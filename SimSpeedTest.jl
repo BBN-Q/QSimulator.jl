@@ -23,10 +23,10 @@ function evolution_unitary(Hnat::Matrix{Complex128}, controlHams, controlFields:
             multiply!(localH, controlFields[controlct, timect]*cos(2*pi*timeStep*timect*controlFreqs[controlct]))
             add!(tmpH, localH)
         end
-        Uprop *= expm_eigen(tmpH, -1im*2*pi*timeStep)
+        Uprop *= expm_eigen(tmpH, 1im*2*pi*timeStep)
     end
 
-    return Uprop
+    return Uprop'
 end
 
 function parallel_evolution_unitary(Hnat::Matrix{Complex128}, controlHams, controlFields::Matrix{Float64}, controlFreqs::Vector{Float64})
@@ -43,10 +43,10 @@ function parallel_evolution_unitary(Hnat::Matrix{Complex128}, controlHams, contr
             multiply!(localH, controlFields[controlct, timect]*cos(2*pi*timeStep*timect*controlFreqs[controlct]))
             add!(tmpH, localH)
         end
-        expm_eigen(tmpH, -1im*2*pi*timeStep)
+        expm_eigen(tmpH, 1im*2*pi*timeStep)
     end
 
-    return Uprop
+    return Uprop'
 end
 
 function sim_setup(dimension, numTimeSteps, numControls)
