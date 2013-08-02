@@ -24,7 +24,7 @@ function read_APS_file(filename)
 
 			# pull out LL data
 			addr = read(curLLData["addr"]) * ADDRESS_UNIT
-			count = read(curLLData["count"]) * ADDRESS_UNIT
+			count = (1 + read(curLLData["count"])) * ADDRESS_UNIT
 			repeat = read(curLLData["repeat"])
 			trigger1 = read(curLLData["trigger1"]) * ADDRESS_UNIT
 			trigger2 = read(curLLData["trigger2"]) * ADDRESS_UNIT
@@ -61,7 +61,7 @@ function read_APS_file(filename)
 					curWF = [curWF, wfLib[1+addr[entryct]]*ones(count[entryct] * curRepeat)]
 				else
 					try
-						curWF = [curWF, repmat(wfLib[1+addr[entryct]:1+addr[entryct]+count[entryct]], curRepeat, 1)]
+						curWF = [curWF, repmat(wfLib[1+addr[entryct]:addr[entryct]+count[entryct]], curRepeat, 1)]
 					catch
 						print("addr: ")
 						println(int(addr[entryct]))
