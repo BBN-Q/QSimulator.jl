@@ -1,4 +1,3 @@
-JuSimulator
-===========
+#JuSimulator
 
-Unitary and Lindbladian evolution in Julia
+Unitary and Lindbladian evolution of quantum states in Julia.
