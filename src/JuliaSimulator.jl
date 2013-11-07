@@ -94,7 +94,7 @@ function unitary_trajectory(controlI, controlQ, calScale)
     return finalZ, finalX
 end
 
-module Test
+module JuliaSimulatorTest
 
 export run_sim, sim_setup, setup_test, run_parallel_sim
 
