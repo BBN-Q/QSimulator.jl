@@ -133,11 +133,11 @@ function sim_setup(dimension,
 
 end
 
-function run_sim( Hnat, controlHams, controlFields, controlFreqs )
+function run_sim(Hnat, controlHams, controlFields, controlFreqs)
     evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
 end
 
-function run_parallel_sim()
+function run_parallel_sim(Hnat, controlHams, controlFields, controlFreqs)
     parallel_evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
 end
 
