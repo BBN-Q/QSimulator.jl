@@ -1,4 +1,4 @@
-module JuliaSimulator
+module QSimulator
 
 export evolution_unitary,
        parallel_evolution_unitary,
@@ -94,7 +94,7 @@ function unitary_trajectory(controlI, controlQ, calScale)
     return finalZ, finalX
 end
 
-module JuliaSimulatorTest
+module QSimulatorTest
 
 export run_sim, sim_setup, setup_test, run_parallel_sim
 
@@ -145,6 +145,6 @@ function setup_test()
   sim_setup(16,2000,4)
 end
 
-end # JuliaSimulator.Test
+end # QSimulator.Test
 
-end # JuliaSimulator
+end # QSimulator
