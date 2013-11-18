@@ -2,7 +2,8 @@ module QSimulator
 
 export evolution_unitary,
        parallel_evolution_unitary,
-       unitary_trajectory
+       unitary_trajectory,
+       run_sim
 
 using NumericExtensions
 
@@ -15,9 +16,9 @@ function expm_eigen(A::Matrix, t)
 end
 
 function evolution_unitary(Hnat::Matrix{Complex128}, 
-                           ampControlHams, 
-                           ampControlFields::Matrix{Float64}, 
-                           ampControlFreqs::Vector{Float64})
+                           controlHams, 
+                           controlFields::Matrix{Float64}, 
+                           controlFreqs::Vector{Float64})
 
     const timeStep = 0.01
     Uprop = eye(Complex128, size(Hnat,1))
@@ -62,8 +63,6 @@ end
 function evolution_unitary(controlI, controlQ, calScale)
 
     const timeStep = 1.0
-    Hnat = eye(Complex128, 2)
-    tmpH = similar(Hnat)
     const sx = 0.5*Complex128[0 1; 1 0]
     const sy = 0.5*Complex128[0 -1im; 1im 0]
 
@@ -94,10 +93,6 @@ function unitary_trajectory(controlI, controlQ, calScale)
     return finalZ, finalX
 end
 
-module QSimulatorTest
-
-export run_sim, sim_setup, setup_test, run_parallel_sim
-
 function run_sim(awgdata, chI, chQ, calScale)
     results = Float64[]
     initialRho = [1. 0.; 0. 0.]
@@ -109,42 +104,5 @@ function run_sim(awgdata, chI, chQ, calScale)
     end
     return results
 end
-
-function sim_setup(dimension, 
-                   numTimeSteps, 
-                   numControls)
-    #Create a random natural hamiltonian 
-    tmpMat = randn(dimension, dimension) + 1im*randn(dimension, dimension)
-    Hnat = tmpMat+tmpMat'
-
-    #Create random control Hamiltonians
-    controlHams = Array(Matrix{Complex128}, numControls)
-    for ct = 1:numControls
-        tmpMat[:] = randn(dimension, dimension) + 1im*randn(dimension, dimension)
-        controlHams[ct] = tmpMat+tmpMat'
-    end
-    #Create random controlfields
-    controlFields = randn(numControls, numTimeSteps)
-        
-    #Control frequencies
-    controlFreqs = randn(numControls)
-
-    return Hnat, controlHams, controlFields, controlFreqs
-
-end
-
-function run_sim(Hnat, controlHams, controlFields, controlFreqs)
-    evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
-end
-
-function run_parallel_sim(Hnat, controlHams, controlFields, controlFreqs)
-    parallel_evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
-end
-
-function setup_test()
-  sim_setup(16,2000,4)
-end
-
-end # QSimulator.Test
 
 end # QSimulator
