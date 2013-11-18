@@ -1,4 +1,9 @@
-JuSimulator
-===========
+#QSimulator
 
-Unitary and Lindbladian evolution in Julia
+Unitary and Lindbladian evolution of quantum states in Julia.
+
+In order to use it, run 
+
+```julia
+Pkg.clone("git@github.com:BBN-Q/QSimulator.jl.git")
+```
