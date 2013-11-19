@@ -109,10 +109,10 @@ function hamiltonian(c::CompositeQSystem, t::Float64)
 end
 
 function expand(m::Matrix, actingOn::Vector, dims::Vector)
-    #Expand a bipartite operator onto a larger Hilbert space
-    # m: matrix form of bipartite operator
-    # actingOn: tuple of which subsystem index the operator should be acting on 
-    # dims: tuple of dimensions of all the subsystems
+    #Expand an operator onto a larger Hilbert space
+    # m: matrix form of  operator
+    # actingOn: array of which subsystem index the operator should be acting on 
+    # dims: array of dimensions of all the subsystems
 
     @assert size(m, 1) == prod(dims[actingOn]) "Oops! Dimensions of matrix do not match dims argument."
 
