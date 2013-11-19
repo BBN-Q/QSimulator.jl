@@ -12,7 +12,7 @@ function read_APS_file(filename)
 	
 	chanStrs = ["chan_1", "chan_2", "chan_3", "chan_4"]
 	mrkStrs = ["ch1m1", "ch2m1", "ch3m1", "ch4m1"]
-	AWGData = [chan => {} for chan in chanStrs]
+	AWGData = [chan => Vector{Float64}[] for chan in chanStrs]
 
 	h5open(filename, "r") do f
 		for (ct, chanStr) in enumerate(chanStrs)
@@ -34,7 +34,7 @@ function read_APS_file(filename)
 			wfLib = (1./MAX_WAVEFORM_VALUE)*read(f[chanStr]["waveformLib"])
 
 			# initialize storage
-			AWGData[mrkStrs[ct]] = {}
+			AWGData[mrkStrs[ct]] = Vector{Float64}[]
 
 			# loop over LL entries
 			for entryct = 1:numEntries
@@ -72,7 +72,8 @@ function read_APS_file(filename)
 
 				# add the trigger pulses and push on the curWF
 				if repeat[entryct] & END_MINILL_MASK != 0
-					push!(AWGData[chanStr], curWF)
+					# println("Size of curWF: $(size(curWF))")
+					push!(AWGData[chanStr], vec(curWF))
 					triggerSeq = zeros(Uint8, length(curWF))
 					triggerSeq[triggerDelays] = 1
 					push!(AWGData[mrkStrs[ct]], triggerSeq)

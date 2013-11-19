@@ -5,6 +5,7 @@
 #        unitary_trajectory
 
 using NumericExtensions
+using Grid
 
 abstract QSystem
 
@@ -44,10 +45,50 @@ hamiltonian(q::Qubit, t::Float64) = hamiltonian(q)
 hamiltonian(r::Resonator) = 2*pi*r.freq*number(r)
 hamiltonian(r::Resonator, t::Float64) = hamiltonian(r)
 
-type Field
+#AWG channels are controls
+abstract Control
+label(c::Control) = c.label
+
+#A pair of AWG channels driving an IQ mixer with a microwave source at a given frequency
+type QuadratureControl <: Control
+    label::String
+    freq::Float64
+    phase::Float64
+    timeStep::Float64
+    sequence_I::Union(InterpGrid, Nothing)
+    sequence_Q::Union(InterpGrid, Nothing)
 end
-#TODO: somehow pull in amplitude from controls
-amplitude(f::Field, t::Float64) = 0.0
+QuadratureControl(label, freq, phase=0., timeStep=1/1.2, sequence_I=nothing, sequence_Q=nothing) = QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
+
+#Create the interpolated object
+function load_sequence(qc::QuadratureControl, seqDict::Dict, n::Int)
+    #For quadrature controls we need two channels
+    #Hack around off the expected BBNAPSx-xx style
+    chan_I = label(qc)[end-1]
+    chan_Q = label(qc)[end]
+    APSLabel = label(qc)[1:7]
+    qc.sequence_I = InterpGrid(seqDict[APSLabel]["chan_"*chan_I][n], BCnearest, InterpNearest)
+    qc.sequence_Q = InterpGrid(seqDict[APSLabel]["chan_"*chan_Q][n], BCnearest, InterpNearest)
+    return nothing
+end
+function amplitude(qc::QuadratureControl, t::Float64)
+    #Create the complex I/Q pair
+    phasor = qc.sequence_I[t] + 1im*qc.sequence_Q[t]
+    return abs(phasor)*cos(2*pi*qc.freq + qc.phase + angle(phasor))
+end
+
+#Flux control 
+#Complex non-linear control of E_J
+type FluxControl <: Control
+end
+
+#AWG controls get connected, possibly through a transfer function, to fields
+type Field
+    control::Control
+end
+#Pull in amplitude from controls
+#TODO: allow for transfer function
+amplitude(f::Field, t::Float64) = amplitude(f.control, t)
 
 abstract Interaction
 
@@ -105,6 +146,15 @@ function hamiltonian(c::CompositeQSystem, t::Float64)
     end
 
     #Add interactions
+    for i in c.interactions
+        #Field-system interactions are one-body terms
+        if isa(i, SemiClassicalDipole)
+            add!(Htot, expand(hamiltonian(i,t), [find_subsystem_pos(c, label(i.system2))], dims(c)))
+        #Other interactions are two body terms
+        else
+            add!(Htot, expand(hamiltonian(i,t), [find_subsystem_pos(c, label(i.system1)), find_subsystem_pos(c, label(i.system2))], dims(c)))
+        end
+    end
 
     return Htot
 end
@@ -138,20 +188,6 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     return reshape(M, prod(dims), prod(dims))
 end
 
-#Abstract type for control.   
-abstract QControl
-
-#Microwave control 
-#Of the form e(t)*cos(2pi*f*t)*Ham
-type uWControl <: QControl
-    freq::Float64
-    Ham::Matrix{Complex128}
-end 
-
-#Flux control 
-#Complex non-linear control of E_J
-type FluxControl <: QControl
-end
 
 function expm_eigen(A::Matrix, t)
     #Calculates expm(t*A) via eigenvalue decomposition and assuming Hermitian matrix
