@@ -101,7 +101,7 @@ function hamiltonian(c::CompositeQSystem, t::Float64)
     Htot = zeros(Complex128, dim(c), dim(c))
 
     for s in c.subSystems
-        add!(Htot, expand(hamiltonian(s, t), [])
+        add!(Htot, expand(hamiltonian(s, t), []))
     end
 
     #Add interactions
@@ -129,6 +129,8 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     #Permute magic 
     forwardPerm = [actingOn, eyeIndices]
     reversePerm = invperm(forwardPerm)
+    #Handle the way tensor product indices work (last subsystem in fastest)
+    reversePerm = reverse(l+1-reversePerm)
     M = permutedims(M, tuple([reversePerm, reversePerm+l]...))
 
     #Reshape back
