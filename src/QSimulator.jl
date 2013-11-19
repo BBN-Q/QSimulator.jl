@@ -128,7 +128,7 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
 
     #Permute magic 
     forwardPerm = [actingOn, eyeIndices]
-    reversePerm = sortperm(forwardPerm)
+    reversePerm = invperm(forwardPerm)
     M = permutedims(M, tuple([reversePerm, reversePerm+l]...))
 
     #Reshape back
