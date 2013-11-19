@@ -1,8 +1,22 @@
-# module QSimulator
+module QSimulator
 
-# export evolution_unitary,
-#        parallel_evolution_unitary,
-#        unitary_trajectory
+export Resonator,
+        Transmon,
+        Qubit,
+        QuadratureControl,
+        load_sequence!,
+
+        Field,
+
+        FlipFlop,
+        SemiClassicalDipole,
+
+        hamiltonian,
+        expand,
+
+       unitary_propagator,
+       parallel_evolution_unitary,
+       unitary_trajectory
 
 using NumericExtensions
 using Grid
@@ -61,20 +75,21 @@ end
 QuadratureControl(label, freq, phase=0., timeStep=1/1.2, sequence_I=nothing, sequence_Q=nothing) = QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
 
 #Create the interpolated object
-function load_sequence(qc::QuadratureControl, seqDict::Dict, n::Int)
+function load_sequence!(qc::QuadratureControl, seqDict::Dict, n::Int)
     #For quadrature controls we need two channels
     #Hack around off the expected BBNAPSx-xx style
     chan_I = label(qc)[end-1]
     chan_Q = label(qc)[end]
     APSLabel = label(qc)[1:7]
-    qc.sequence_I = InterpGrid(seqDict[APSLabel]["chan_"*chan_I][n], BCnearest, InterpNearest)
-    qc.sequence_Q = InterpGrid(seqDict[APSLabel]["chan_"*chan_Q][n], BCnearest, InterpNearest)
+    qc.sequence_I = InterpGrid(seqDict[APSLabel]["chan_"*string(chan_I)][n], BCnearest, InterpNearest)
+    qc.sequence_Q = InterpGrid(seqDict[APSLabel]["chan_"*string(chan_Q)][n], BCnearest, InterpNearest)
     return nothing
 end
 function amplitude(qc::QuadratureControl, t::Float64)
     #Create the complex I/Q pair
-    phasor = qc.sequence_I[t] + 1im*qc.sequence_Q[t]
-    return abs(phasor)*cos(2*pi*qc.freq + qc.phase + angle(phasor))
+    #Scale time by the timestep
+    phasor = qc.sequence_I[t/qc.timeStep] + 1im*qc.sequence_Q[t/qc.timeStep]
+    return abs(phasor)*cos(2*pi*qc.freq*t + qc.phase + angle(phasor))
 end
 
 #Flux control 
@@ -107,7 +122,7 @@ type SemiClassicalDipole <: Interaction
     strength::Float64
 end
 function hamiltonian(scd::SemiClassicalDipole, t::Float64)
-    return scd.strength*amplitude(system1, t)*X(system2)
+    return scd.strength*amplitude(scd.system1, t)*X(scd.system2)
 end
 
 type CompositeQSystem
@@ -197,26 +212,13 @@ function expm_eigen(A::Matrix, t)
     return scale(F[:vectors], exp(t*F[:values])) * F[:vectors]'
 end
 
-function evolution_unitary(Hnat::Matrix{Complex128}, 
-                           ampControlHams, 
-                           ampControlFields::Matrix{Float64}, 
-                           ampControlFreqs::Vector{Float64})
+function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, endTime::Float64)
 
-    const timeStep = 0.01
-    Uprop = eye(Complex128, size(Hnat,1))
-    tmpH = similar(Hnat)
-    localH = similar(Hnat)
-
-    for timect = 1:size(controlFields,2)
-        tmpH[:] = Hnat
-        for controlct = 1:size(controlFields,1)
-            localH[:] = controlHams[controlct]
-            multiply!(localH, controlFields[controlct, timect]*cos(2*pi*timeStep*timect*controlFreqs[controlct]))
-            add!(tmpH, localH)
-        end
-        Uprop *= expm_eigen(tmpH, 1im*2*pi*timeStep)
+    
+    Uprop = @parallel (*) for ct = 1:fld(endTime, timeStep)
+        #a *= b expands to a = a*b
+        expm_eigen(hamiltonian(sys, ct*timeStep), 1im*timeStep)
     end
-
     return Uprop'
 end
 
@@ -277,57 +279,57 @@ function unitary_trajectory(controlI, controlQ, calScale)
     return finalZ, finalX
 end
 
-# module QSimulatorTest
+module QSimulatorTest
 
-# export run_sim, sim_setup, setup_test, run_parallel_sim
+export run_sim, sim_setup, setup_test, run_parallel_sim
 
-# function run_sim(awgdata, chI, chQ, calScale)
-#     results = Float64[]
-#     initialRho = [1. 0.; 0. 0.]
-#     const measOp = [1. 0.; 0. -1.]
-#     for ct = 1:length(awgdata[chI])
-#         U = evolution_unitary(awgdata[chI][ct], awgdata[chQ][ct], calScale)
-#         finalRho = U * initialRho * U'
-#         push!(results, real(trace(finalRho * measOp)))
-#     end
-#     return results
-# end
+function run_sim(awgdata, chI, chQ, calScale)
+    results = Float64[]
+    initialRho = [1. 0.; 0. 0.]
+    const measOp = [1. 0.; 0. -1.]
+    for ct = 1:length(awgdata[chI])
+        U = evolution_unitary(awgdata[chI][ct], awgdata[chQ][ct], calScale)
+        finalRho = U * initialRho * U'
+        push!(results, real(trace(finalRho * measOp)))
+    end
+    return results
+end
 
-# function sim_setup(dimension, 
-#                    numTimeSteps, 
-#                    numControls)
-#     #Create a random natural hamiltonian 
-#     tmpMat = randn(dimension, dimension) + 1im*randn(dimension, dimension)
-#     Hnat = tmpMat+tmpMat'
+function sim_setup(dimension, 
+                   numTimeSteps, 
+                   numControls)
+    #Create a random natural hamiltonian 
+    tmpMat = randn(dimension, dimension) + 1im*randn(dimension, dimension)
+    Hnat = tmpMat+tmpMat'
 
-#     #Create random control Hamiltonians
-#     controlHams = Array(Matrix{Complex128}, numControls)
-#     for ct = 1:numControls
-#         tmpMat[:] = randn(dimension, dimension) + 1im*randn(dimension, dimension)
-#         controlHams[ct] = tmpMat+tmpMat'
-#     end
-#     #Create random controlfields
-#     controlFields = randn(numControls, numTimeSteps)
+    #Create random control Hamiltonians
+    controlHams = Array(Matrix{Complex128}, numControls)
+    for ct = 1:numControls
+        tmpMat[:] = randn(dimension, dimension) + 1im*randn(dimension, dimension)
+        controlHams[ct] = tmpMat+tmpMat'
+    end
+    #Create random controlfields
+    controlFields = randn(numControls, numTimeSteps)
         
-#     #Control frequencies
-#     controlFreqs = randn(numControls)
+    #Control frequencies
+    controlFreqs = randn(numControls)
 
-#     return Hnat, controlHams, controlFields, controlFreqs
+    return Hnat, controlHams, controlFields, controlFreqs
 
-# end
+end
 
-# function run_sim(Hnat, controlHams, controlFields, controlFreqs)
-#     evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
-# end
+function run_sim(Hnat, controlHams, controlFields, controlFreqs)
+    evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
+end
 
-# function run_parallel_sim(Hnat, controlHams, controlFields, controlFreqs)
-#     parallel_evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
-# end
+function run_parallel_sim(Hnat, controlHams, controlFields, controlFreqs)
+    parallel_evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
+end
 
-# function setup_test()
-#   sim_setup(16,2000,4)
-# end
+function setup_test()
+  sim_setup(16,2000,4)
+end
 
-# end # QSimulator.Test
+end # QSimulator.Test
 
-# end # QSimulator
+end # QSimulator
