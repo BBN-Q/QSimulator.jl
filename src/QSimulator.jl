@@ -8,46 +8,35 @@ using NumericExtensions
 
 abstract QSystem
 
+label(q::QSystem) = q.label
+dim(q::QSystem) = q.dim
+raising(q::QSystem) = diagm(sqrt(1:(dim(q)-1)), -1)
+lowering(q::QSystem) = diagm(sqrt(1:(dim(q)-1)), 1)
+number(q::QSystem) = raising(q) * lowering(q)
+X(q::QSystem) = raising(q) + lowering(q)
+
 #Resonator 
 type Resonator <: QSystem
-    name::String
+    label::String
     freq::Float64
     dim::Int
 end 
 #Transmon
 #Duffing approximation to a transmon 
 type Transmon <: QSystem
-    name::String
+    label::String
     E_J::Float64
     E_C::Float64
     d::Float64 = 0 #asymmetry 
     dim::Int
 end 
 
-
 #Basic two-level qubit
 type Qubit <: QSystem
-    name::String
+    label::String
     freq::Float64
 end
-Qubit(name, freq) = Qubit(name, freq)
 dim(q::Qubit) = 2
-
-for t = [Resonator, Transmon, Qubit]
-    @eval begin
-        name(x::$t) = x.name
-        raising(x::$t) = diagm(sqrt(1:(dim(x)-1)), -1)
-        lowering(x::$t) = diagm(sqrt(1:(dim(x)-1)), 1)
-        number(x::$t) = raising(x) * lowering(x)
-        X(x::$t) = raising(x) + lowering(x)
-     end
-end
-
-for t = [Resonator, Transmon]
-    @eval begin
-        dim(x::$t) = x.dim
-    end
-end
 
 #System hamiltonians 
 hamiltonian(q::Qubit) = 2*pi*q.freq*number(q)
@@ -97,13 +86,13 @@ function +(c::CompositeQSystem, i::Interaction)
     return c
 end
 
-names(c::CompositeQSystem) = [s.name for s in c.subSystems]
-dims(c::CompositeQSystem) = [s.dim for s in c.subSystems]
+labels(c::CompositeQSystem) = [label(s) for s in c.subSystems]
+dims(c::CompositeQSystem) = [dim(s) for s in c.subSystems]
 dim(c::CompositeQSystem) = prod([dim(s) for s in c.subSystems])
 
-function find_subsystem_pos(c::CompositeQSystem, name::String)
-    @assert name in names(c) "Oops! subsystem not found."
-    findin(names(c), [name])
+function find_subsystem_pos(c::CompositeQSystem, label::String)
+    @assert label in labels(c) "Oops! subsystem not found."
+    findin(labels(c), [label])
 end
 
 
@@ -112,11 +101,12 @@ function hamiltonian(c::CompositeQSystem, t::Float64)
     Htot = zeros(Complex128, dim(c), dim(c))
 
     for s in c.subSystems
-        add!(Htot, expand(hamiltonian(s, t), [find_subsystem_pos(c, s.name)], dims(c)))
+        add!(Htot, expand(hamiltonian(s, t), [find_subsystem_pos(c, label(s))], dims(c)))
     end
 
     #Add interactions
 
+    return Htot
 end
 
 function expand(m::Matrix, actingOn::Vector, dims::Vector)
