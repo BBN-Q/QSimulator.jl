@@ -24,28 +24,23 @@ type Transmon <: QSystem
     dim::Int
 end 
 
-for t = [Resonator, Transmon]
-    @eval begin
-    raising(x::$t) = diagm(sqrt(1:(x.dim-1)), -1)
-    lowering(x::$t) = diagm(sqrt(1:(x.dim-1)), 1)
-    number(x::$t) = raising(x) * lowering(x)
-    X(x::$t) = raising(x) + lowering(x)
-    end
-end
 
 #Basic two-level qubit
 type Qubit <: QSystem
     name::String
     freq::Float64
 end
-Qubit(name, freq) = Qubit(name, freq, dim)
-raising(q::Qubit) = Float64[0 0;1 0]
-lowering(q::Qubit) = Float64[0 1;0 0]
+Qubit(name, freq) = Qubit(name, freq)
+dim(q::Qubit) = 2
 
 for t = [Resonator, Transmon, Qubit]
     @eval begin
         name(x::$t) = x.name
-    end
+        raising(x::$t) = diagm(sqrt(1:(dim(x)-1)), -1)
+        lowering(x::$t) = diagm(sqrt(1:(dim(x)-1)), 1)
+        number(x::$t) = raising(x) * lowering(x)
+        X(x::$t) = raising(x) + lowering(x)
+     end
 end
 
 for t = [Resonator, Transmon]
@@ -53,6 +48,12 @@ for t = [Resonator, Transmon]
         dim(x::$t) = x.dim
     end
 end
+
+#System hamiltonians 
+hamiltonian(q::Qubit) = 2*pi*q.freq*number(q)
+hamiltonian(q::Qubit, t::Float64) = hamiltonian(q)
+hamiltonian(r::Resonator) = 2*pi*r.freq*number(r)
+hamiltonian(r::Resonator, t::Float64) = hamiltonian(r)
 
 type Field
 end
@@ -80,28 +81,38 @@ function hamiltonian(scd::SemiClassicalDipole, t::Float64)
 end
 
 type CompositeQSystem
-    subSystems::Dict{String, QSystem}
-    interactions::Vector
+    #An OrderedDict would be ideal here
+    subSystems::Vector{QSystem}
+    interactions::Vector{Interaction}
 end
+CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[])
 
 function +(c::CompositeQSystem, q::QSystem)
-    c.subSystems[name(q)] = q
+    append!(c.subSystems, [q])
     return c
 end
 
 function +(c::CompositeQSystem, i::Interaction)
-    append!(c.interactions, i)
+    append!(c.interactions, [i])
     return c
 end
 
-dim(c::CompositeQSystem) = prod([dim(s) for s in values(c.subSystems)])
+names(c::CompositeQSystem) = [s.name for s in c.subSystems]
+dims(c::CompositeQSystem) = [s.dim for s in c.subSystems]
+dim(c::CompositeQSystem) = prod([dim(s) for s in c.subSystems])
+
+function find_subsystem_pos(c::CompositeQSystem, name::String)
+    @assert name in names(c) "Oops! subsystem not found."
+    findin(names(c), [name])
+end
+
 
 function hamiltonian(c::CompositeQSystem, t::Float64)
     #Put together subsystem Hamiltonians
     Htot = zeros(Complex128, dim(c), dim(c))
 
     for s in c.subSystems
-        add!(Htot, expand(hamiltonian(s, t), []))
+        add!(Htot, expand(hamiltonian(s, t), [find_subsystem_pos(c, s.name)], dims(c)))
     end
 
     #Add interactions
@@ -151,11 +162,6 @@ end
 #Complex non-linear control of E_J
 type FluxControl <: QControl
 end
-
-
-
-
-
 
 function expm_eigen(A::Matrix, t)
     #Calculates expm(t*A) via eigenvalue decomposition and assuming Hermitian matrix
