@@ -15,6 +15,7 @@ export Resonator,
         expand,
 
        unitary_propagator,
+       evolution_unitary,
        parallel_evolution_unitary,
        unitary_trajectory,
        run_sim
