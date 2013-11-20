@@ -24,6 +24,7 @@ export Resonator,
 
 using NumericExtensions
 using Grid
+using Debug
 
 abstract QSystem
 
@@ -133,49 +134,79 @@ type CompositeQSystem
     #An OrderedDict would be ideal here
     subSystems::Vector{QSystem}
     interactions::Vector{Interaction}
+    subSystemExpansions::Vector{Vector{Vector{Int}}}
+    interactionExpansions::Vector{Vector{Vector{Int}}}
 end
-CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[])
+CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[], Vector{Vector{Int}}[], Vector{Vector{Int}}[])
 
 function +(c::CompositeQSystem, q::QSystem)
     append!(c.subSystems, [q])
+    update_expansion_indices!(c)
     return c
 end
 
 function +(c::CompositeQSystem, i::Interaction)
     append!(c.interactions, [i])
+    update_expansion_indices!(c)
     return c
+end
+
+function update_expansion_indices!(c::CompositeQSystem)
+    c.subSystemExpansions = [Vector{Int}[] for _ = 1:length(c.subSystems)]
+    for (ct, sys) in enumerate(c.subSystems)
+        c.subSystemExpansions[ct] = expand_indices([ct], dims(c))
+    end
+
+    c.interactionExpansions = [Vector{Int}[] for _ = 1:length(c.interactions)]
+    for (ct, i) in enumerate(c.interactions)
+        c.interactionExpansions[ct] = expand_indices(find_subsystem_pos(c, i), dims(c))
+    end
 end
 
 labels(c::CompositeQSystem) = [label(s) for s in c.subSystems]
 dims(c::CompositeQSystem) = [dim(s) for s in c.subSystems]
 dim(c::CompositeQSystem) = prod([dim(s) for s in c.subSystems])
 
-function find_subsystem_pos(c::CompositeQSystem, label::String)
-    @assert label in labels(c) "Oops! subsystem not found."
-    findin(labels(c), [label])
+function find_subsystem_pos(c::CompositeQSystem, s::QSystem)
+    @assert s in c.subSystems "Oops! Subsystem not found."
+    findin(c.subSystems, [s])
 end
 
+function find_subsystem_pos(c::CompositeQSystem, i::Interaction)
+    #Field-system interactions are one-body terms
+    if isa(i, SemiClassicalDipole)
+        return find_subsystem_pos(c, i.system2)
+    else
+        return [find_subsystem_pos(c, i.system1), find_subsystem_pos(c, i.system2)]
+    end
+end
 
 function hamiltonian(c::CompositeQSystem, t::Float64)
-    #Put together subsystem Hamiltonians
+
+    #Initialize Hamiltonian
     Htot = zeros(Complex128, dim(c), dim(c))
 
-    for s in c.subSystems
-        add!(Htot, expand(hamiltonian(s, t), [find_subsystem_pos(c, label(s))], dims(c)))
+    #Add in all the terms    
+    hamiltonian_add!(Htot, c, t)
+
+    return Htot
+end
+
+function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float64)
+    #Fast system hamiltonian calculator with total Hamiltonian preallocated
+    
+    #Zero the Hamiltonian memory
+    Ham[:] = zero(Complex128)
+
+    #Add together subsystem Hamiltonians
+    for (ct, s) in enumerate(c.subSystems)
+        expand_add!(Ham, hamiltonian(s, t), c.subSystemExpansions[ct])
     end
 
     #Add interactions
-    for i in c.interactions
-        #Field-system interactions are one-body terms
-        if isa(i, SemiClassicalDipole)
-            add!(Htot, expand(hamiltonian(i,t), [find_subsystem_pos(c, label(i.system2))], dims(c)))
-        #Other interactions are two body terms
-        else
-            add!(Htot, expand(hamiltonian(i,t), [find_subsystem_pos(c, label(i.system1)), find_subsystem_pos(c, label(i.system2))], dims(c)))
-        end
+    for (ct, i) in enumerate(c.interactions)
+        expand_add!(Ham, hamiltonian(i,t), c.interactionExpansions[ct])
     end
-
-    return Htot
 end
 
 function expand(m::Matrix, actingOn::Vector, dims::Vector)
@@ -188,9 +219,8 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
 
     #Create the large matrix by tensoring on identity
     l = length(dims)
-    indices = [1:l]
-    eyeIndices = filter(x->!(x in actingOn), indices)
-    M = kron(m, eye(prod(dims[eyeIndices])))  
+    eyeIndices = filter(x->!(x in actingOn), 1:l)
+    M = kron(m, eye(eltype(m), prod(dims[eyeIndices])))  
 
     #Reshape into multi-dimensional array given by subsystem dimensions
     #Since we have a matrix we repeat for rows then columns
@@ -199,12 +229,36 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     #Permute magic 
     forwardPerm = [actingOn, eyeIndices]
     reversePerm = invperm(forwardPerm)
-    #Handle the way tensor product indices work (last subsystem in fastest)
+    #Handle the way tensor product indices work (last subsystem is fastest)
     reversePerm = reverse(l+1-reversePerm)
     M = permutedims(M, tuple([reversePerm, reversePerm+l]...))
 
     #Reshape back
     return reshape(M, prod(dims), prod(dims))
+end
+
+function expand(m::Matrix, indices::Vector, sizeM::Int )
+    M = zeros(eltype(m), (sizeM, sizeM))
+    for (ct, inds) in enumerate(indices)
+        M[inds] = m[ct]
+    end
+    return M
+end
+
+function expand_add!(M::Matrix, m::Matrix, indices::Vector )
+    #Add to certain indices of M with terms from m according to expansion indices.
+    for (ct, inds) in enumerate(indices)
+        M[inds] += m[ct]
+    end
+end
+
+function expand_indices(actingOn::Vector, dims::Vector)
+    #Calculate the indices for expansion
+    actingOnDim = prod(dims[actingOn])
+    sm = (actingOnDim, actingOnDim)
+    lenm = actingOnDim^2;
+    M = expand(reshape(1:lenm, sm), actingOn, dims)
+    return [find(M .== x) for x in 1:lenm]
 end
 
 
@@ -264,7 +318,8 @@ end
 
 function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, endTime::Float64)
 
-    
+    #Preallocate Hamiltonian memory
+    Ham = zeros(Complex128, (dim(sys), dim(sys)))
     Uprop = @parallel (*) for ct = 1:fld(endTime, timeStep)
         #a *= b expands to a = a*b
         expm_eigen(hamiltonian(sys, ct*timeStep), 1im*timeStep)
