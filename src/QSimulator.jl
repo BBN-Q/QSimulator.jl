@@ -3,6 +3,8 @@ module QSimulator
 export Resonator,
         Transmon,
         Qubit,
+        CompositeQSystem,
+
         QuadratureControl,
         load_sequence!,
 
