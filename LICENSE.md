@@ -178,7 +178,7 @@ The JuliaSimulator.jl package is licensed under the Apache License v2.0:
 > the same "printed page" as the copyright notice for easier identification within
 > third-party archives.
 > 
->    Copyright [2013] Raytheon BBN Technologies
+>   Copyright [yyyy] [name of copyright owner]
 > 
 >    Licensed under the Apache License, Version 2.0 (the "License");
 >    you may not use this file except in compliance with the License.
