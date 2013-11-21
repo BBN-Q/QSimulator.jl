@@ -41,15 +41,37 @@ type Resonator <: QSystem
     freq::Float64
     dim::Int
 end 
-#Transmon
-#Duffing approximation to a transmon 
-type Transmon <: QSystem
+hamiltonian(r::Resonator) = 2*pi*r.freq*number(r)
+hamiltonian(r::Resonator, t::Float64) = hamiltonian(r)
+
+#Duffing approximation to transmons
+
+#Fixed frequency transmon 
+type FFTransmon <: QSystem
     label::String
-    E_J::Float64
     E_C::Float64
-    d::Float64 = 0 #asymmetry 
+    E_J::Float64
     dim::Int
 end 
+
+#Tunable transmon 
+type TunableTransmon <: QSystem
+    label::String
+    E_C::Float64
+    E_J::Float64 #sum of junction E_J's
+    dim::Int
+    fluxBias::Float64 #flux bias in units of Phi_0
+    d::Float64 
+end
+TunableTransmon(label, E_C, E_J, dim, fluxBias, d=0.0) = TunableTransmon(label, E_C, E_J, dim, fluxBias, d)
+
+function hamiltonian(tt::TunableTransmon)
+    myE_J = tt.E_J*scale_EJ(tt.fluxBias, tt.d)
+    return sqrt(8*tt.E_C*myE_J)*number(tt) - (1.0/12)*tt.E_C*(X(tt)^4)
+end
+
+#Helper function to calculate effective EJ for a transmon
+scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2))
 
 #Basic two-level qubit
 type Qubit <: QSystem
@@ -57,12 +79,8 @@ type Qubit <: QSystem
     freq::Float64
 end
 dim(q::Qubit) = 2
-
-#System hamiltonians 
 hamiltonian(q::Qubit) = 2*pi*q.freq*number(q)
 hamiltonian(q::Qubit, t::Float64) = hamiltonian(q)
-hamiltonian(r::Resonator) = 2*pi*r.freq*number(r)
-hamiltonian(r::Resonator, t::Float64) = hamiltonian(r)
 
 #AWG channels are controls
 abstract Control
@@ -78,6 +96,7 @@ type QuadratureControl <: Control
     sequence_Q::Union(InterpGrid, Nothing)
 end
 QuadratureControl(label, freq, phase=0., timeStep=1/1.2, sequence_I=nothing, sequence_Q=nothing) = QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
+
 
 #Create the interpolated object
 function load_sequence!(qc::QuadratureControl, seqDict::Dict, n::Int)
@@ -95,11 +114,6 @@ function amplitude(qc::QuadratureControl, t::Float64)
     #Scale time by the timestep
     phasor = qc.sequence_I[t/qc.timeStep] + 1im*qc.sequence_Q[t/qc.timeStep]
     return abs(phasor)*cos(2*pi*qc.freq*t + qc.phase + angle(phasor))
-end
-
-#Flux control 
-#Complex non-linear control of E_J
-type FluxControl <: Control
 end
 
 #AWG controls get connected, possibly through a transfer function, to fields
@@ -128,6 +142,19 @@ type SemiClassicalDipole <: Interaction
 end
 function hamiltonian(scd::SemiClassicalDipole, t::Float64)
     return scd.strength*amplitude(scd.system1, t)*X(scd.system2)
+end
+
+#Flux control 
+type FluxTransmon <: Interaction
+    flux::Field
+    transmon::TunableTransmon
+    strength::Float64
+end
+#This is a bit tricky becuase of the non-linear dependence on flux
+#Hack solution is to subtract off the non-interaction 
+function hamiltonian(ft::FluxTransmon, t::Float64)
+    myE_J = ft.transmon.E_J*scale_EJ(ft.transmon.fluxBias + ft.strength*amplitude(ft.flux,t), ft.transmon.d)
+    return -hamiltonian(ft.transmon) + sqrt(8*t.E_C*myE_J)*number(ft.transmon) - (1.0/12)*ft.transmon.E_C*(X(ft.transmon)^4)
 end
 
 type CompositeQSystem
