@@ -247,8 +247,11 @@ end
 
 function expand_add!(M::Matrix, m::Matrix, indices::Vector )
     #Add to certain indices of M with terms from m according to expansion indices.
-    for (ct, inds) in enumerate(indices)
-        M[inds] += m[ct]
+    for ct=1:length(indices)
+        # M[indices[ct]] += m[ct]
+        for idx = indices[ct]
+            M[idx] += m[ct]
+        end
     end
 end
 
@@ -322,7 +325,8 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, endTime::F
     Ham = zeros(Complex128, (dim(sys), dim(sys)))
     Uprop = @parallel (*) for ct = 1:fld(endTime, timeStep)
         #a *= b expands to a = a*b
-        expm_eigen(hamiltonian(sys, ct*timeStep), 1im*timeStep)
+        hamiltonian_add!(Ham, sys, ct*timeStep)
+        expm_eigen(Ham, 1im*timeStep)
     end
     return Uprop'
 end
