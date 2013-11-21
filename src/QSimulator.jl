@@ -86,6 +86,30 @@ hamiltonian(q::Qubit, t::Float64) = hamiltonian(q)
 abstract Control
 label(c::Control) = c.label
 
+#A double-balanced mixer driven by an RF/microwave souce and a single AWG channel
+type MicrowaveControl <: Control
+    label::String
+    freq::Float64
+    phase::Float64
+    timeStep::Float64
+    sequence::Union(InterpGrid, Nothing)
+end
+MicrowaveControl(label, freq, phase=0., timeStep=1/1.2, sequence=nothing) = MicrowaveControl(label, freq, phase, timeStep, sequence)
+
+#Create the interpolated sequence object
+function load_sequence!(mc::MicrowaveControl, seqDict::Dict, n::Int)
+    #For double balanced mixer need one AWG channel
+    #Hack around off the expected BBNAPSx-xx style
+    chan = label(mc)[end]
+    APSLabel = label(mc)[1:7]
+    mc.sequence = InterpGrid(seqDict[APSLabel]["chan_"*string(chan)][n], BCnearest, InterpNearest)
+    return nothing
+end
+function amplitude(mc::MicrowaveControl, t::Float64)
+    #Scale time by the timestep before interpolating
+    return mc.sequence_I[t/qc.timeStep]*cos(2*pi*qc.freq*t + qc.phase)
+end
+
 #A pair of AWG channels driving an IQ mixer with a microwave source at a given frequency
 type QuadratureControl <: Control
     label::String
