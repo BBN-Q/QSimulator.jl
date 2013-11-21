@@ -1,10 +1,12 @@
 module QSimulator
 
 export Resonator,
-        Transmon,
+        TunableTransmon,
+        FFTransmon,
         Qubit,
         CompositeQSystem,
 
+        MicrowaveControl,
         QuadratureControl,
         load_sequence!,
 
@@ -12,6 +14,7 @@ export Resonator,
 
         FlipFlop,
         SemiClassicalDipole,
+        FluxTransmon,
 
         hamiltonian,
         expand,
@@ -64,11 +67,11 @@ type TunableTransmon <: QSystem
     d::Float64 
 end
 TunableTransmon(label, E_C, E_J, dim, fluxBias, d=0.0) = TunableTransmon(label, E_C, E_J, dim, fluxBias, d)
-
-function hamiltonian(tt::TunableTransmon)
+function hamiltonian(tt::TunableTransmon, t::Float64)
     myE_J = tt.E_J*scale_EJ(tt.fluxBias, tt.d)
-    return sqrt(8*tt.E_C*myE_J)*number(tt) - (1.0/12)*tt.E_C*(X(tt)^4)
+    return 2*pi*(sqrt(8*tt.E_C*myE_J)*number(tt) - (1.0/12)*tt.E_C*(X(tt)^4))
 end
+hamiltonian(tt::TunableTransmon) = hamiltonian(tt, 0.0)
 
 #Helper function to calculate effective EJ for a transmon
 scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2))
@@ -120,7 +123,6 @@ type QuadratureControl <: Control
     sequence_Q::Union(InterpGrid, Nothing)
 end
 QuadratureControl(label, freq, phase=0., timeStep=1/1.2, sequence_I=nothing, sequence_Q=nothing) = QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
-
 
 #Create the interpolated object
 function load_sequence!(qc::QuadratureControl, seqDict::Dict, n::Int)
@@ -178,7 +180,7 @@ end
 #Hack solution is to subtract off the non-interaction 
 function hamiltonian(ft::FluxTransmon, t::Float64)
     myE_J = ft.transmon.E_J*scale_EJ(ft.transmon.fluxBias + ft.strength*amplitude(ft.flux,t), ft.transmon.d)
-    return -hamiltonian(ft.transmon) + sqrt(8*t.E_C*myE_J)*number(ft.transmon) - (1.0/12)*ft.transmon.E_C*(X(ft.transmon)^4)
+    return -hamiltonian(ft.transmon) + 2*pi*(sqrt(8*t.E_C*myE_J)*number(ft.transmon) - (1.0/12)*ft.transmon.E_C*(X(ft.transmon)^4))
 end
 
 type CompositeQSystem
@@ -227,6 +229,8 @@ function find_subsystem_pos(c::CompositeQSystem, i::Interaction)
     #Field-system interactions are one-body terms
     if isa(i, SemiClassicalDipole)
         return find_subsystem_pos(c, i.system2)
+    elseif isa(i, FluxTransmon)
+        return find_subsystem_pos(c, i.transmon)
     else
         return [find_subsystem_pos(c, i.system1), find_subsystem_pos(c, i.system2)]
     end
@@ -242,6 +246,7 @@ function hamiltonian(c::CompositeQSystem, t::Float64)
 
     return Htot
 end
+hamiltonian(c::CompositeQSystem) = hamiltonian(c, 0.0)
 
 function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float64)
     #Fast system hamiltonian calculator with total Hamiltonian preallocated
