@@ -160,7 +160,7 @@ type FlipFlop <: Interaction
     strength::Float64
 end
 function hamiltonian(f::FlipFlop, t::Float64=0.0)
-    return f.strength*(kron(raising(f.system1), lowering(f.system2)) + kron(lowering(f.system1), raising(f.system2)))
+    return 2pi*f.strength*(kron(raising(f.system1), lowering(f.system2)) + kron(lowering(f.system1), raising(f.system2)))
 end
 
 type SemiClassicalDipole <: Interaction
