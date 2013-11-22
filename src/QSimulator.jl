@@ -63,13 +63,13 @@ type TunableTransmon <: QSystem
     label::String
     E_C::Float64
     E_J::Float64 #sum of junction E_J's
+    d::Float64 #asymmetry parameter
     dim::Int
-    fluxBias::Float64 #flux bias in units of Phi_0
-    d::Float64 
+    fluxBias::Float64 # flux bias in units of Phi_0
+    flux::Float64 #total flux in units of Phi_0
 end
-TunableTransmon(label, E_C, E_J, dim, fluxBias, d=0.0) = TunableTransmon(label, E_C, E_J, dim, fluxBias, d)
 function hamiltonian(tt::TunableTransmon, t::Float64)
-    myE_J = tt.E_J*scale_EJ(tt.fluxBias, tt.d)
+    myE_J = tt.E_J*scale_EJ(tt.flux, tt.d)
     return 2*pi*(sqrt(8*tt.E_C*myE_J)*number(tt) - (1.0/12)*tt.E_C*(X(tt)^4))
 end
 hamiltonian(tt::TunableTransmon) = hamiltonian(tt, 0.0)
@@ -151,6 +151,7 @@ end
 #TODO: allow for transfer function
 amplitude(f::Field, t::Float64) = amplitude(f.control, t)
 
+#Iteractions linearly add new Hamiltonians to the system
 abstract Interaction
 
 type FlipFlop <: Interaction
@@ -171,27 +172,29 @@ function hamiltonian(scd::SemiClassicalDipole, t::Float64)
     return scd.strength*amplitude(scd.system1, t)*X(scd.system2)
 end
 
+#Interactions which modify parameters of systems rather than linearly add new Hamiltonians
+abstract ParametricInteraction
+
 #Flux control 
-type FluxTransmon <: Interaction
+type FluxTransmon <: ParametricInteraction
     flux::Field
     transmon::TunableTransmon
     strength::Float64
 end
-#This is a bit tricky becuase of the non-linear dependence on flux
-#Hack solution is to subtract off the non-interaction 
-function hamiltonian(ft::FluxTransmon, t::Float64)
-    myE_J = ft.transmon.E_J*scale_EJ(ft.transmon.fluxBias + ft.strength*amplitude(ft.flux,t), ft.transmon.d)
-    return -hamiltonian(ft.transmon) + 2*pi*(sqrt(8*t.E_C*myE_J)*number(ft.transmon) - (1.0/12)*ft.transmon.E_C*(X(ft.transmon)^4))
+#Set the flux in the associated transmon
+function update_params(ft::FluxTransmon, t::Float64)
+    ft.transmon.flux = ft.transmon.fluxBias + ft.strength*amplitude(ft.flux,t)
 end
 
 type CompositeQSystem
     #An OrderedDict would be ideal here
     subSystems::Vector{QSystem}
     interactions::Vector{Interaction}
+    parametericInteractions::Vector{ParametricInteraction}
     subSystemExpansions::Vector{Vector{Vector{Int}}}
     interactionExpansions::Vector{Vector{Vector{Int}}}
 end
-CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[], Vector{Vector{Int}}[], Vector{Vector{Int}}[])
+CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[], ParametricInteraction[], Vector{Vector{Int}}[], Vector{Vector{Int}}[])
 
 function +(c::CompositeQSystem, q::QSystem)
     append!(c.subSystems, [q])
@@ -203,6 +206,10 @@ function +(c::CompositeQSystem, i::Interaction)
     append!(c.interactions, [i])
     update_expansion_indices!(c)
     return c
+end
+
+function +(c::CompositeQSystem, pi::ParametricInteraction)
+    append!(c.parametericInteractions, pi)
 end
 
 function update_expansion_indices!(c::CompositeQSystem)
@@ -254,6 +261,11 @@ function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float
     
     #Zero the Hamiltonian memory
     Ham[:] = zero(Complex128)
+
+    #Update the subsystems with the parameteric interactions
+    for pi in c.parametericInteractions 
+        update_params(pi)
+    end
 
     #Add together subsystem Hamiltonians
     for (ct, s) in enumerate(c.subSystems)
