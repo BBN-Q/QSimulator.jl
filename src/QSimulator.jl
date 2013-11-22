@@ -5,6 +5,7 @@ export Resonator,
         FFTransmon,
         Qubit,
         CompositeQSystem,
+        dim,
 
         MicrowaveControl,
         QuadratureControl,
@@ -375,17 +376,21 @@ function parallel_evolution_unitary(Hnat::Matrix{Complex128},
     return Uprop'
 end
 
-function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, endTime::Float64)
+function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64)
 
     #Preallocate Hamiltonian memory
     Ham = zeros(Complex128, (dim(sys), dim(sys)))
-    Uprop = @parallel (*) for ct = 1:fld(endTime, timeStep)
+    Uprop = @parallel (*) for time = startTime:timeStep:endTime
         #a *= b expands to a = a*b
-        hamiltonian_add!(Ham, sys, ct*timeStep)
+        hamiltonian_add!(Ham, sys, time)
         expm_eigen(Ham, 1im*timeStep)
     end
     return Uprop'
 end
+
+# function unitary_propagator(sys, timeStep)
+#     #Assume we start at 0.0
+
 
 function evolution_unitary(controlI, controlQ, calScale)
 
