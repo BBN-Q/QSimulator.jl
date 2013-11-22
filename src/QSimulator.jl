@@ -111,7 +111,7 @@ function load_sequence!(mc::MicrowaveControl, seqDict::Dict, n::Int)
 end
 function amplitude(mc::MicrowaveControl, t::Float64)
     #Scale time by the timestep before interpolating
-    return mc.sequence_I[t/qc.timeStep]*cos(2*pi*qc.freq*t + qc.phase)
+    return mc.sequence[t/qc.timeStep]*cos(2*pi*qc.freq*t + qc.phase)
 end
 
 #A pair of AWG channels driving an IQ mixer with a microwave source at a given frequency
@@ -209,7 +209,8 @@ function +(c::CompositeQSystem, i::Interaction)
 end
 
 function +(c::CompositeQSystem, pi::ParametricInteraction)
-    append!(c.parametericInteractions, pi)
+    append!(c.parametericInteractions, [pi])
+    return c
 end
 
 function update_expansion_indices!(c::CompositeQSystem)
@@ -264,7 +265,7 @@ function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float
 
     #Update the subsystems with the parameteric interactions
     for pi in c.parametericInteractions 
-        update_params(pi)
+        update_params(pi, t)
     end
 
     #Add together subsystem Hamiltonians
