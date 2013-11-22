@@ -1,24 +1,28 @@
 module QSimulator
 
 export Resonator,
-        TunableTransmon,
-        FFTransmon,
-        Qubit,
-        CompositeQSystem,
-        dim,
+       TunableTransmon,
+       FFTransmon,
+       Qubit,
+       CompositeQSystem,
+       dim,
+       label,
+       raising,
+       lowering,
+       number,
 
-        MicrowaveControl,
-        QuadratureControl,
-        load_sequence!,
+       MicrowaveControl,
+       QuadratureControl,
+       load_sequence!,
 
-        Field,
+       Field,
 
-        FlipFlop,
-        SemiClassicalDipole,
-        FluxTransmon,
+       FlipFlop,
+       SemiClassicalDipole,
+       FluxTransmon,
 
-        hamiltonian,
-        expand,
+       hamiltonian,
+       expand,
 
        unitary_propagator,
        evolution_unitary,
@@ -193,8 +197,9 @@ type CompositeQSystem
     parametericInteractions::Vector{ParametricInteraction}
     subSystemExpansions::Vector{Vector{Vector{Int}}}
     interactionExpansions::Vector{Vector{Vector{Int}}}
+    dissipators::Vector{Dissipation}
 end
-CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[], ParametricInteraction[], Vector{Vector{Int}}[], Vector{Vector{Int}}[])
+CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[], ParametricInteraction[], Vector{Vector{Int}}[], Vector{Vector{Int}}[], Dissipation[])
 
 function +(c::CompositeQSystem, q::QSystem)
     append!(c.subSystems, [q])
@@ -211,6 +216,10 @@ end
 function +(c::CompositeQSystem, pi::ParametricInteraction)
     append!(c.parametericInteractions, [pi])
     return c
+end
+
+function +(c::CompositeQSystem, d::Dissipation)
+    append!(c.dissipators, [d])
 end
 
 function update_expansion_indices!(c::CompositeQSystem)
