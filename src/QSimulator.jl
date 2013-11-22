@@ -111,7 +111,7 @@ function load_sequence!(mc::MicrowaveControl, seqDict::Dict, n::Int)
 end
 function amplitude(mc::MicrowaveControl, t::Float64)
     #Scale time by the timestep before interpolating
-    return mc.sequence[t/qc.timeStep]*cos(2*pi*qc.freq*t + qc.phase)
+    return mc.sequence[t/mc.timeStep]*cos(2*pi*mc.freq*t + mc.phase)
 end
 
 #A pair of AWG channels driving an IQ mixer with a microwave source at a given frequency
