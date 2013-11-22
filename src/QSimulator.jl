@@ -96,9 +96,9 @@ type MicrowaveControl <: Control
     freq::Float64
     phase::Float64
     timeStep::Float64
-    sequence::Union(InterpGrid, Nothing)
+    sequence::InterpGrid
 end
-MicrowaveControl(label, freq, phase=0., timeStep=1/1.2, sequence=nothing) = MicrowaveControl(label, freq, phase, timeStep, sequence)
+MicrowaveControl(label, freq, phase=0., timeStep=1/1.2, sequence=InterpGrid([0.0], BCnearest, InterpNearest)) = MicrowaveControl(label, freq, phase, timeStep, sequence)
 
 #Create the interpolated sequence object
 function load_sequence!(mc::MicrowaveControl, seqDict::Dict, n::Int)
@@ -120,10 +120,10 @@ type QuadratureControl <: Control
     freq::Float64
     phase::Float64
     timeStep::Float64
-    sequence_I::Union(InterpGrid, Nothing)
-    sequence_Q::Union(InterpGrid, Nothing)
+    sequence_I::InterpGrid
+    sequence_Q::InterpGrid
 end
-QuadratureControl(label, freq, phase=0., timeStep=1/1.2, sequence_I=nothing, sequence_Q=nothing) = QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
+QuadratureControl(label, freq, phase=0., timeStep=1/1.2, sequence_I=InterpGrid([0.0], BCnearest, InterpNearest), sequence_Q=InterpGrid([0.0], BCnearest, InterpNearest)) = QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
 
 #Create the interpolated object
 function load_sequence!(qc::QuadratureControl, seqDict::Dict, n::Int)
