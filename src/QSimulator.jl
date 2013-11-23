@@ -1,24 +1,24 @@
 module QSimulator
 
 export Resonator,
-        TunableTransmon,
-        FFTransmon,
-        Qubit,
-        CompositeQSystem,
-        dim,
+       TunableTransmon,
+       FFTransmon,
+       Qubit,
+       CompositeQSystem,
+       dim,
 
-        MicrowaveControl,
-        QuadratureControl,
-        load_sequence!,
+       MicrowaveControl,
+       QuadratureControl,
+       load_sequence!,
 
-        Field,
+       Field,
 
-        FlipFlop,
-        SemiClassicalDipole,
-        FluxTransmon,
+       FlipFlop,
+       SemiClassicalDipole,
+       FluxTransmon,
 
-        hamiltonian,
-        expand,
+       hamiltonian,
+       expand,
 
        unitary_propagator,
        evolution_unitary,
@@ -26,9 +26,7 @@ export Resonator,
        unitary_trajectory,
        run_sim
 
-using NumericExtensions
-using Grid
-using Debug
+using NumericExtensions, Grid
 
 abstract QSystem
 
