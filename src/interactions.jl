@@ -1,5 +1,5 @@
 export FlipFlop,
-       SemiClassicalDipole,
+       SemiClassicalDipole
 
 #Iteractions linearly add new Hamiltonians to the system
 type FlipFlop <: Interaction
