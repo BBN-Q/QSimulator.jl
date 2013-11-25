@@ -24,6 +24,7 @@ end
 
 function +(c::CompositeQSystem, d::Dissipation)
     append!(c.dissipators, [d])
+    return c
 end
 
 function update_expansion_indices!(c::CompositeQSystem)

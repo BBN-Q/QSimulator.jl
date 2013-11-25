@@ -1,7 +1,10 @@
-export FFTransmon,
+export ## Types
+       FFTransmon,
        Resonator,
        TunableTransmon,
-       Qubit
+       Qubit,
+       ## Methods
+       hamiltonian
 
 #Resonator 
 type Resonator <: QSystem
