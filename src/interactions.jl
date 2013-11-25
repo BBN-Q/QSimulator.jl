@@ -1,5 +1,9 @@
-export FlipFlop,
+export ## Types,
+       FlipFlop,
+       FluxTransmon,
        SemiClassicalDipole,
+       ## Methods
+       update_params
 
 #Iteractions linearly add new Hamiltonians to the system
 type FlipFlop <: Interaction
