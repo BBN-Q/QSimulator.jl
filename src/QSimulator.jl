@@ -6,10 +6,6 @@ export Resonator,
        Qubit,
        CompositeQSystem,
        dim,
-       label,
-       raising,
-       lowering,
-       number,
 
        MicrowaveControl,
        QuadratureControl,
@@ -30,9 +26,7 @@ export Resonator,
        unitary_trajectory,
        run_sim
 
-using NumericExtensions
-using Grid
-using Debug
+using NumericExtensions, Grid
 
 abstract QSystem
 
