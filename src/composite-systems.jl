@@ -59,7 +59,7 @@ function find_subsystem_pos(c::CompositeQSystem, i::Interaction)
     end
 end
 
-function hamiltonian(c::CompositeQSystem, t::Float64)
+function hamiltonian(c::CompositeQSystem, t::Float64=0.0)
 
     #Initialize Hamiltonian
     Htot = zeros(Complex128, dim(c), dim(c))
@@ -69,7 +69,6 @@ function hamiltonian(c::CompositeQSystem, t::Float64)
 
     return Htot
 end
-hamiltonian(c::CompositeQSystem) = hamiltonian(c, 0.0)
 
 function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float64)
     #Fast system hamiltonian calculator with total Hamiltonian preallocated
@@ -169,4 +168,62 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
     return Uprop'
 end
 
+# [todo] - need a liouvillian counterpart to hamiltonian_add!
+## due to how parallel multiplies matrices, we need the dual to the liouvillian generators
+# function dual_liouvillian_add!(Liou::Matrix{Complex128}, c::CompositeQSystem, t::Float64)
+#     #Fast toal system dual Liouvillian calculator with Liouvillian preallocated
 
+#     #Zero the Liouvillian memory
+#     Liou[:] = zero(Complex128)
+
+#     #Update the subsystems with the parameteric interactions
+#     for pi in c.parametericInteractions 
+#         update_params(pi, t)
+#     end
+
+#     #Add together subsystem Hamiltonian liouvillians
+#     for (ct, s) in enumerate(c.subSystems)
+#         expand_add!(Liou, (hamiltonian(s, t),), c.subSystemExpansions[ct])
+#     end
+
+#     #Add interactions
+#     for (ct, i) in enumerate(c.interactions)
+#         expand_add!(Liou, (hamiltonian(i,t),), c.interactionExpansions[ct])
+#     end
+
+#     #Add dissipators
+#     for (ct, d) in enumerate(c.dissipators)
+#         for g in generator(d,t)
+#             expand_add!(Liou, generator(d, t), c.dissipatorExpansions[ct])
+#         end
+#     end
+# end
+
+function lindbladian(c::CompositeQSystem, t::Real=0.)
+  local H, Gsop, id, d
+  H = QSimulator.hamiltonian(c, t)
+  d = size(H,1)
+  id = eye(d)
+
+  Gsop = QIP.hamiltonian(H)
+
+  for (ct, diss) in enumerate(c.dissipators)
+      for sop in generator(diss,t)
+          add!(Gsop, 
+               QIP.liou(expand(sop[1],c.dissipatorExpansions[ct],d),
+                        expand(sop[2],c.dissipatorExpansions[ct],d)))
+      end
+  end
+  return Gsop
+end
+
+# function liouville_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64)
+#     local lind, liouprop
+#     #Preallocate Liouvillian memory
+#     lind = zeros(Complex128, (dim(sys)^2, dim(sys)^2))
+#     liouprop = @parallel (*) for time = startTime:timeStep:endTime
+#         dual_liouvillian_add!(lind, sys, time)
+#         expm(lind, timeStep)
+#     end
+#     return lind'
+# end
