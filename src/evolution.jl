@@ -3,7 +3,6 @@ export ## Methods
 
 
 const liblapack = Base.liblapack_name
-
 import Base.LinAlg: BlasChar, BlasInt, blas_int
 
 function expm_eigen(A::Matrix, t)
@@ -125,16 +124,20 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
 
 end
 
-# function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64)
+function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64)
 
-#     #Preallocate Hamiltonian memory
-#     Ham = zeros(Complex128, (dim(sys), dim(sys)))
-#     Uprop = @parallel (*) for time = startTime:timeStep:endTime
-#         #a *= b expands to a = a*b
-#         hamiltonian_add!(Ham, sys, time)
-#         expm_eigen(Ham, 1im*timeStep)
-#     end
-#     return Uprop'
-# end
+    #Preallocate Hamiltonian memory
+    Ham = zeros(Complex128, (dim(sys), dim(sys)))
+
+    #Allocate workspace for the matrix exponential
+    (jobz, range, uplo, n, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, rwork, lrwork, iwork, liwork, info) = allocate_workspace(dim(sys))
+
+    Uprop = @parallel (*) for time = startTime:timeStep:endTime
+        #a *= b expands to a = a*b
+        hamiltonian_add!(Ham, sys, time)
+        expm_eigen!(Ham, 1im*timeStep, jobz, range, uplo, n, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, rwork, lrwork, iwork, liwork, info)
+    end
+    return Uprop'
+end
 
 
