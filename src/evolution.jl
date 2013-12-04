@@ -135,7 +135,7 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
     Uprop = @parallel (*) for time = startTime:timeStep:endTime
         #a *= b expands to a = a*b
         hamiltonian_add!(Ham, sys, time)
-        expm_eigen!(Ham, 1im*timeStep, jobz, range, uplo, n, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, rwork, lrwork, iwork, liwork, info)
+        expm_eigen!(Ham, 1im*2pi*timeStep, jobz, range, uplo, n, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, rwork, lrwork, iwork, liwork, info)
     end
     return Uprop'
 end
