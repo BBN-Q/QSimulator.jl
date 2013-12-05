@@ -11,7 +11,7 @@ type FlipFlop <: Interaction
     system2::QSystem
     strength::Float64
 end
-function hamiltonian(f::FlipFlop, t::Float64=0.0)
+function hamiltonian(f::FlipFlop)
     return f.strength*(kron(raising(f.system1), lowering(f.system2)) + kron(lowering(f.system1), raising(f.system2)))
 end
 
@@ -30,11 +30,14 @@ end
 #Flux control 
 type FluxTransmon <: ParametricInteraction
     flux::Field
-    transmon::TunableTransmon
+    transmon::String #refer to transmon by label in parent CompositeQSystem to avoid broken reference on copy
     strength::Float64
 end
+FluxTransmon(flux::Field, transmon::TunableTransmon, strength::Float64) = FluxTransmon(flux, label(transmon), strength)
+
 #Set the flux in the associated transmon
-function update_params(ft::FluxTransmon, t::Float64)
-    ft.transmon.flux = ft.transmon.fluxBias + ft.strength*amplitude(ft.flux,t)
+function update_params(sys::CompositeQSystem, ft::FluxTransmon, t::Float64)
+    myTransmon = sys[ft.transmon]
+    myTransmon.flux = myTransmon.fluxBias + ft.strength*amplitude(ft.flux,t)
 end
 

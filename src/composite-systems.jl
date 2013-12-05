@@ -5,6 +5,16 @@ export ## Types
 
 CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[], ParametricInteraction[], Vector{Vector{Int}}[], Vector{Vector{Int}}[], Dissipation[])
 
+function getindex(c::CompositeQSystem, key::String)
+    for s in c.subSystems
+        if label(s) == key
+            return s
+        end
+    end
+    throw(KeyError(key))
+end
+
+
 function +(c::CompositeQSystem, q::QSystem)
     append!(c.subSystems, [q])
     update_expansion_indices!(c)
@@ -78,17 +88,17 @@ function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float
 
     #Update the subsystems with the parameteric interactions
     for pi in c.parametericInteractions 
-        update_params(pi, t)
+        update_params(c, pi, t)
     end
 
     #Add together subsystem Hamiltonians
-    for (ct, s) in enumerate(c.subSystems)
-        expand_add!(Ham, hamiltonian(s, t), c.subSystemExpansions[ct])
+    for (subsys, expander) in zip(c.subSystems, c.subSystemExpansions)
+        expand_add!(Ham, hamiltonian(subsys, t), expander)
     end
 
     #Add interactions
-    for (ct, i) in enumerate(c.interactions)
-        expand_add!(Ham, hamiltonian(i,t), c.interactionExpansions[ct])
+    for (i, expander) in zip(c.interactions, c.interactionExpansions)
+        expand_add!(Ham, hamiltonian(i,t), expander)
     end
 end
 
