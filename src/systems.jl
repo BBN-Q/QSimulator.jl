@@ -10,7 +10,6 @@ type Resonator <: QSystem
     dim::Int
 end 
 hamiltonian(r::Resonator) = r.freq*number(r)
-hamiltonian(r::Resonator, t::Float64) = hamiltonian(r)
 
 #Duffing approximation to transmons
 
@@ -49,4 +48,3 @@ type Qubit <: QSystem
 end
 dim(q::Qubit) = 2
 hamiltonian(q::Qubit) = q.freq*number(q)
-hamiltonian(q::Qubit, t::Float64) = hamiltonian(q)
