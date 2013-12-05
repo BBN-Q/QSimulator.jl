@@ -32,6 +32,7 @@ type TunableTransmon <: QSystem
     fluxBias::Float64 # flux bias in units of Phi_0
     flux::Float64 #total flux in units of Phi_0
 end
+TunableTransmon(label::String, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) = TunableTransmon(label, E_C, E_J, d, dim, fluxBias, 0.0)
 
 #Helper function to calculate effective EJ for a transmon
 scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2))
