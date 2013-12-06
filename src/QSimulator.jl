@@ -17,4 +17,6 @@ include("composite-systems.jl")
 
 include("evolution.jl")
 
+include("spectra.jl")
+
 end
