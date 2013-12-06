@@ -1,6 +1,5 @@
 export ## Types
        ## Methods
-       +,
        unitary_propagator
 
 CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[], ParametricInteraction[], Vector{Vector{Int}}[], Vector{Vector{Int}}[], Dissipation[])
