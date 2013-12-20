@@ -17,9 +17,13 @@ type MicrowaveControl <: Control
     timeStep::Float64
     sequence::InterpGrid
 end
-MicrowaveControl(label, freq, phase=0., timeStep=1/1.2, sequence=InterpGrid([0.0], BCnearest, InterpNearest)) = MicrowaveControl(label, freq, phase, timeStep, sequence)
+MicrowaveControl(label, freq; phase=0., timeStep=1/1.2, sequence=InterpGrid([0.0], BCnearest, InterpNearest)) = MicrowaveControl(label, freq, phase, timeStep, sequence)
 
-#Create the interpolated sequence object
+# Methods to create the interpolated sequence object
+function load_sequence!{T}(mc::MicrowaveControl, sequence::Vector{T})
+    mc.sequence = InterpGrid(sequence, BCnearest, InterpNearest)
+end
+
 function load_sequence!(mc::MicrowaveControl, seqDict::Dict, n::Int)
     #For double balanced mixer need one AWG channel
     #Hack around off the expected BBNAPSx-xx style
@@ -42,7 +46,7 @@ type QuadratureControl <: Control
     sequence_I::InterpGrid
     sequence_Q::InterpGrid
 end
-QuadratureControl(label, freq, phase=0., timeStep=1/1.2, sequence_I=InterpGrid([0.0], BCnearest, InterpNearest), sequence_Q=InterpGrid([0.0], BCnearest, InterpNearest)) = QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
+QuadratureControl(label, freq; phase=0., timeStep=1/1.2, sequence_I=InterpGrid([0.0], BCnearest, InterpNearest), sequence_Q=InterpGrid([0.0], BCnearest, InterpNearest)) = QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
 
 #Create the interpolated object
 function load_sequence!(qc::QuadratureControl, seqDict::Dict, n::Int)
