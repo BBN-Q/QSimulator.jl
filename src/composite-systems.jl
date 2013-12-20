@@ -13,6 +13,7 @@ function getindex(c::CompositeQSystem, key::String)
     throw(KeyError(key))
 end
 
++(s1::QSystem, s2::QSystem) = (c = CompositeQSystem(); c += s1; c += s2; c)
 
 function +(c::CompositeQSystem, q::QSystem)
     append!(c.subSystems, [q])
@@ -123,7 +124,7 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     reversePerm = invperm(forwardPerm)
     #Handle the way tensor product indices work (last subsystem is fastest)
     reversePerm = reverse(l+1-reversePerm)
-    M = permutedims(M, tuple([reversePerm, reversePerm+l]...))
+    M = permutedims(M, [reversePerm, reversePerm+l])
 
     #Reshape back
     return reshape(M, prod(dims), prod(dims))
