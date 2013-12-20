@@ -14,6 +14,7 @@ function getindex(c::CompositeQSystem, key::String)
 end
 
 +(s1::QSystem, s2::QSystem) = (c = CompositeQSystem(); c += s1; c += s2; c)
++(s::QSystem, i::Interaction) = (c = CompositeQSystem(); c += s; c += i; c)
 
 function +(c::CompositeQSystem, q::QSystem)
     append!(c.subSystems, [q])
@@ -84,7 +85,7 @@ function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float
     #Fast system hamiltonian calculator with total Hamiltonian preallocated
     
     #Zero the Hamiltonian memory
-    Ham[:] = zero(Complex128)
+    Ham[:] = 0.0
 
     #Update the subsystems with the parameteric interactions
     for pi in c.parametericInteractions 
