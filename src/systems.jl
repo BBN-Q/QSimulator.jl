@@ -1,7 +1,8 @@
-export FFTransmon,
+export Transmon,
        Resonator,
        TunableTransmon,
-       Qubit
+       Qubit,
+       Duffing
 
 #Resonator 
 type Resonator <: QSystem
@@ -14,12 +15,20 @@ hamiltonian(r::Resonator) = r.freq*number(r)
 #Duffing approximation to transmons
 
 #Fixed frequency transmon 
-type FFTransmon <: QSystem
+type Transmon <: QSystem
     label::String
     E_C::Float64
     E_J::Float64
     dim::Int
-end 
+end
+
+function Transmon(label::String, nu::Float64, alpha::Float64; dim=3)
+    E_C = abs(alpha)
+    E_J = (nu + E_C)^2 / (8 * E_C)
+    return Transmon(label, E_C, E_J, dim)
+end
+
+hamiltonian(t::Transmon) = sqrt(8*t.E_J*t.E_C)*number(t) - t.E_C/12*(X(t)^4)
 
 #Tunable transmon 
 type TunableTransmon <: QSystem
@@ -48,3 +57,12 @@ type Qubit <: QSystem
 end
 dim(q::Qubit) = 2
 hamiltonian(q::Qubit) = q.freq*number(q)
+
+#Duffing oscillator
+type Duffing <: QSystem
+    label::String
+    freq::Float64
+    alpha::Float64
+    dim::Int
+end
+hamiltonian(s::Duffing) = (s.freq - 0.5*s.alpha)*number(s) + 0.5*s.alpha * number(s)^2
