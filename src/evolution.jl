@@ -124,7 +124,7 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
 
 end
 
-function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64)
+function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64; parallelize=true)
 
     #Preallocate Hamiltonian memory
     Ham = zeros(Complex128, (dim(sys), dim(sys)))
@@ -134,11 +134,21 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
 
     times = startTime:timeStep:(endTime-timeStep)
 
-    Uprop = @parallel (*) for time = times
-        #a *= b expands to a = a*b
-        hamiltonian_add!(Ham, sys, time)
-        # expm_eigen(Ham, 1im*2pi*timeStep)
-        expm_eigen!(Ham, 1im*2pi*timeStep, workspace...)
+    if parallelize
+        Uprop = @parallel (*) for time = times
+            #a *= b expands to a = a*b
+            hamiltonian_add!(Ham, sys, time)
+            # expm_eigen(Ham, 1im*2pi*timeStep)
+            expm_eigen!(Ham, 1im*2pi*timeStep, workspace...)
+        end
+    else
+        Uprop = eye(dim(sys))
+        for time = times
+            #a *= b expands to a = a*b
+            hamiltonian_add!(Ham, sys, time)
+            # expm_eigen(Ham, 1im*2pi*timeStep)
+            Uprop *= expm_eigen!(Ham, 1im*2pi*timeStep, workspace...)
+        end
     end
 
     if (endTime-times[end]) > timeStep
