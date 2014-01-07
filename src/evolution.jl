@@ -152,7 +152,8 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
     end
 
     if (endTime-times[end]) > timeStep
-        Uprop *= expm_eigen!(hamiltonian(sys,times[end]+timeStep), 1im*2pi*(endTime-times[end]-timeStep), workspace...)
+        hamiltonian_add!(Ham, sys, times[end]+timeStep)
+        Uprop *= expm_eigen!(Ham, 1im*2pi*(endTime-times[end]-timeStep), workspace...)
     end
 
     return Uprop'
