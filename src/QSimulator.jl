@@ -18,7 +18,6 @@ include("composite-systems.jl")
 
 include("dissipation.jl")
 
-# [todo] - Do away with the early evolution routines
 include("evolution.jl")
 
 end

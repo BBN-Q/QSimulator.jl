@@ -1,9 +1,20 @@
 export ## Types
        ## Methods
-       +,
        unitary_propagator
 
 CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[], ParametricInteraction[], Vector{Vector{Int}}[], Vector{Vector{Int}}[], Dissipation[])
+
+function getindex(c::CompositeQSystem, key::String)
+    for s in c.subSystems
+        if label(s) == key
+            return s
+        end
+    end
+    throw(KeyError(key))
+end
+
++(s1::QSystem, s2::QSystem) = (c = CompositeQSystem(); c += s1; c += s2; c)
++(s::QSystem, i::Interaction) = (c = CompositeQSystem(); c += s; c += i; c)
 
 function +(c::CompositeQSystem, q::QSystem)
     append!(c.subSystems, [q])
@@ -75,21 +86,21 @@ function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float
     #Fast system hamiltonian calculator with total Hamiltonian preallocated
     
     #Zero the Hamiltonian memory
-    Ham[:] = zero(Complex128)
+    Ham[:] = 0.0
 
     #Update the subsystems with the parameteric interactions
     for pi in c.parametericInteractions 
-        update_params(pi, t)
+        update_params(c, pi, t)
     end
 
     #Add together subsystem Hamiltonians
-    for (ct, s) in enumerate(c.subSystems)
-        expand_add!(Ham, hamiltonian(s, t), c.subSystemExpansions[ct])
+    for (subsys, expander) in zip(c.subSystems, c.subSystemExpansions)
+        expand_add!(Ham, hamiltonian(subsys, t), expander)
     end
 
     #Add interactions
-    for (ct, i) in enumerate(c.interactions)
-        expand_add!(Ham, hamiltonian(i,t), c.interactionExpansions[ct])
+    for (i, expander) in zip(c.interactions, c.interactionExpansions)
+        expand_add!(Ham, hamiltonian(i,t), expander)
     end
 end
 
@@ -115,7 +126,7 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     reversePerm = invperm(forwardPerm)
     #Handle the way tensor product indices work (last subsystem is fastest)
     reversePerm = reverse(l+1-reversePerm)
-    M = permutedims(M, tuple([reversePerm, reversePerm+l]...))
+    M = permutedims(M, [reversePerm, reversePerm+l])
 
     #Reshape back
     return reshape(M, prod(dims), prod(dims))
@@ -147,26 +158,3 @@ function expand_indices(actingOn::Vector, dims::Vector)
     M = expand(reshape(1:lenm, sm), actingOn, dims)
     return [find(M .== x) for x in 1:lenm]
 end
-
-
-function expm_eigen(A::Matrix, t)
-    #Calculates expm(t*A) via eigenvalue decomposition and assuming Hermitian matrix
-    F = eigfact(Hermitian(A))
-
-    # V * diagm(exp(t*D)) * V'
-    return scale(F[:vectors], exp(t*F[:values])) * F[:vectors]'
-end
-
-function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64)
-
-    #Preallocate Hamiltonian memory
-    Ham = zeros(Complex128, (dim(sys), dim(sys)))
-    Uprop = @parallel (*) for time = startTime:timeStep:endTime
-        #a *= b expands to a = a*b
-        hamiltonian_add!(Ham, sys, time)
-        expm_eigen(Ham, 1im*timeStep)
-    end
-    return Uprop'
-end
-
-

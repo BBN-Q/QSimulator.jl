@@ -23,12 +23,14 @@ raising(q::QSystem) = diagm(sqrt(1:(dim(q)-1)), -1)
 lowering(q::QSystem) = diagm(sqrt(1:(dim(q)-1)), 1)
 number(q::QSystem) = raising(q) * lowering(q)
 X(q::QSystem) = raising(q) + lowering(q)
+hamiltonian(q::QSystem, t) = hamiltonian(q)
 
 abstract Control
 label(c::Control) = c.label
 
 abstract Interaction
 strength(i::Interaction) = i.strength
+hamiltonian(i::Interaction, t) = hamiltonian(i)
 
 abstract ParametricInteraction <: Interaction
 
