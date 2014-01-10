@@ -3,6 +3,7 @@ export ## Types
        Control,
        Dissipation,
        Field,
+       IndexSet,
        Interaction,
        ParametricInteraction,
        QSystem,
@@ -36,14 +37,18 @@ abstract ParametricInteraction <: Interaction
 
 abstract Dissipation
 
+typealias IndexSet Vector{Int}
+
 # [todo] - Should COmpositeQSystem <: QSystem ? 
 type CompositeQSystem
     # [feature] - Use something like OrderedDict for component enumeration
     subSystems::Vector{QSystem}
     interactions::Vector{Interaction}
     parametericInteractions::Vector{ParametricInteraction}
-    subSystemExpansions::Vector{Vector{Vector{Int}}}
-    interactionExpansions::Vector{Vector{Vector{Int}}}
+    subSystemExpansions::Vector{Vector{IndexSet}}
+    interactionExpansions::Vector{Vector{IndexSet}}
+    #dissipatorExpansions::Vector{Vector{(Vector{Int},Vector{Int},Vector{Int})}}
+    dissipatorExpansions::Vector{(Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})}
     dissipators::Vector{Dissipation}
 end
 

@@ -8,10 +8,12 @@ export ## Types
 label(d::Dissipation) = d.label
 rate(d::Dissipation) = d.rate
 
+# NOTE: Only single body dissipators are currently supported
+
 type Cooling <: Dissipation
   label::String
   rate::Real
-  sys::QSystem
+  system::QSystem
 end
 
 function generator(d::Cooling, t::Real)

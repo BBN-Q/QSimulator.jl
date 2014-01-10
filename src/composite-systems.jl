@@ -2,7 +2,13 @@ export ## Types
        ## Methods
        unitary_propagator
 
-CompositeQSystem() = CompositeQSystem(QSystem[], Interaction[], ParametricInteraction[], Vector{Vector{Int}}[], Vector{Vector{Int}}[], Dissipation[])
+CompositeQSystem() = CompositeQSystem(QSystem[], 
+                                      Interaction[], 
+                                      ParametricInteraction[], 
+                                      Vector{IndexSet}[], 
+                                      Vector{IndexSet}[], 
+                                      (Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})[],
+                                      Dissipation[])
 
 function getindex(c::CompositeQSystem, key::String)
     for s in c.subSystems
@@ -35,18 +41,31 @@ end
 
 function +(c::CompositeQSystem, d::Dissipation)
     append!(c.dissipators, [d])
+    update_expansion_indices!(c)
     return c
 end
 
 function update_expansion_indices!(c::CompositeQSystem)
-    c.subSystemExpansions = [Vector{Int}[] for _ = 1:length(c.subSystems)]
+    c.subSystemExpansions = [IndexSet[] for _ = 1:length(c.subSystems)]
     for (ct, sys) in enumerate(c.subSystems)
         c.subSystemExpansions[ct] = expand_indices([ct], dims(c))
     end
 
-    c.interactionExpansions = [Vector{Int}[] for _ = 1:length(c.interactions)]
+    c.interactionExpansions = [IndexSet[] for _ = 1:length(c.interactions)]
     for (ct, i) in enumerate(c.interactions)
         c.interactionExpansions[ct] = expand_indices(find_subsystem_pos(c, i), dims(c))
+    end
+
+    c.dissipatorExpansions = [(IndexSet[], IndexSet[], IndexSet[]) for _ = 1:length(c.dissipators)]
+    subsystems = length(c.subSystems)
+    for (ct, d) in enumerate(c.dissipators)
+        subsys = find_subsystem_pos(c, d) 
+        # for efficiency, we need expansion for an operator acting on the left,
+        # another for one acting on the right, and one for operators acting on both sides
+        ddims = [dims(c), dims(c)]
+        c.dissipatorExpansions[ct]= (expand_indices( [subsys+subsystems], ddims),
+                                     expand_indices( [subsys], ddims),
+                                     expand_indices( [subsys, subsys+subsystems], ddims))
     end
 end
 
@@ -70,6 +89,11 @@ function find_subsystem_pos(c::CompositeQSystem, i::Interaction)
     end
 end
 
+function find_subsystem_pos(c::CompositeQSystem, d::Dissipation)
+    @assert d in c.dissipators "Oops! Dissipator not found in composite system."
+    findin(c.subSystems, [d.system])
+end
+
 function hamiltonian(c::CompositeQSystem, t::Float64=0.0)
 
     #Initialize Hamiltonian
@@ -80,6 +104,16 @@ function hamiltonian(c::CompositeQSystem, t::Float64=0.0)
 
     return Htot
 end
+
+#function dissipator(c::CompositeQSystem, t::Float64=0.0)
+#    #Initialize liouvillian
+#    Ltot = zeros(Complex128, dim(c)², dim(c)²)
+#
+#    #Add in all the terms    
+#    liouvillian_add!(Ltot, c, t)
+#
+#    return Ltot  
+#end
 
 function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float64)
     #Fast system hamiltonian calculator with total Hamiltonian preallocated
@@ -102,6 +136,31 @@ function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float
         expand_add!(Ham, hamiltonian(i,t), expander)
     end
 end
+
+#function liouvillian_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t::Float64)
+#    #Fast system superoperator calculator with liouvillian preallocated
+#    
+#    # get total Hamiltonian
+#    Htot = hamiltonian(c, t)
+#
+#    #Zero the preallocated operator
+#    liouv[:] = 0.0
+#
+#    #Update the subsystems with the parameteric interactions
+#    for pi in c.parametericInteractions 
+#        update_params(c, pi, t)
+#    end
+#
+#    #Add together subsystem operators
+#    for (subsys, expander) in zip(c.subSystems, c.subSystemExpansions)
+#        expand_add!(liouv, hamiltonian(subsys, t), expander)
+#    end
+#
+#    #Add interactions
+#    for (i, expander) in zip(c.interactions, c.interactionExpansions)
+#        expand_add!(liouv, hamiltonian(i,t), expander)
+#    end
+#end
 
 function expand(m::Matrix, actingOn::Vector, dims::Vector)
     #Expand an operator onto a larger Hilbert space
@@ -155,7 +214,7 @@ function expand_indices(actingOn::Vector, dims::Vector)
     sm = (actingOnDim, actingOnDim)
     lenm = actingOnDim^2;
     M = expand(reshape(1:lenm, sm), actingOn, dims)
-    return [find(M .== x) for x in 1:lenm]
+    return IndexSet[find(M .== x) for x in 1:lenm]
 end
 
 function expm_eigen(A::Matrix, t)
@@ -209,23 +268,23 @@ end
 #     end
 # end
 
-function lindbladian(c::CompositeQSystem, t::Real=0.)
-  local H, Gsop, id, d
-  H = QSimulator.hamiltonian(c, t)
-  d = size(H,1)
-  id = eye(d)
-
-  Gsop = QIP.hamiltonian(H)
-
-  for (ct, diss) in enumerate(c.dissipators)
-      for sop in generator(diss,t)
-          add!(Gsop, 
-               QIP.liou(expand(sop[1],c.dissipatorExpansions[ct],d),
-                        expand(sop[2],c.dissipatorExpansions[ct],d)))
-      end
-  end
-  return Gsop
-end
+#function lindbladian(c::CompositeQSystem, t::Real=0.)
+#  local H, Gsop, id, d
+#  H = QSimulator.hamiltonian(c, t)
+#  d = size(H,1)
+#  id = eye(d)
+#
+#  Gsop = QIP.hamiltonian(H)
+#
+#  for (ct, diss) in enumerate(c.dissipators)
+#      for sop in generator(diss,t)
+#          add!(Gsop, 
+#               QIP.liou(expand(sop[1],c.dissipatorExpansions[ct],d),
+#                        expand(sop[2],c.dissipatorExpansions[ct],d)))
+#      end
+#  end
+#  return Gsop
+#end
 
 # function liouville_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64)
 #     local lind, liouprop
