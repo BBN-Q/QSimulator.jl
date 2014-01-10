@@ -1,7 +1,3 @@
-#using QIP
-
-#import QIP.hamiltonian
-
 export ## Types
        Cooling,
        ## Methods
@@ -28,24 +24,4 @@ function generator(d::Cooling, t::Real)
   return [(sqrt(r)*a,sqrt(r)*a'),
           (-1/2*r*n,id),
           (id,-1/2*r*n)]
-end
-
-function generator(c::CompositeQSystem, t::Real=0.)
-  local H, Gsop, id, d
-  H = QSimulator.hamiltonian(c, t)
-  d = size(H,1)
-  id = eye(d)
-
-  #Gsop = QIP.liou(-1im*H,id)
-  #add!(Gsop, QIP.liou(id,1im*H))
-  Gsop = QIP.hamiltonian(H)
-
-  for (ct, diss) in enumerate(c.dissipators)
-      for sop in generator(diss,t)
-          add!(Gsop, 
-               QIP.liou(expand(sop[1],c.subSystemExpansions[ct],d),
-                        expand(sop[2],c.subSystemExpansions[ct],d)))
-      end
-  end
-  return Gsop
 end
