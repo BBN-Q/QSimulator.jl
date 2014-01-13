@@ -1,6 +1,6 @@
 export ## Methods
-       unitary_propagator
-
+       unitary_propagator,
+       liouvillian_propagator
 
 const liblapack = Base.liblapack_name
 import Base.LinAlg: BlasChar, BlasInt, blas_int
@@ -124,6 +124,7 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
 
 end
 
+
 function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64; parallelize=true)
 
     #Preallocate Hamiltonian memory
@@ -133,6 +134,11 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
     workspace = allocate_workspace(dim(sys))
 
     times = startTime:timeStep:(endTime-timeStep)
+    #times = startTime:timeStep:endTime
+
+    #if isapprox(endTime,times[end])
+    #    times = times[1:(end-1)]
+    #end
 
     if parallelize
         Uprop = @parallel (*) for time = times
@@ -159,4 +165,31 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
     return Uprop'
 end
 
+function liouvillian_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64; parallelize=true)
+
+    #Preallocate memory
+    liouv = zeros(Complex128, (dim(sys)^2, dim(sys)^2))
+
+    times = startTime:timeStep:(endTime-timeStep)
+
+    if parallelize
+        Lprop = @parallel (*) for time = times
+            liouvillian_add!(liouv, sys, time)
+            expm(2pi*timeStep*liouv)
+        end
+    else
+        Lprop = eye(dim(sys))
+        for time = times
+            liouvillian_add!(liouv, sys, time)
+            Lprop *= expm(2pi*timeStep*liouv)
+        end
+    end
+
+    if (endTime-times[end]) > timeStep
+        liouvillian_add!(liouv, sys, times[end]+timeStep)
+        Lprop *= expm(2pi*(endTime-times[end]-timeStep)*liouvillian)
+    end
+
+    return Lprop'
+end
 

@@ -47,9 +47,6 @@ type CompositeQSystem
     parametericInteractions::Vector{ParametricInteraction}
     subSystemExpansions::Vector{(Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})}
     interactionExpansions::Vector{(Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})}
-    #subSystemExpansions::Vector{Vector{IndexSet}}
-    #interactionExpansions::Vector{Vector{IndexSet}}
-    #dissipatorExpansions::Vector{Vector{(Vector{Int},Vector{Int},Vector{Int})}}
     dissipatorExpansions::Vector{(Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})}
     dissipators::Vector{Dissipation}
 end
