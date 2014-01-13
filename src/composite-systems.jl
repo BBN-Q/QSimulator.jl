@@ -5,8 +5,10 @@ export ## Types
 CompositeQSystem() = CompositeQSystem(QSystem[], 
                                       Interaction[], 
                                       ParametricInteraction[], 
-                                      Vector{IndexSet}[], 
-                                      Vector{IndexSet}[], 
+                                      #Vector{IndexSet}[], 
+                                      #Vector{IndexSet}[], 
+                                      (Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})[],
+                                      (Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})[],
                                       (Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})[],
                                       Dissipation[])
 
@@ -46,26 +48,32 @@ function +(c::CompositeQSystem, d::Dissipation)
 end
 
 function update_expansion_indices!(c::CompositeQSystem)
-    c.subSystemExpansions = [IndexSet[] for _ = 1:length(c.subSystems)]
+    ddims = [dims(c), dims(c)]
+    subsystems = length(c.subSystems)
+
+    c.subSystemExpansions = [(IndexSet[],IndexSet[],IndexSet[]) for _ = 1:length(c.subSystems)]
     for (ct, sys) in enumerate(c.subSystems)
-        c.subSystemExpansions[ct] = expand_indices([ct], dims(c))
+        c.subSystemExpansions[ct] = (expand_indices([ct], dims(c)),            # operator
+                                     expand_indices([ct], ddims),              # superoperator right
+                                     expand_indices([ct+subsystems], ddims))   # superoperator left
     end
 
-    c.interactionExpansions = [IndexSet[] for _ = 1:length(c.interactions)]
+    c.interactionExpansions = [(IndexSet[],IndexSet[],IndexSet[]) for _ = 1:length(c.interactions)]
     for (ct, i) in enumerate(c.interactions)
-        c.interactionExpansions[ct] = expand_indices(find_subsystem_pos(c, i), dims(c))
+        pos_list = find_subsystem_pos(c,i)
+        c.interactionExpansions[ct] = (expand_indices(pos_list, dims(c)), # operator
+                                       expand_indices(pos_list, ddims),   # superoperator right
+                                       expand_indices([map(x->x+subsystems,pos_list)], ddims)) #superoperator left
     end
 
     c.dissipatorExpansions = [(IndexSet[], IndexSet[], IndexSet[]) for _ = 1:length(c.dissipators)]
-    subsystems = length(c.subSystems)
     for (ct, d) in enumerate(c.dissipators)
         subsys = find_subsystem_pos(c, d) 
         # for efficiency, we need expansion for an operator acting on the left,
         # another for one acting on the right, and one for operators acting on both sides
-        ddims = [dims(c), dims(c)]
-        c.dissipatorExpansions[ct]= (expand_indices( [subsys+subsystems], ddims),
-                                     expand_indices( [subsys], ddims),
-                                     expand_indices( [subsys, subsys+subsystems], ddims))
+        c.dissipatorExpansions[ct]= (expand_indices( [subsys+subsystems], ddims),  # left
+                                     expand_indices( [subsys], ddims),             # right
+                                     expand_indices( [subsys, subsys+subsystems], ddims)) # bilateral
     end
 end
 
@@ -122,39 +130,45 @@ function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float
 
     #Add together subsystem Hamiltonians
     for (subsys, expander) in zip(c.subSystems, c.subSystemExpansions)
-        expand_add!(Ham, hamiltonian(subsys, t), expander)
+        expand_add!(Ham, hamiltonian(subsys, t), expander[1])
     end
 
     #Add interactions
     for (i, expander) in zip(c.interactions, c.interactionExpansions)
-        expand_add!(Ham, hamiltonian(i,t), expander)
+        expand_add!(Ham, hamiltonian(i,t), expander[1])
     end
 end
 
-#function liouvillian_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t::Float64)
-#    #Fast system superoperator calculator with liouvillian preallocated
-#    
-#    # get total Hamiltonian
-#    Htot = hamiltonian(c, t)
-#
-#    #Zero the preallocated operator
-#    liouv[:] = 0.0
-#
-#    #Update the subsystems with the parameteric interactions
-#    for pi in c.parametericInteractions 
-#        update_params(c, pi, t)
-#    end
-#
-#    #Add together subsystem operators
-#    for (subsys, expander) in zip(c.subSystems, c.subSystemExpansions)
-#        expand_add!(liouv, hamiltonian(subsys, t), expander)
-#    end
-#
-#    #Add interactions
-#    for (i, expander) in zip(c.interactions, c.interactionExpansions)
-#        expand_add!(liouv, hamiltonian(i,t), expander)
-#    end
-#end
+function liouvillian_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t::Float64 )
+    #Fast system superoperator calculator with liouvillian preallocated
+    
+    #Zero the preallocated operators
+    liouv[:] = 0.0
+
+    #Update the subsystems with the parameteric interactions
+    for pi in c.parametericInteractions 
+        update_params(c, pi, t)
+    end
+
+    #Add together subsystem Hamiltonians
+    for (subsys, expander) in zip(c.subSystems, c.subSystemExpansions)
+        expand_add!(liouv, conj(hamiltonian(subsys, t)), expander[2], mult=-1im) # superoperator right
+        expand_add!(liouv,      hamiltonian(subsys, t),  expander[3], mult= 1im) # superoperator left
+    end
+
+    #Add interactions
+    for (i, expander) in zip(c.interactions, c.interactionExpansions)
+        expand_add!(liouv, conj(hamiltonian(subsys, t)), expander[2], mult=-1im) # superoperator right
+        expand_add!(liouv,      hamiltonian(subsys, t),  expander[3], mult= 1im) # superoperator left
+    end
+
+    # Add the Liouvillian for the dissipators
+    for (i, expander) in zip(c.dissipators, c.dissipatorExpansions)
+        expand_add!(liouv, liouvillian_left(i,t),  expander[1]) # left
+        expand_add!(liouv, liouvillian_right(i,t), expander[2]) # right
+        expand_add!(liouv, liouvillian_bilat(i,t), expander[3]) # bilateral
+    end
+end
 
 function expand(m::Matrix, actingOn::Vector, dims::Vector)
     #Expand an operator onto a larger Hilbert space
@@ -192,12 +206,12 @@ function expand(m::Matrix, indices::Vector, sizeM::Int )
     return M
 end
 
-function expand_add!(M::Matrix, m::Matrix, indices::Vector )
+function expand_add!(M::Matrix, m::Matrix, indices::Vector; mult=1.0 )
     #Add to certain indices of M with terms from m according to expansion indices.
     for ct=1:length(indices)
         # M[indices[ct]] += m[ct]
         for idx = indices[ct]
-            M[idx] += m[ct]
+            M[idx] += mult*m[ct]
         end
     end
 end
