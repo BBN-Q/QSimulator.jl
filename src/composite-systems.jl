@@ -96,24 +96,18 @@ end
 
 function hamiltonian(c::CompositeQSystem, t::Float64=0.0)
 
-    #Initialize Hamiltonian
-    Htot = zeros(Complex128, dim(c), dim(c))
-
-    #Add in all the terms    
-    hamiltonian_add!(Htot, c, t)
-
-    return Htot
+    if length(c.subSystems) != 0
+        #Initialize Hamiltonian
+        Htot = zeros(Complex128, dim(c), dim(c))
+        
+        #Add in all the terms    
+        hamiltonian_add!(Htot, c, t)
+        
+        return Htot
+    else
+        error("No systems added to composite system yet.")
+    end
 end
-
-#function dissipator(c::CompositeQSystem, t::Float64=0.0)
-#    #Initialize liouvillian
-#    Ltot = zeros(Complex128, dim(c)², dim(c)²)
-#
-#    #Add in all the terms    
-#    liouvillian_add!(Ltot, c, t)
-#
-#    return Ltot  
-#end
 
 function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float64)
     #Fast system hamiltonian calculator with total Hamiltonian preallocated
