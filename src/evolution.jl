@@ -165,6 +165,39 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
     return Uprop'
 end
 
+function pade_expm(A::AbstractMatrix; order=10)
+    lg_norm = log2(norm(A,Inf));
+    e = ceil(lg_norm)
+    f = lg_norm - e
+    s = max(0,e+1)
+
+    A = A/2^s
+    
+    X = A
+    c = 1/2
+    E = speye(size(A,1)) + c*A
+    D = speye(size(A,1)) - c*A
+    order = 10
+    p = true
+    for k = 2:order
+        c = c * (order-k+1) / (k*(2*order-k+1))
+        X = A*X
+        cX = c*X
+        E = E+cX
+        if p
+            D = D + cX
+        else
+            D = D - cX
+        end
+        p = !p
+    end
+    E = D\E
+    for k=1:s
+        E = E*E
+    end
+    E
+end
+
 function liouvillian_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64; parallelize=true)
 
     #Preallocate memory
