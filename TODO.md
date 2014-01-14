@@ -1,7 +1,7 @@
 # Dissipation
 
-- [ ] Support for sparse matrices
-- [ ] Implement more efficient Liouvillian propagator with Padé approximation
+- [X] Support for sparse matrices
+- [X] Implement more efficient Liouvillian evolution with action of matrix exponential on a state, instead of explicit matrix exponentiation.
 
 # General
 
