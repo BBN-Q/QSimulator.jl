@@ -59,11 +59,11 @@ function test_4()
   L = zeros(Complex128, 4, 4)
 
   system += q1
-  QSimulator.liouvillian_add!(L, system, 0.0)
+  QSimulator.liouvillian_dual_add!(L, system, 0.0)
   @test_approx_eq norm(L-QIP.hamiltonian(sz)',2) 0.0
 
   system += Cooling("T1", 0.1, q1)
-  QSimulator.liouvillian_add!(L, system, 0.0)
+  QSimulator.liouvillian_dual_add!(L, system, 0.0)
   @test_approx_eq norm(L-(QIP.hamiltonian(sz)+.1*QIP.dissipator(sm))',2) 0.0
 end
 
@@ -75,14 +75,33 @@ function test_5()
 
   system = CompositeQSystem()
 
-  L = zeros(Complex128, 4, 4)
+  system += q1
+
+  system += Cooling("T1", 1.0, q1)
+
+  Lp = liouvillian_propagator(system,1000.,0.,1000.)
+
+  @test_approx_eq_eps norm(Lp-[1 0 0 1; 0 0 0 0; 0 0 0 0; 0 0 0 0], 2) 0.0 1e-12
+end
+
+function test_6()
+  sz = [0 0; 0 1];
+  sm = [0 1; 0 0];
+
+  q1 = Qubit("q1", 0.0)
+
+  system = CompositeQSystem()
 
   system += q1
 
   system += Cooling("T1", 1.0, q1)
-  QSimulator.liouvillian_add!(L, system, 0.0)
 
-  @test_approx_eq_eps norm(liouvillian_propagator(system, 1000., 0., 1000.)-[1 0 0 1; 0 0 0 0; 0 0 0 0; 0 0 0 0], 2) 0.0 1e-12
+  state = [0. 0.; 0. 1.]
+  state = state[:]
+
+  state = liouvillian_evolution(state,system,1000.,0.,1000.)
+
+  @test_approx_eq_eps norm(state - [1,0,0,0], 2) 0.0 1e-12
 end
 
 test_1()
@@ -90,3 +109,4 @@ test_2()
 test_3()
 test_4()
 test_5()
+test_6()

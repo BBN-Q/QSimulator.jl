@@ -137,7 +137,7 @@ function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float
     end
 end
 
-function liouvillian_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t::Float64 )
+function liouvillian_dual_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t::Float64 )
     #Fast system superoperator calculator with liouvillian preallocated
     
     #Zero the preallocated operators
@@ -153,7 +153,7 @@ function liouvillian_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t::Flo
         expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult=-1im) # superoperator right
         expand_add!(liouv,           hamiltonian(subsys, t),  expander[3], mult= 1im) # superoperator left
     end
-
+    
     #Add interactions
     for (i, expander) in zip(c.interactions, c.interactionExpansions)
         expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult=-1im) # superoperator right
@@ -165,6 +165,45 @@ function liouvillian_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t::Flo
         expand_add!(liouv, liouvillian_left(i,t),  expander[1]) # left
         expand_add!(liouv, liouvillian_right(i,t), expander[2]) # right
         expand_add!(liouv, liouvillian_bilat(i,t), expander[3]) # bilateral
+    end
+end
+
+function liouvillian_add!(liouv::AbstractMatrix, c::CompositeQSystem, t::Float64 )
+    #Fast system superoperator calculator with liouvillian preallocated
+    
+    #Zero the preallocated operators. 
+    if issparse(liouv)
+        # TODO: is it safe to assume that we will not make liouv denser and denser?
+        rows,cols,_ = findnz(liouv)
+        for i = 1:length(rows)
+            liouv[rows(i),cols(i)] = 0.0
+        end
+    else
+        liouv[:] = 0.0
+    end
+        
+    #Update the subsystems with the parameteric interactions
+    for pi in c.parametericInteractions 
+        update_params(c, pi, t)
+    end
+
+    #Add together subsystem Hamiltonians
+    for (subsys, expander) in zip(c.subSystems, c.subSystemExpansions)
+        expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult= 1im) # superoperator right
+        expand_add!(liouv,           hamiltonian(subsys, t),  expander[3], mult=-1im) # superoperator left
+    end
+    
+    #Add interactions
+    for (i, expander) in zip(c.interactions, c.interactionExpansions)
+        expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult= 1im) # superoperator right
+        expand_add!(liouv,           hamiltonian(subsys, t),  expander[3], mult=-1im) # superoperator left
+    end
+
+    # Add the Liouvillian for the dissipators
+    for (i, expander) in zip(c.dissipators, c.dissipatorExpansions)
+        expand_add!(liouv, liouvillian_left(i,t),  expander[1]) # left
+        expand_add!(liouv, liouvillian_right(i,t), expander[2]) # right
+        expand_add!(liouv, liouvillian_bilat(i,t)', expander[3]) # bilateral
     end
 end
 
@@ -204,7 +243,7 @@ function expand(m::Matrix, indices::Vector, sizeM::Int )
     return M
 end
 
-function expand_add!(M::Matrix, m::Matrix, indices::Vector; mult=1.0 )
+function expand_add!(M::AbstractMatrix, m::AbstractMatrix, indices::Vector; mult=1.0 )
     #Add to certain indices of M with terms from m according to expansion indices.
     for ct=1:length(indices)
         # M[indices[ct]] += m[ct]

@@ -1,9 +1,12 @@
 export ## Methods
        unitary_propagator,
-       liouvillian_propagator
+       liouvillian_propagator,
+       liouvillian_evolution
 
 const liblapack = Base.liblapack_name
 import Base.LinAlg: BlasChar, BlasInt, blas_int
+
+using ExpmV
 
 function expm_eigen(A::Matrix, t)
     #Calculates exp(t*A) via eigenvalue decomposition and assuming Hermitian matrix
@@ -125,7 +128,11 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
 end
 
 
-function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64; parallelize=true)
+function unitary_propagator(sys::CompositeQSystem, 
+                            timeStep::Float64, 
+                            startTime::Float64, 
+                            endTime::Float64; 
+                            parallelize=true)
 
     #Preallocate Hamiltonian memory
     Ham = zeros(Complex128, (dim(sys), dim(sys)))
@@ -165,64 +172,60 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
     return Uprop'
 end
 
-function pade_expm(A::AbstractMatrix; order=10)
-    lg_norm = log2(norm(A,Inf));
-    e = ceil(lg_norm)
-    f = lg_norm - e
-    s = max(0,e+1)
-
-    A = A/2^s
-    
-    X = A
-    c = 1/2
-    E = speye(size(A,1)) + c*A
-    D = speye(size(A,1)) - c*A
-    order = 10
-    p = true
-    for k = 2:order
-        c = c * (order-k+1) / (k*(2*order-k+1))
-        X = A*X
-        cX = c*X
-        E = E+cX
-        if p
-            D = D + cX
-        else
-            D = D - cX
-        end
-        p = !p
-    end
-    E = D\E
-    for k=1:s
-        E = E*E
-    end
-    E
-end
-
-function liouvillian_propagator(sys::CompositeQSystem, timeStep::Float64, startTime::Float64, endTime::Float64; parallelize=true)
+function liouvillian_propagator(sys::CompositeQSystem, 
+                                timeStep::Float64, 
+                                startTime::Float64, 
+                                endTime::Float64; 
+                                parallelize=true)
 
     #Preallocate memory
-    liouv = zeros(Complex128, (dim(sys)^2, dim(sys)^2))
+    liouv = zeros(Complex128, dim(sys)^2, dim(sys)^2)
 
     times = startTime:timeStep:(endTime-timeStep)
 
     if parallelize
         Lprop = @parallel (*) for time = times
-            liouvillian_add!(liouv, sys, time)
+            liouvillian_dual_add!(liouv, sys, time)
             expm(2pi*timeStep*liouv)
         end
     else
         Lprop = eye(dim(sys))
         for time = times
-            liouvillian_add!(liouv, sys, time)
+            liouvillian_dual_add!(liouv, sys, time)
             Lprop *= expm(2pi*timeStep*liouv)
         end
     end
 
     if (endTime-times[end]) > timeStep
-        liouvillian_add!(liouv, sys, times[end]+timeStep)
-        Lprop *= expm(2pi*(endTime-times[end]-timeStep)*liouvillian)
+        liouvillian_dual_add!(liouv, sys, times[end]+timeStep)
+        Lprop *= expm(2pi*(endTime-times[end]-timeStep)*liouv)
     end
 
     return Lprop'
+end
+
+function liouvillian_evolution(state::Vector,
+                               sys::CompositeQSystem, 
+                               timeStep::Float64, 
+                               startTime::Float64, 
+                               endTime::Float64)
+
+    #Preallocate memory
+    liouv = spzeros(Complex128, dim(sys)^2, dim(sys)^2)
+
+    times = startTime:timeStep:(endTime-timeStep)
+
+    Lprop = speye(dim(sys))
+    for time = times
+        liouvillian_add!(liouv, sys, time)
+        state[:],_,_,_,_,_ = expmv(2pi*timeStep,liouv,state[:])
+    end
+
+    if (endTime-times[end]) > timeStep
+        liouvillian_add!(liouv, sys, times[end]+timeStep)
+        state[:],_,_,_,_,_ = expmv(2pi*(endTime-times[end]-timeStep),liouv,state[:])
+    end
+
+    return state
 end
 
