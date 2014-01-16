@@ -176,7 +176,7 @@ function liouvillian_add!(liouv::AbstractMatrix, c::CompositeQSystem, t::Float64
         # TODO: is it safe to assume that we will not make liouv denser and denser?
         rows,cols,_ = findnz(liouv)
         for i = 1:length(rows)
-            liouv[rows(i),cols(i)] = 0.0
+            liouv[rows[i],cols[i]] = 0.0
         end
     else
         liouv[:] = 0.0
@@ -194,13 +194,13 @@ function liouvillian_add!(liouv::AbstractMatrix, c::CompositeQSystem, t::Float64
     end
     
     #Add interactions
-    for (i, expander) in zip(c.interactions, c.interactionExpansions)
+    for (subsys, expander) in zip(c.interactions, c.interactionExpansions)
         expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult= 1im) # superoperator right
         expand_add!(liouv,           hamiltonian(subsys, t),  expander[3], mult=-1im) # superoperator left
     end
 
     # Add the Liouvillian for the dissipators
-    for (i, expander) in zip(c.dissipators, c.dissipatorExpansions)
+    for (subsys, expander) in zip(c.dissipators, c.dissipatorExpansions)
         expand_add!(liouv, liouvillian_left(i,t),  expander[1]) # left
         expand_add!(liouv, liouvillian_right(i,t), expander[2]) # right
         expand_add!(liouv, liouvillian_bilat(i,t)', expander[3]) # bilateral
