@@ -132,8 +132,8 @@ function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float
     end
 
     #Add interactions
-    for (i, expander) in zip(c.interactions, c.interactionExpansions)
-        expand_add!(Ham, hamiltonian(i,t), expander[1])
+    for (subsys, expander) in zip(c.interactions, c.interactionExpansions)
+        expand_add!(Ham, hamiltonian(subsys,t), expander[1])
     end
 end
 
@@ -155,16 +155,16 @@ function liouvillian_dual_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t
     end
     
     #Add interactions
-    for (i, expander) in zip(c.interactions, c.interactionExpansions)
+    for (subsys, expander) in zip(c.interactions, c.interactionExpansions)
         expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult=-1im) # superoperator right
         expand_add!(liouv,           hamiltonian(subsys, t),  expander[3], mult= 1im) # superoperator left
     end
 
     # Add the Liouvillian for the dissipators
-    for (i, expander) in zip(c.dissipators, c.dissipatorExpansions)
-        expand_add!(liouv, liouvillian_left(i,t),  expander[1]) # left
-        expand_add!(liouv, liouvillian_right(i,t), expander[2]) # right
-        expand_add!(liouv, liouvillian_bilat(i,t), expander[3]) # bilateral
+    for (subsys, expander) in zip(c.dissipators, c.dissipatorExpansions)
+        expand_add!(liouv, liouvillian_left(subsys,t),  expander[1]) # left
+        expand_add!(liouv, liouvillian_right(subsys,t), expander[2]) # right
+        expand_add!(liouv, liouvillian_bilat(subsys,t), expander[3]) # bilateral
     end
 end
 
@@ -201,9 +201,9 @@ function liouvillian_add!(liouv::AbstractMatrix, c::CompositeQSystem, t::Float64
 
     # Add the Liouvillian for the dissipators
     for (subsys, expander) in zip(c.dissipators, c.dissipatorExpansions)
-        expand_add!(liouv, liouvillian_left(i,t),  expander[1]) # left
-        expand_add!(liouv, liouvillian_right(i,t), expander[2]) # right
-        expand_add!(liouv, liouvillian_bilat(i,t)', expander[3]) # bilateral
+        expand_add!(liouv, liouvillian_left(subsys,t),  expander[1]) # left
+        expand_add!(liouv, liouvillian_right(subsys,t), expander[2]) # right
+        expand_add!(liouv, liouvillian_bilat(subsys,t)', expander[3]) # bilateral
     end
 end
 
