@@ -1,4 +1,5 @@
 export ## Types,
+       Dipole,
        FlipFlop,
        FluxTransmon,
        SemiClassicalDipole,
@@ -6,6 +7,17 @@ export ## Types,
        update_params
 
 #Iteractions linearly add new Hamiltonians to the system
+
+type Dipole <: Interaction
+    system1::QSystem
+    system2::QSystem
+    strength::Float64
+end
+
+function hamiltonian(f::Dipole)
+    return f.strength*kron(X(f.system1), X(f.system2))
+end
+
 type FlipFlop <: Interaction
     system1::QSystem
     system2::QSystem
