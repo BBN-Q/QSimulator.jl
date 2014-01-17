@@ -1,5 +1,6 @@
 export Transmon,
        Resonator,
+       TunableDuffingTransmon,
        TunableTransmon,
        Qubit,
        Duffing
@@ -48,6 +49,28 @@ scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2)
 function hamiltonian(tt::TunableTransmon, t::Float64=0.0)
     myE_J = tt.E_J*scale_EJ(tt.flux, tt.d)
     return (sqrt(8*tt.E_C*myE_J)*number(tt) - (1.0/12)*tt.E_C*(X(tt)^4))
+end
+
+#Tunable transmon 
+type TunableDuffingTransmon <: QSystem
+    label::String
+    E_C::Float64
+    E_J::Float64 #sum of junction E_J's
+    d::Float64 #asymmetry parameter
+    dim::Int
+    fluxBias::Float64 # flux bias in units of Phi_0
+    flux::Float64 #total flux in units of Phi_0
+end
+TunableDuffingTransmon(label::String, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) = TunableDuffingTransmon(label, E_C, E_J, d, dim, fluxBias, fluxBias)
+
+#Helper function to calculate effective EJ for a transmon
+scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2))
+
+function hamiltonian(tt::TunableDuffingTransmon, t::Float64=0.0)
+    myE_J = tt.E_J*scale_EJ(tt.flux, tt.d)
+    omega_p = sqrt(8*tt.E_C*myE_J)
+    omega = [(omega_p-tt.E_C/2)*i-tt.E_C/2*i^2 for i in 0:(tt.dim-1)]
+    return diagm(omega)
 end
 
 #Basic two-level qubit
