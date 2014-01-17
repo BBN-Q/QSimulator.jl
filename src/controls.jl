@@ -62,7 +62,7 @@ end
 function amplitude(qc::QuadratureControl, t::Float64)
     #Create the complex I/Q pair
     #Scale time by the timestep
-    phasor = qc.sequence_I[t/qc.timeStep] + 1im*qc.sequence_Q[t/qc.timeStep]
+    phasor = qc.sequence_I[t/qc.timeStep] - 1im*qc.sequence_Q[t/qc.timeStep]
     return abs(phasor)*cos(2*pi*qc.freq*t + qc.phase + angle(phasor))
 end
 
