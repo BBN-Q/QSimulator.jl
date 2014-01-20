@@ -1,5 +1,6 @@
 export ## Methods
        unitary_propagator,
+       unitary_evolution,
        liouvillian_propagator,
        liouvillian_evolution
 
@@ -141,11 +142,10 @@ function unitary_propagator(sys::CompositeQSystem,
     workspace = allocate_workspace(dim(sys))
 
     times = startTime:timeStep:(endTime-timeStep)
-    #times = startTime:timeStep:endTime
 
-    #if isapprox(endTime,times[end])
-    #    times = times[1:(end-1)]
-    #end
+    if length(times) < 1
+        error("Time step is too small")
+    end
 
     if parallelize
         Uprop = @parallel (*) for time = times
@@ -172,6 +172,37 @@ function unitary_propagator(sys::CompositeQSystem,
     return Uprop'
 end
 
+function unitary_evolution{T<:Number}(state::Vector{T},
+                                      sys::CompositeQSystem, 
+                                      timeStep::Float64, 
+                                      startTime::Float64, 
+                                      endTime::Float64)
+
+    state_cp = copy(state)
+
+    #Preallocate Hamiltonian memory
+    Ham = spzeros(Complex128, dim(sys), dim(sys))
+
+    times = startTime:timeStep:(endTime-timeStep)
+
+    if length(times) < 1
+        error("Time step is too small")
+    end
+
+    Uprop = eye(dim(sys))
+    for time = times
+        hamiltonian_add!(Ham, sys, time)
+        state_cp,_,_,_,_,_ = expmv(-1im*2pi*timeStep,Ham,state_cp)
+    end
+    
+    if (endTime-times[end]) > timeStep
+        hamiltonian_add!(Ham, sys, times[end]+timeStep)
+        state_cp,_,_,_,_,_ = expmv(-1im*2pi*(endTime-times[end]-timeStep),Ham,state_cp)
+    end
+
+    return state_cp
+end
+
 function liouvillian_propagator(sys::CompositeQSystem, 
                                 timeStep::Float64, 
                                 startTime::Float64, 
@@ -182,6 +213,10 @@ function liouvillian_propagator(sys::CompositeQSystem,
     liouv = zeros(Complex128, dim(sys)^2, dim(sys)^2)
 
     times = startTime:timeStep:(endTime-timeStep)
+
+    if length(times) < 1
+        error("Time step is too small")
+    end
 
     if parallelize
         Lprop = @parallel (*) for time = times

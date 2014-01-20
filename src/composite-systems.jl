@@ -115,11 +115,19 @@ function hamiltonian(c::CompositeQSystem, t::Float64=0.0)
     end
 end
 
-function hamiltonian_add!(Ham::Matrix{Complex128}, c::CompositeQSystem, t::Float64)
+function hamiltonian_add!{T<:Number}(Ham::AbstractMatrix{T}, c::CompositeQSystem, t::Float64)
     #Fast system hamiltonian calculator with total Hamiltonian preallocated
     
     #Zero the Hamiltonian memory
-    Ham[:] = 0.0
+    if issparse(Ham)
+        # TODO: check: is it safe to assume that we will not make liouv denser and denser?
+        rows,cols,_ = findnz(Ham)
+        for i = 1:length(rows)
+            Ham[rows[i],cols[i]] = 0.0
+        end
+    else
+        Ham[:] = 0.0
+    end
 
     #Update the subsystems with the parameteric interactions
     for pi in c.parametericInteractions 
@@ -168,12 +176,12 @@ function liouvillian_dual_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t
     end
 end
 
-function liouvillian_add!(liouv::AbstractMatrix, c::CompositeQSystem, t::Float64 )
+function liouvillian_add!{T<:Number}(liouv::AbstractMatrix{T}, c::CompositeQSystem, t::Float64 )
     #Fast system superoperator calculator with liouvillian preallocated
     
     #Zero the preallocated operators. 
     if issparse(liouv)
-        # TODO: is it safe to assume that we will not make liouv denser and denser?
+        # TODO: check: is it safe to assume that we will not make liouv denser and denser?
         rows,cols,_ = findnz(liouv)
         for i = 1:length(rows)
             liouv[rows[i],cols[i]] = 0.0
@@ -243,7 +251,7 @@ function expand(m::Matrix, indices::Vector, sizeM::Int )
     return M
 end
 
-function expand_add!(M::AbstractMatrix, m::AbstractMatrix, indices::Vector; mult=1.0 )
+function expand_add!{T<:Number,U<:Number}(M::AbstractMatrix{T}, m::AbstractMatrix{U}, indices::Vector; mult=1.0 )
     #Add to certain indices of M with terms from m according to expansion indices.
     for ct=1:length(indices)
         # M[indices[ct]] += m[ct]
