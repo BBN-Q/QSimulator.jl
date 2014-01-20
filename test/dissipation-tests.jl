@@ -79,7 +79,7 @@ function test_5()
 
   system += Cooling("T1", 1.0, q1)
 
-  Lp = liouvillian_propagator(system,1000.,0.,1000.)
+  Lp = liouvillian_propagator(system,100.,0.,1000.)
 
   @test_approx_eq_eps norm(Lp-[1 0 0 1; 0 0 0 0; 0 0 0 0; 0 0 0 0], 2) 0.0 1e-12
 end
@@ -97,12 +97,35 @@ function test_6()
   system += Cooling("T1", 1.0, q1)
 
   state = [0. 0.; 0. 1.]
-  state = state[:]
 
-  state = liouvillian_evolution(state,system,1000.,0.,1000.)
+  ev_state = liouvillian_evolution(state,system,100.,0.,1000.)
 
-  @test_approx_eq_eps norm(state - [1,0,0,0], 2) 0.0 1e-12
+  @test_approx_eq_eps norm(ev_state - [1 0; 0 0], 1) 0.0 1e-12
 end
+
+function test_7()
+  sz = [0 0; 0 1];
+  sm = [0 1; 0 0];
+
+  q1 = Qubit("q1", 0.0)
+
+  system = CompositeQSystem()
+
+  system += q1
+
+  system += Cooling("T1", 1.0/2pi, q1)
+
+  state = [0. 0.; 0. 1.]
+
+  for i=1:10
+      t = 1.0 + 10*abs(randn())
+      ev_state = liouvillian_evolution(state,system,.01,0.,t)
+      ans = diagm([1-exp(-t),exp(-t)])
+
+      @test_approx_eq_eps norm(ev_state - ans, 1) 0.0 1e-12
+  end
+end
+
 
 test_1()
 test_2()
@@ -110,3 +133,4 @@ test_3()
 test_4()
 test_5()
 test_6()
+test_7()
