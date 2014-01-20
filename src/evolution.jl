@@ -239,28 +239,34 @@ function liouvillian_propagator(sys::CompositeQSystem,
     return Lprop'
 end
 
-function liouvillian_evolution(state::Vector,
-                               sys::CompositeQSystem, 
-                               timeStep::Float64, 
-                               startTime::Float64, 
-                               endTime::Float64)
+function liouvillian_evolution{T<:Number}(state::Matrix{T},
+                                          sys::CompositeQSystem, 
+                                          timeStep::Float64, 
+                                          startTime::Float64, 
+                                          endTime::Float64)
+
+    state_cp = copy(state[:])
 
     #Preallocate memory
     liouv = spzeros(Complex128, dim(sys)^2, dim(sys)^2)
 
     times = startTime:timeStep:(endTime-timeStep)
 
+    if length(times) < 1
+        error("Time step is too small")
+    end
+
     Lprop = speye(dim(sys))
     for time = times
         liouvillian_add!(liouv, sys, time)
-        state[:],_,_,_,_,_ = expmv(2pi*timeStep,liouv,state[:])
+        state_cp,_,_,_,_,_ = expmv(2pi*timeStep,liouv,state_cp)
     end
 
     if (endTime-times[end]) > timeStep
         liouvillian_add!(liouv, sys, times[end]+timeStep)
-        state[:],_,_,_,_,_ = expmv(2pi*(endTime-times[end]-timeStep),liouv,state[:])
+        state_cp,_,_,_,_,_ = expmv(2pi*(endTime-times[end]-timeStep),liouv,state_cp)
     end
 
-    return state
+    return reshape(state_cp,size(state,1),size(state,2))
 end
 
