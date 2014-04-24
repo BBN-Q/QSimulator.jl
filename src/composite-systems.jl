@@ -114,7 +114,7 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     #Create the large matrix by tensoring on identity
     l = length(dims)
     eyeIndices = filter(x->!(x in actingOn), 1:l)
-    M = kron(m, eye(eltype(m), prod(dims[eyeIndices])))  
+    M = isempty(eyeIndices) ? m : kron(m, eye(eltype(m), prod(dims[eyeIndices])))
 
     #Reshape into multi-dimensional array given by subsystem dimensions
     #Since we have a matrix we repeat for rows then columns
