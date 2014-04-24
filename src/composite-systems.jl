@@ -124,8 +124,8 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     forwardPerm = [actingOn, eyeIndices]
     reversePerm = invperm(forwardPerm)
     #Handle the way tensor product indices work (last subsystem is fastest)
-    reversePerm = reverse(l+1-reversePerm)
-    M = permutedims(M, [reversePerm, reversePerm+l])
+    reversePerm = reverse((l+1) .- reversePerm)
+    M = permutedims(M, [reversePerm, reversePerm .+ l])
 
     #Reshape back
     return reshape(M, prod(dims), prod(dims))
