@@ -26,7 +26,8 @@ end
 
 function pauli_mats(n::Int, dim=2)
 	#Multi-qubit Pauli operators for n qubits
-	n <= 1 && return base_paulis(dim)
+	@assert n > 0 "You need at least 1 qubit!"
+	n == 1 && return base_paulis(dim)
 	map(x->kron(x...), product(base_paulis(dim), pauli_mats(n-1, dim)))
 end
 
