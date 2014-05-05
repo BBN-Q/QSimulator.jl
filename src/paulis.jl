@@ -17,24 +17,22 @@ const pI = eye(Complex128, 2)
 
 function pauli_mats(n::Int)
 	#Multi-qubit Pauli operators for n qubits
-	n == 0 && return 1.0
-	map(x->kron(x...), product({pI, pX, pY, pZ}, pauli_mats(n-1)))
+	@assert n > 0 "You need at least 1 qubit!"
+	n == 1 && return {pI, pX, pY, pZ}
+	map(x->kron(x...), product(pauli_mats(1), pauli_mats(n-1)))
+end
+
+function base_paulis(dim::Int)
+	#Pauli projectors onto the bottom 2 levels of an dim-level system
+	map({pI, pX, pY, pZ}) do p
+		fullPauli = zeros(Complex128, dim, dim)
+		fullPauli[1:2, 1:2] = p
+		fullPauli
+	end
 end
 
 function pauli_mats(dims::Array{Int,1})
 	#Multi-qubit pauli operators for n multi-level systems
-
-	function base_paulis(dim::Int)
-		#Pauli projectors onto the bottom 2 levels of an dim-level system
-		basePaulis = Array{Complex128, 2}[]
-		for p in {pI, pX, pY, pZ}
-			fullPauli = zeros(Complex128, dim, dim)
-			fullPauli[1:2, 1:2] = p
-			push!(basePaulis, fullPauli)
-		end
-		basePaulis
-	end
-
 	paulis = base_paulis(dims[end])
 	for sysct in length(dims)-1:-1:1
 		paulis = map(x->kron(x...), product(base_paulis(dims[sysct]), paulis))
