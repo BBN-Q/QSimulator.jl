@@ -1,4 +1,4 @@
-The JuliaSimulator.jl package is licensed under the Apache License v2.0:
+The QSimulator.jl package is licensed under the Apache License v2.0:
 > 
 > Apache License
 > Version 2.0, January 2004

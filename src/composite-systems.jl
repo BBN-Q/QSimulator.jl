@@ -226,7 +226,7 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     #Create the large matrix by tensoring on identity
     l = length(dims)
     eyeIndices = filter(x->!(x in actingOn), 1:l)
-    M = kron(m, eye(eltype(m), prod(dims[eyeIndices])))  
+    M = isempty(eyeIndices) ? m : kron(m, eye(eltype(m), prod(dims[eyeIndices])))
 
     #Reshape into multi-dimensional array given by subsystem dimensions
     #Since we have a matrix we repeat for rows then columns
@@ -236,8 +236,8 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     forwardPerm = [actingOn, eyeIndices]
     reversePerm = invperm(forwardPerm)
     #Handle the way tensor product indices work (last subsystem is fastest)
-    reversePerm = reverse(l+1-reversePerm)
-    M = permutedims(M, [reversePerm, reversePerm+l])
+    reversePerm = reverse((l+1) .- reversePerm)
+    M = permutedims(M, [reversePerm, reversePerm .+ l])
 
     #Reshape back
     return reshape(M, prod(dims), prod(dims))
