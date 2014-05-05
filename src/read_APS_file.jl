@@ -1,6 +1,6 @@
 using HDF5
 
-function read_APS_file(filename)
+function read_APS_file(filename, startIdx=0)
 
 	#APS bit masks
 	START_MINILL_MASK = 2^15
@@ -81,5 +81,15 @@ function read_APS_file(filename)
 			end
 		end
 	end
+
+	#Strip-off the starting zero points
+	if startIdx > 0
+		for seqs in values(AWGData)
+			for seq in seqs
+				deleteat!(seq, 1:startIdx)
+			end
+		end
+	end
+
 	return AWGData
 end
