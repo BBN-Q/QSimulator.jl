@@ -45,7 +45,7 @@ function test_3()
 
   system = CompositeQSystem()
 
-  @test_throws hamiltonian(system,0.0)
+  @test_throws ErrorException hamiltonian(system,0.0)
 end
 
 function test_4()
