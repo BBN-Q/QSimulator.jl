@@ -6,20 +6,19 @@ Some code from https://github.com/blakejohnson/Qlab.jl
 =#
 
 export ## Methods
-		pauli_mats
-		pauli_strs
+		pauli_mats,
+		pauli_strs,
 		pauli_decomp
 
-
-const X = complex128([[0.0 1.0;1.0 0.0]]) 
-const Y = complex128([[0.0 -1.0im;1.0im 0.0]]) 
-const Z = complex128([[1.0 0.0;0.0 -1.0]]) 
-const Id = eye(Complex128, 2) 
+const pX = complex128([[0.0 1.0;1.0 0.0]]) 
+const pY = complex128([[0.0 -1.0im;1.0im 0.0]]) 
+const pZ = complex128([[1.0 0.0;0.0 -1.0]]) 
+const pI = eye(Complex128, 2) 
 
 function pauli_mats(n::Int)
 	#Multi-qubit Pauli operators for n qubits
 	n == 0 && return 1.0
-	map(x->kron(x...), product({Id, X, Y, Z}, pauli_mats(n-1)))
+	map(x->kron(x...), product({pI, pX, pY, pZ}, pauli_mats(n-1)))
 end
 
 function pauli_mats(dims::Array{Int,1})
@@ -28,7 +27,7 @@ function pauli_mats(dims::Array{Int,1})
 	function base_paulis(dim::Int)
 		#Pauli projectors onto the bottom 2 levels of an dim-level system
 		basePaulis = Array{Complex128, 2}[]
-		for p in {Id, X, Y, Z}
+		for p in {pI, pX, pY, pZ}
 			fullPauli = zeros(Complex128, dim, dim)
 			fullPauli[1:2, 1:2] = p
 			push!(basePaulis, fullPauli)
