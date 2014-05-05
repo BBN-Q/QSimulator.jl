@@ -53,7 +53,7 @@ function update_expansion_indices!(c::CompositeQSystem)
     for (ct, sys) in enumerate(c.subSystems)
         c.subSystemExpansions[ct] = (expand_indices([ct], dims(c)),            # operator
                                      expand_indices([ct], ddims),              # superoperator right
-                                     expand_indices([ct+subsystems], ddims))   # superoperator left
+                                     expand_indices([ct.+subsystems], ddims))   # superoperator left
     end
 
     c.interactionExpansions = [(IndexSet[],IndexSet[],IndexSet[]) for _ = 1:length(c.interactions)]
@@ -61,7 +61,7 @@ function update_expansion_indices!(c::CompositeQSystem)
         pos_list = find_subsystem_pos(c,i)
         c.interactionExpansions[ct] = (expand_indices(pos_list, dims(c)), # operator
                                        expand_indices(pos_list, ddims),   # superoperator right
-                                       expand_indices([map(x->x+subsystems,pos_list)], ddims)) #superoperator left
+                                       expand_indices([map(x->x.+subsystems,pos_list)], ddims)) #superoperator left
     end
 
     c.dissipatorExpansions = [(IndexSet[], IndexSet[], IndexSet[]) for _ = 1:length(c.dissipators)]
@@ -69,9 +69,9 @@ function update_expansion_indices!(c::CompositeQSystem)
         subsys = find_subsystem_pos(c, d) 
         # for efficiency, we need expansion for an operator acting on the left,
         # another for one acting on the right, and one for operators acting on both sides
-        c.dissipatorExpansions[ct]= (expand_indices( [subsys+subsystems], ddims),  # left
+        c.dissipatorExpansions[ct]= (expand_indices( [subsys.+subsystems], ddims),  # left
                                      expand_indices( [subsys], ddims),             # right
-                                     expand_indices( [subsys, subsys+subsystems], ddims)) # bilateral
+                                     expand_indices( [subsys, subsys.+subsystems], ddims)) # bilateral
     end
 end
 
