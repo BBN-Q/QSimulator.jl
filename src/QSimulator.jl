@@ -1,7 +1,8 @@
 module QSimulator
 
 using Grid,
-      NumericExtensions
+      NumericExtensions,
+      Iterators
 
 include("base-types.jl")
 
@@ -16,5 +17,9 @@ include("composite-systems.jl")
 #include("dissipation.jl")
 
 include("evolution.jl")
+
+include("read_APS_file.jl")
+
+include("paulis.jl")
 
 end
