@@ -10,14 +10,14 @@ export ## Methods
 		pauli_strs,
 		pauli_decomp
 
-const pX = complex128([[0.0 1.0;1.0 0.0]]) 
-const pY = complex128([[0.0 -1.0im;1.0im 0.0]]) 
-const pZ = complex128([[1.0 0.0;0.0 -1.0]]) 
-const pI = eye(Complex128, 2) 
+const pX = Complex128[0.0 1.0;1.0 0.0]
+const pY = Complex128[0.0 -1.0im;1.0im 0.0]
+const pZ = Complex128[1.0 0.0;0.0 -1.0]
+const pI = eye(Complex128, 2)
 
 function base_paulis(dim::Int)
 	#Pauli projectors onto the bottom 2 levels of a dim-level system
-	map({pI, pX, pY, pZ}) do p
+	map(Any[pI, pX, pY, pZ]) do p
 		fullPauli = zeros(Complex128, dim, dim)
 		fullPauli[1:2, 1:2] = p
 		fullPauli
