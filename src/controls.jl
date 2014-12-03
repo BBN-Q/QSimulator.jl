@@ -73,3 +73,4 @@ end
 #Pull in amplitude from controls
 #[todo] - allow for transfer function
 amplitude(f::Field, t::Float64) = amplitude(f.control, t)
+frequency(f::Field) = f.control.freq

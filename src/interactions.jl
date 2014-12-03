@@ -3,6 +3,7 @@ export ## Types,
        FlipFlop,
        FluxTransmon,
        SemiClassicalDipole,
+       RotatingSemiClassicalDipole,
        ## Methods
        update_params
 
@@ -34,6 +35,15 @@ type SemiClassicalDipole <: Interaction
 end
 function hamiltonian(scd::SemiClassicalDipole, t::Float64)
     return scd.strength*amplitude(scd.system1, t)*X(scd.system2)
+end
+
+type RotatingSemiClassicalDipole <: Interaction
+    system1::Field
+    system2::QSystem
+    strength::Float64
+end
+function hamiltonian(scd::RotatingSemiClassicalDipole, t::Float64)
+    return scd.strength * amplitude(scd.system1, t) * (cos(2pi*frequency(scd.system1)*t)*X(scd.system2) + sin(2pi*frequency(scd.system1)*t)*Y(scd.system2))
 end
 
 # ParametricInteractions are interactions which modify 
