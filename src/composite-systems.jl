@@ -58,16 +58,10 @@ function find_subsystem_pos(c::CompositeQSystem, s::QSystem)
     findin(c.subSystems, [s])
 end
 
-function find_subsystem_pos(c::CompositeQSystem, i::Interaction)
-    #Field-system interactions are one-body terms
-    if isa(i, SemiClassicalDipole)
-        return find_subsystem_pos(c, i.system2)
-    elseif isa(i, FluxTransmon)
-        return find_subsystem_pos(c, i.transmon)
-    else
-        return [find_subsystem_pos(c, i.system1), find_subsystem_pos(c, i.system2)]
-    end
-end
+find_subsystem_pos(c::CompositeQSystem, i::Interaction) = [find_subsystem_pos(c, i.system1), find_subsystem_pos(c, i.system2)]
+find_subsystem_pos(c::CompositeQSystem, i::FluxTransmon) = find_subsystem_pos(c, i.transmon)
+find_subsystem_pos(c::CompositeQSystem, i::SemiClassicalDipole) = find_subsystem_pos(c, i.system2)
+find_subsystem_pos(c::CompositeQSystem, i::RotatingSemiClassicalDipole) = find_subsystem_pos(c, i.system2)
 
 function hamiltonian(c::CompositeQSystem, t::Float64)
 
