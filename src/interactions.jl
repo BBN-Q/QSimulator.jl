@@ -38,12 +38,17 @@ function hamiltonian(scd::SemiClassicalDipole, t::Float64)
 end
 
 type RotatingSemiClassicalDipole <: Interaction
-    system1::Field
+    field::Field
     system2::QSystem
     strength::Float64
 end
 function hamiltonian(scd::RotatingSemiClassicalDipole, t::Float64)
-    return scd.strength * amplitude(scd.system1, t) * (cos(2pi*frequency(scd.system1)*t)*X(scd.system2) + sin(2pi*frequency(scd.system1)*t)*Y(scd.system2))
+    saved_phase = scd.field.control.phase
+    H = 0.5 * scd.strength * amplitude(scd.field, t) * X(scd.system2)
+    scd.field.control.phase += pi/2
+    H += 0.5 * scd.strength * amplitude(scd.field, t) * Y(scd.system2)
+    scd.field.control.phase = saved_phase
+    return H
 end
 
 # ParametricInteractions are interactions which modify 
