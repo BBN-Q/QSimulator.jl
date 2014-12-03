@@ -71,7 +71,7 @@ function allocate_workspace(dim::Int)
     liwork = blas_int(-1)
     info  = Array(BlasInt, 1)
 
-    ccall(("zheevr_", liblapack), Void,
+    ccall((Base.blasfunc(:zheevr_), liblapack), Void,
                     (Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasInt},
                      Ptr{Complex128}, Ptr{BlasInt}, Ptr{Float64}, Ptr{Float64},
                      Ptr{BlasInt}, Ptr{BlasInt}, Ptr{Complex128}, Ptr{BlasInt},
@@ -105,7 +105,7 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
     #This version requires preallocated workspace memory and destroys the input matrix A
 
     #Directly call the LAPACK function 
-    ccall(("zheevr_", liblapack), Void,
+    ccall((Base.blasfunc(:zheevr_), liblapack), Void,
                     (Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasInt},
                      Ptr{Complex128}, Ptr{BlasInt}, Ptr{Float64}, Ptr{Float64},
                      Ptr{BlasInt}, Ptr{BlasInt}, Ptr{Complex128}, Ptr{BlasInt},
@@ -146,13 +146,14 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
         for time = times
             #a *= b expands to a = a*b
             hamiltonian_add!(Ham, sys, time)
-            # expm_eigen(Ham, 1im*2pi*timeStep)
+            # Uprop *= expm_eigen(Ham, 1im*2pi*timeStep)
             Uprop *= expm_eigen!(Ham, 1im*2pi*timeStep, workspace...)
         end
     end
 
     if (endTime-times[end]) > timeStep
         hamiltonian_add!(Ham, sys, times[end]+timeStep)
+        # Uprop *= expm_eigen(Ham, 1im*2pi*(endTime-times[end]-timeStep))
         Uprop *= expm_eigen!(Ham, 1im*2pi*(endTime-times[end]-timeStep), workspace...)
     end
 
