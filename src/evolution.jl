@@ -71,7 +71,7 @@ function allocate_workspace(dim::Int)
     liwork = blas_int(-1)
     info  = Array(BlasInt, 1)
 
-    ccall((Base.blasfunc(:zheevr_), liblapack), Void,
+    ccall((:zheevr_64_, liblapack), Void,
                     (Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasInt},
                      Ptr{Complex128}, Ptr{BlasInt}, Ptr{Float64}, Ptr{Float64},
                      Ptr{BlasInt}, Ptr{BlasInt}, Ptr{Complex128}, Ptr{BlasInt},
@@ -105,7 +105,7 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
     #This version requires preallocated workspace memory and destroys the input matrix A
 
     #Directly call the LAPACK function 
-    ccall((Base.blasfunc(:zheevr_), liblapack), Void,
+    ccall((:zheevr_64_, liblapack), Void,
                     (Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasInt},
                      Ptr{Complex128}, Ptr{BlasInt}, Ptr{Float64}, Ptr{Float64},
                      Ptr{BlasInt}, Ptr{BlasInt}, Ptr{Complex128}, Ptr{BlasInt},
