@@ -1,44 +1,41 @@
+using QSimulator
 
 function speed_test(repeats)
-	Hnat, controlHams, controlFields, controlFreqs = sim_setup(16, 2000, 4)
+	T_f = 1000.0
+	sys = sim_setup(4, T_f)
+	dt = 1.0
 
 	# run once for JIT
-	evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
-	parallel_evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
+	unitary_propagator(sys, dt, 0.0, T_f, parallelize=false)
+	unitary_propagator(sys, dt, 0.0, T_f, parallelize=true)
 
 	# then time each
 	tserial = @elapsed for ct = 1:repeats
-		evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
+		unitary_propagator(sys, dt, 0.0, T_f, parallelize=false)
 	end
 
 	tparallel = @elapsed for ct = 1:repeats
-		parallel_evolution_unitary(Hnat, controlHams, controlFields, controlFreqs)
+		unitary_propagator(sys, dt, 0.0, T_f, parallelize=true)
 	end
 
 	println("Serial execution in $(tserial/repeats) seconds")
 	println("Parallel execution in $(tparallel/repeats) seconds")
 
-	tserial, tparallel
+	tserial/repeats, tparallel/repeats
 end
 
-function sim_setup(dimension, 
-                   numTimeSteps, 
-                   numControls)
-    #Create a random natural hamiltonian 
-    tmpMat = randn(dimension, dimension) + 1im*randn(dimension, dimension)
-    Hnat = tmpMat+tmpMat'
+function sim_setup(dimension, numTimeSteps)
+	α = -0.350
+	J = 0.002
+	Ω = 0.010
+	Q1 = Duffing("q1", 0.0, α, dimension)
+	Q2 = Duffing("q2", 1.0, α, dimension)
 
-    #Create random control Hamiltonians
-    controlHams = Array(Matrix{Complex128}, numControls)
-    for ct = 1:numControls
-        tmpMat[:] = randn(dimension, dimension) + 1im*randn(dimension, dimension)
-        controlHams[ct] = tmpMat+tmpMat'
-    end
-    #Create random controlfields
-    controlFields = randn(numControls, numTimeSteps)
-        
-    #Control frequencies
-    controlFreqs = randn(numControls)
+	drive = MicrowaveControl("CR", 1.0, timeStep=1.0)
+	sys = Q1 + Q2 + FlipFlop(Q1, Q2, J) + RotatingSemiClassicalDipole(Field(drive), Q2, Ω)
 
-    return Hnat, controlHams, controlFields, controlFreqs
+	seq = ones(int(numTimeSteps))
+	load_sequence!(drive, seq)
+
+	return sys
 end
