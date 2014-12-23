@@ -1,7 +1,6 @@
 module QSimulator
 
 using Grid,
-      NumericExtensions,
       Iterators
 
 include("base-types.jl")
