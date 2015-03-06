@@ -130,7 +130,7 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
     Ham = zeros(Complex128, (dim(sys), dim(sys)))
 
     #Allocate workspace for the matrix exponential
-    workspace = allocate_workspace(dim(sys))
+    # workspace = allocate_workspace(dim(sys))
 
     times = startTime:timeStep:(endTime-timeStep)
 
@@ -138,23 +138,23 @@ function unitary_propagator(sys::CompositeQSystem, timeStep::Float64, startTime:
         Uprop = @parallel (*) for time = times
             #a *= b expands to a = a*b
             hamiltonian_add!(Ham, sys, time)
-            # expm_eigen(Ham, 1im*2pi*timeStep)
-            expm_eigen!(Ham, 1im*2pi*timeStep, workspace...)
+            expm_eigen(Ham, 1im*2pi*timeStep)
+            # expm_eigen!(Ham, 1im*2pi*timeStep, workspace...)
         end
     else
         Uprop = eye(dim(sys))
         for time = times
             #a *= b expands to a = a*b
             hamiltonian_add!(Ham, sys, time)
-            # Uprop *= expm_eigen(Ham, 1im*2pi*timeStep)
-            Uprop *= expm_eigen!(Ham, 1im*2pi*timeStep, workspace...)
+            Uprop *= expm_eigen(Ham, 1im*2pi*timeStep)
+            # Uprop *= expm_eigen!(Ham, 1im*2pi*timeStep, workspace...)
         end
     end
 
     if (endTime-times[end]) > timeStep
         hamiltonian_add!(Ham, sys, times[end]+timeStep)
-        # Uprop *= expm_eigen(Ham, 1im*2pi*(endTime-times[end]-timeStep))
-        Uprop *= expm_eigen!(Ham, 1im*2pi*(endTime-times[end]-timeStep), workspace...)
+        Uprop *= expm_eigen(Ham, 1im*2pi*(endTime-times[end]-timeStep))
+        # Uprop *= expm_eigen!(Ham, 1im*2pi*(endTime-times[end]-timeStep), workspace...)
     end
 
     return Uprop'
