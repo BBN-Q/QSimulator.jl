@@ -112,14 +112,14 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
 
     #Reshape into multi-dimensional array given by subsystem dimensions
     #Since we have a matrix we repeat for rows then columns
-    M = reshape(M, tuple([dims, dims]...))
+    M = reshape(M, tuple([dims; dims]...))
 
     #Permute magic 
-    forwardPerm = [actingOn, eyeIndices]
+    forwardPerm = [actingOn; eyeIndices]
     reversePerm = invperm(forwardPerm)
     #Handle the way tensor product indices work (last subsystem is fastest)
     reversePerm = reverse((l+1) .- reversePerm)
-    M = permutedims(M, [reversePerm, reversePerm .+ l])
+    M = permutedims(M, [reversePerm; reversePerm .+ l])
 
     #Reshape back
     return reshape(M, prod(dims), prod(dims))
