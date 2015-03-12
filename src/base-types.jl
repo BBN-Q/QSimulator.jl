@@ -13,7 +13,7 @@ export ## Types
        number,
        raising,
        strength,
-       X
+       X,Y
 
 abstract QSystem
 
@@ -37,7 +37,7 @@ abstract ParametricInteraction <: Interaction
 
 abstract Dissipation
 
-# [todo] - Should COmpositeQSystem <: QSystem ? 
+# [todo] - Should CompositeQSystem <: QSystem ?
 type CompositeQSystem
     # [feature] - Use something like OrderedDict for component enumeration
     subSystems::Vector{QSystem}
@@ -47,5 +47,3 @@ type CompositeQSystem
     interactionExpansions::Vector{Vector{Vector{Int}}}
     dissipators::Vector{Dissipation}
 end
-
-
