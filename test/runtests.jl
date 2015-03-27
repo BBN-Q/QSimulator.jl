@@ -1,5 +1,7 @@
 using QSimulator
 
-include("speed_test.jl")
+include("unitary-tests.jl")
+include("dissipation-tests.jl")
 
-speed_test(5)
+#include("speed_test.jl")
+#speed_test(5)

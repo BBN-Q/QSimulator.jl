@@ -1,10 +1,12 @@
-export Transmon,
+export ## Types
+       Duffing,
        Resonator,
        TunableDuffingTransmon,
        TunableFullTransmon,
        TunableTransmon,
        Qubit,
-       Duffing
+       ## Methods
+       hamiltonian
 
 #Resonator 
 type Resonator <: QSystem

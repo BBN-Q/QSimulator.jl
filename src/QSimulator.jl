@@ -1,7 +1,10 @@
 module QSimulator
 
 using Grid,
-      Iterators
+      Iterators,
+      QIP
+
+import QIP.hamiltonian
 
 include("base-types.jl")
 
@@ -13,7 +16,7 @@ include("interactions.jl")
 
 include("composite-systems.jl")
 
-#include("dissipation.jl")
+include("dissipation.jl")
 
 include("evolution.jl")
 
