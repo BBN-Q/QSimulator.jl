@@ -192,12 +192,12 @@ function unitary_evolution{T<:Number}(state::Vector{T},
     Uprop = eye(dim(sys))
     for time = times
         hamiltonian_add!(Ham, sys, time)
-        state_cp,_,_,_,_,_ = expmv(-1im*2pi*timeStep,Ham,state_cp)
+        state_cp = expmv(-1im*2pi*timeStep,Ham,state_cp)
     end
     
     if (endTime-times[end]) > timeStep
         hamiltonian_add!(Ham, sys, times[end]+timeStep)
-        state_cp,_,_,_,_,_ = expmv(-1im*2pi*(endTime-times[end]-timeStep),Ham,state_cp)
+        state_cp = expmv(-1im*2pi*(endTime-times[end]-timeStep),Ham,state_cp)
     end
 
     return state_cp
@@ -259,12 +259,12 @@ function liouvillian_evolution{T<:Number}(state::Matrix{T},
     Lprop = speye(dim(sys))
     for time = times
         liouvillian_add!(liouv, sys, time)
-        state_cp,_,_,_,_,_ = expmv(2pi*timeStep,liouv,state_cp)
+        state_cp = expmv(2pi*timeStep,liouv,state_cp)
     end
 
     if (endTime-times[end]) > timeStep
         liouvillian_add!(liouv, sys, times[end]+timeStep)
-        state_cp,_,_,_,_,_ = expmv(2pi*(endTime-times[end]-timeStep),liouv,state_cp)
+        state_cp = expmv(2pi*(endTime-times[end]-timeStep),liouv,state_cp)
     end
 
     return reshape(state_cp,size(state,1),size(state,2))

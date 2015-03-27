@@ -19,7 +19,7 @@ function test_1()
       ans = state .* exp(-1im*2*pi*t*Float64[k for k in 0:9])
       ev_state = unitary_evolution(state,system,.1,0.,t)
       
-      @test_approx_eq_eps norm(ans'*ev_state, 2) 1.0 1e-12
+      @test_approx_eq_eps dot(ans,ev_state) 1.0 1e-12
       #@test_approx_eq_eps norm(state, 2) 1.0 1e-12
   end
 end

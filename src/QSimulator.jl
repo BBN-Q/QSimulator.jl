@@ -2,7 +2,6 @@ module QSimulator
 
 using Grid,
       Iterators,
-      NumericExtensions,
       QIP
 
 import QIP.hamiltonian

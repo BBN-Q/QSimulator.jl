@@ -46,7 +46,7 @@ function +(c::CompositeQSystem, d::Dissipation)
 end
 
 function update_expansion_indices!(c::CompositeQSystem)
-    ddims = [dims(c), dims(c)]
+    ddims = [dims(c); dims(c)]
     subsystems = length(c.subSystems)
 
     c.subSystemExpansions = [(IndexSet[],IndexSet[],IndexSet[]) for _ = 1:length(c.subSystems)]
@@ -61,7 +61,7 @@ function update_expansion_indices!(c::CompositeQSystem)
         pos_list = find_subsystem_pos(c,i)
         c.interactionExpansions[ct] = (expand_indices(pos_list, dims(c)), # operator
                                        expand_indices(pos_list, ddims),   # superoperator right
-                                       expand_indices([map(x->x.+subsystems,pos_list)], ddims)) #superoperator left
+                                       expand_indices(map(x->x.+subsystems,pos_list), ddims)) #superoperator left
     end
 
     c.dissipatorExpansions = [(IndexSet[], IndexSet[], IndexSet[]) for _ = 1:length(c.dissipators)]
@@ -69,9 +69,9 @@ function update_expansion_indices!(c::CompositeQSystem)
         subsys = find_subsystem_pos(c, d) 
         # for efficiency, we need expansion for an operator acting on the left,
         # another for one acting on the right, and one for operators acting on both sides
-        c.dissipatorExpansions[ct]= (expand_indices( [subsys.+subsystems], ddims),  # left
-                                     expand_indices( [subsys], ddims),             # right
-                                     expand_indices( [subsys, subsys.+subsystems], ddims)) # bilateral
+        c.dissipatorExpansions[ct]= (expand_indices( [subsys.+subsystems;], ddims),  # left
+                                     expand_indices( [subsys;], ddims),             # right
+                                     expand_indices( [subsys; subsys.+subsystems], ddims)) # bilateral
     end
 end
 
@@ -91,7 +91,7 @@ function find_subsystem_pos(c::CompositeQSystem, i::Interaction)
     elseif isa(i, FluxTransmon)
         return find_subsystem_pos(c, i.transmon)
     else
-        return [find_subsystem_pos(c, i.system1), find_subsystem_pos(c, i.system2)]
+        return [find_subsystem_pos(c, i.system1); find_subsystem_pos(c, i.system2)]
     end
 end
 
@@ -230,14 +230,14 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
 
     #Reshape into multi-dimensional array given by subsystem dimensions
     #Since we have a matrix we repeat for rows then columns
-    M = reshape(M, tuple([dims, dims]...))
+    M = reshape(M, tuple([dims; dims]...))
 
     #Permute magic 
-    forwardPerm = [actingOn, eyeIndices]
+    forwardPerm = [actingOn; eyeIndices]
     reversePerm = invperm(forwardPerm)
     #Handle the way tensor product indices work (last subsystem is fastest)
     reversePerm = reverse((l+1) .- reversePerm)
-    M = permutedims(M, [reversePerm, reversePerm .+ l])
+    M = permutedims(M, [reversePerm; reversePerm .+ l])
 
     #Reshape back
     return reshape(M, prod(dims), prod(dims))
