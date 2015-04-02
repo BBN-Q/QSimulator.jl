@@ -20,16 +20,16 @@ end
 MicrowaveControl(label, freq; phase=0., timeStep=1/1.2, sequence=InterpGrid([0.0], BCnearest, InterpNearest)) = MicrowaveControl(label, freq, phase, timeStep, sequence)
 
 # Methods to create the interpolated sequence object
-function load_sequence!{T}(mc::MicrowaveControl, sequence::Vector{T})
-    mc.sequence = InterpGrid(sequence, BCnearest, InterpNearest)
+function load_sequence!{T}(mc::MicrowaveControl, sequence::Vector{T}; interpolation=InterpNearest)
+    mc.sequence = InterpGrid(sequence, BCnearest, interpolation)
 end
 
-function load_sequence!(mc::MicrowaveControl, seqDict::Dict, n::Int)
+function load_sequence!(mc::MicrowaveControl, seqDict::Dict, n::Int; interpolation=InterpNearest)
     #For double balanced mixer need one AWG channel
     #Hack around off the expected BBNAPSx-xx style
     chan = label(mc)[end]
     APSLabel = label(mc)[1:7]
-    mc.sequence = InterpGrid(seqDict[APSLabel]["chan_"*string(chan)][n], BCnearest, InterpNearest)
+    mc.sequence = InterpGrid(seqDict[APSLabel]["chan_"*string(chan)][n], BCnearest, interpolation)
     return nothing
 end
 function amplitude(mc::MicrowaveControl, t::Float64)
@@ -49,14 +49,14 @@ end
 QuadratureControl(label, freq; phase=0., timeStep=1/1.2, sequence_I=InterpGrid([0.0], BCnearest, InterpNearest), sequence_Q=InterpGrid([0.0], BCnearest, InterpNearest)) = QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
 
 #Create the interpolated object
-function load_sequence!(qc::QuadratureControl, seqDict::Dict, n::Int)
+function load_sequence!(qc::QuadratureControl, seqDict::Dict, n::Int; interpolation=InterpNearest)
     #For quadrature controls we need two channels
     #Hack around off the expected BBNAPSx-xx style
     chan_I = label(qc)[end-1]
     chan_Q = label(qc)[end]
     APSLabel = label(qc)[1:7]
-    qc.sequence_I = InterpGrid(seqDict[APSLabel]["chan_"*string(chan_I)][n], BCnearest, InterpNearest)
-    qc.sequence_Q = InterpGrid(seqDict[APSLabel]["chan_"*string(chan_Q)][n], BCnearest, InterpNearest)
+    qc.sequence_I = InterpGrid(seqDict[APSLabel]["chan_"*string(chan_I)][n], BCnearest, interpolation)
+    qc.sequence_Q = InterpGrid(seqDict[APSLabel]["chan_"*string(chan_Q)][n], BCnearest, interpolation)
     return nothing
 end
 function amplitude(qc::QuadratureControl, t::Float64)
