@@ -2,12 +2,12 @@ export ## Types
        ## Methods
        unitary_propagator
 
-CompositeQSystem() = CompositeQSystem(QSystem[], 
-                                      Interaction[], 
-                                      ParametricInteraction[], 
-                                      (Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})[],
-                                      (Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})[],
-                                      (Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})[],
+CompositeQSystem() = CompositeQSystem(QSystem[],
+                                      Interaction[],
+                                      ParametricInteraction[],
+                                      Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}[],
+                                      Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}[],
+                                      Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}[],
                                       Dissipation[])
 
 function getindex(c::CompositeQSystem, key::String)
@@ -66,7 +66,7 @@ function update_expansion_indices!(c::CompositeQSystem)
 
     c.dissipatorExpansions = [(IndexSet[], IndexSet[], IndexSet[]) for _ = 1:length(c.dissipators)]
     for (ct, d) in enumerate(c.dissipators)
-        subsys = find_subsystem_pos(c, d) 
+        subsys = find_subsystem_pos(c, d)
         # for efficiency, we need expansion for an operator acting on the left,
         # another for one acting on the right, and one for operators acting on both sides
         c.dissipatorExpansions[ct]= (expand_indices( [subsys.+subsystems;], ddims),  # left
@@ -99,10 +99,10 @@ function hamiltonian(c::CompositeQSystem, t::Float64=0.0)
     if length(c.subSystems) != 0
         #Initialize Hamiltonian
         Htot = zeros(Complex128, dim(c), dim(c))
-        
-        #Add in all the terms    
+
+        #Add in all the terms
         hamiltonian_add!(Htot, c, t)
-        
+
         return Htot
     else
         error("No systems added to composite system yet.")
@@ -111,7 +111,7 @@ end
 
 function hamiltonian_add!{T<:Number}(Ham::AbstractMatrix{T}, c::CompositeQSystem, t::Float64)
     #Fast system hamiltonian calculator with total Hamiltonian preallocated
-    
+
     #Zero the Hamiltonian memory
     if issparse(Ham)
         # TODO: check: is it safe to assume that we will not make liouv denser and denser?
@@ -124,7 +124,7 @@ function hamiltonian_add!{T<:Number}(Ham::AbstractMatrix{T}, c::CompositeQSystem
     end
 
     #Update the subsystems with the parameteric interactions
-    for pi in c.parametericInteractions 
+    for pi in c.parametericInteractions
         update_params(c, pi, t)
     end
 
@@ -141,12 +141,12 @@ end
 
 function liouvillian_dual_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t::Float64 )
     #Fast system superoperator calculator with liouvillian preallocated
-    
+
     #Zero the preallocated operators
     liouv[:] = 0.0
 
     #Update the subsystems with the parameteric interactions
-    for pi in c.parametericInteractions 
+    for pi in c.parametericInteractions
         update_params(c, pi, t)
     end
 
@@ -155,7 +155,7 @@ function liouvillian_dual_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t
         expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult=-1im) # superoperator right
         expand_add!(liouv,           hamiltonian(subsys, t),  expander[3], mult= 1im) # superoperator left
     end
-    
+
     #Add interactions
     for (subsys, expander) in zip(c.interactions, c.interactionExpansions)
         expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult=-1im) # superoperator right
@@ -172,8 +172,8 @@ end
 
 function liouvillian_add!{T<:Number}(liouv::AbstractMatrix{T}, c::CompositeQSystem, t::Float64 )
     #Fast system superoperator calculator with liouvillian preallocated
-    
-    #Zero the preallocated operators. 
+
+    #Zero the preallocated operators.
     if issparse(liouv)
         # TODO: check: is it safe to assume that we will not make liouv denser and denser?
         rows,cols,_ = findnz(liouv)
@@ -183,9 +183,9 @@ function liouvillian_add!{T<:Number}(liouv::AbstractMatrix{T}, c::CompositeQSyst
     else
         liouv[:] = 0.0
     end
-        
+
     #Update the subsystems with the parameteric interactions
-    for pi in c.parametericInteractions 
+    for pi in c.parametericInteractions
         update_params(c, pi, t)
     end
 
@@ -194,7 +194,7 @@ function liouvillian_add!{T<:Number}(liouv::AbstractMatrix{T}, c::CompositeQSyst
         expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult= 1im) # superoperator right
         expand_add!(liouv,           hamiltonian(subsys, t),  expander[3], mult=-1im) # superoperator left
     end
-    
+
     #Add interactions
     for (subsys, expander) in zip(c.interactions, c.interactionExpansions)
         expand_add!(liouv, transpose(hamiltonian(subsys, t)), expander[2], mult= 1im) # superoperator right
@@ -212,7 +212,7 @@ end
 function expand(m::Matrix, actingOn::Vector, dims::Vector)
     #Expand an operator onto a larger Hilbert space
     # m: matrix form of  operator
-    # actingOn: array of which subsystem index the operator should be acting on 
+    # actingOn: array of which subsystem index the operator should be acting on
     # dims: array of dimensions of all the subsystems
 
     @assert size(m, 1) == prod(dims[actingOn]) "Oops! Dimensions of matrix do not match dims argument."
@@ -226,7 +226,7 @@ function expand(m::Matrix, actingOn::Vector, dims::Vector)
     #Since we have a matrix we repeat for rows then columns
     M = reshape(M, tuple([dims; dims]...))
 
-    #Permute magic 
+    #Permute magic
     forwardPerm = [actingOn; eyeIndices]
     reversePerm = invperm(forwardPerm)
     #Handle the way tensor product indices work (last subsystem is fastest)

@@ -40,14 +40,14 @@ abstract Dissipation
 
 typealias IndexSet Vector{Int}
 
-# [todo] - Should COmpositeQSystem <: QSystem ? 
+# [todo] - Should COmpositeQSystem <: QSystem ?
 type CompositeQSystem
     # [feature] - Use something like OrderedDict for component enumeration
     subSystems::Vector{QSystem}
     interactions::Vector{Interaction}
     parametericInteractions::Vector{ParametricInteraction}
-    subSystemExpansions::Vector{(Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})}
-    interactionExpansions::Vector{(Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})}
-    dissipatorExpansions::Vector{(Vector{IndexSet},Vector{IndexSet},Vector{IndexSet})}
+    subSystemExpansions::Vector{Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}}
+    interactionExpansions::Vector{Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}}
+    dissipatorExpansions::Vector{Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}}
     dissipators::Vector{Dissipation}
 end
