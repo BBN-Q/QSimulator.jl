@@ -39,6 +39,7 @@ abstract ParametricInteraction <: Interaction
 abstract Dissipation
 
 typealias IndexSet Vector{Int}
+typealias ExpansionIndices Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}
 
 # [todo] - Should COmpositeQSystem <: QSystem ?
 type CompositeQSystem
@@ -46,8 +47,8 @@ type CompositeQSystem
     subSystems::Vector{QSystem}
     interactions::Vector{Interaction}
     parametericInteractions::Vector{ParametricInteraction}
-    subSystemExpansions::Vector{Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}}
-    interactionExpansions::Vector{Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}}
-    dissipatorExpansions::Vector{Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}}
+    subSystemExpansions::Vector{ExpansionIndices}
+    interactionExpansions::Vector{ExpansionIndices}
+    dissipatorExpansions::Vector{ExpansionIndices}
     dissipators::Vector{Dissipation}
 end
