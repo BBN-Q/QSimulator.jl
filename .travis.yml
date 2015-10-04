@@ -1,13 +1,13 @@
-language: cpp
-compiler:
-  - clang
+language: julia
+julia:
+  - 0.4
+  - nightly
 notifications:
   email: false
-before_install:
-  - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-  - sudo add-apt-repository ppa:staticfloat/julianightlies -y
-  - sudo apt-get update -qq -y
-  - sudo apt-get install libpcre3-dev julia -y
-script:
-  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("JuliaSimulator"))`); Pkg.pin("JuliaSimulator"); Pkg.resolve()'
-  - julia -e 'using JuliaSimulator; @assert isdefined(:JuliaSimulator); @assert typeof(JuliaSimulator) === Module'
+# uncomment the following lines to override the default test script
+#script:
+#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("QSimulator"); Pkg.test("QSimulator"; coverage=true)'
+
+# necessary to run on new container-based infrastructure
+sudo: false
