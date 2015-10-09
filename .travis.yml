@@ -4,10 +4,12 @@ julia:
   - nightly
 notifications:
   email: false
-# uncomment the following lines to override the default test script
-#script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("QSimulator"); Pkg.test("QSimulator"; coverage=true)'
+# custom script to grab the unregistered ExpmV and QuantumInfo packages
+script:
+ - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+ - julia -e 'Pkg.clone("git@github.com:marcusps/ExpmV.jl.git")'
+ - julia -e 'Pkg.clone("git@bitbucket.org:marcusps/quantuminfo.jl.git", "QuantumInfo")'
+ - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("QSimulator"); Pkg.test("QSimulator"; coverage=true)'
 
 # necessary to run on new container-based infrastructure
 sudo: false
