@@ -11,7 +11,7 @@ export ## Types
 
 #A double-balanced mixer driven by an RF/microwave souce and a single AWG channel
 type MicrowaveControl <: Control
-    label::String
+    label::AbstractString
     freq::Float64
     phase::Float64
     timeStep::Float64
@@ -39,7 +39,7 @@ end
 
 #A pair of AWG channels driving an IQ mixer with a microwave source at a given frequency
 type QuadratureControl <: Control
-    label::String
+    label::AbstractString
     freq::Float64
     phase::Float64
     timeStep::Float64

@@ -34,7 +34,7 @@ function sim_setup(dimension, numTimeSteps)
 	drive = MicrowaveControl("CR", 1.0, timeStep=1.0)
 	sys = Q1 + Q2 + FlipFlop(Q1, Q2, J) + RotatingSemiClassicalDipole(Field(drive), Q2, Ω)
 
-	seq = ones(int(numTimeSteps))
+	seq = ones(round(Int, numTimeSteps))
 	load_sequence!(drive, seq)
 
 	return sys

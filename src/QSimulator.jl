@@ -5,6 +5,7 @@ using Grid,
       QIP
 
 import QIP.hamiltonian
+import Base: getindex, +
 
 include("base-types.jl")
 

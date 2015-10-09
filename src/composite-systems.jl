@@ -10,7 +10,7 @@ CompositeQSystem() = CompositeQSystem(QSystem[],
                                       Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}[],
                                       Dissipation[])
 
-function getindex(c::CompositeQSystem, key::String)
+function getindex(c::CompositeQSystem, key::AbstractString)
     for s in c.subSystems
         if label(s) == key
             return s

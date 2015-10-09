@@ -8,6 +8,7 @@ export ## Types
        ParametricInteraction,
        QSystem,
        ## Methods
+       hamiltonian,
        dim,
        label,
        lowering,

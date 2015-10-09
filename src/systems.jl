@@ -10,7 +10,7 @@ export ## Types
 
 #Resonator 
 type Resonator <: QSystem
-    label::String
+    label::AbstractString
     freq::Float64
     dim::Int
 end 
@@ -18,13 +18,13 @@ hamiltonian(r::Resonator) = r.freq*number(r)
 
 #Fixed frequency transmon 
 type Transmon <: QSystem
-    label::String
+    label::AbstractString
     E_C::Float64
     E_J::Float64
     dim::Int
 end
 
-function Transmon(label::String, nu::Float64, alpha::Float64; dim=3)
+function Transmon(label::AbstractString, nu::Float64, alpha::Float64; dim=3)
     E_C = abs(alpha)
     E_J = (nu + E_C)^2 / (8 * E_C)
     return Transmon(label, E_C, E_J, dim)
@@ -37,7 +37,7 @@ hamiltonian(t::Transmon) = sqrt(8*t.E_J*t.E_C)*number(t) - t.E_C/12*(X(t)^4)
 abstract TunableTransmon <: QSystem
 
 type TunableFullTransmon <: TunableTransmon
-    label::String
+    label::AbstractString
     E_C::Float64
     E_J::Float64 #sum of junction E_J's
     d::Float64 #asymmetry parameter
@@ -45,7 +45,7 @@ type TunableFullTransmon <: TunableTransmon
     fluxBias::Float64 # flux bias in units of Phi_0
     flux::Float64 #total flux in units of Phi_0
 end
-TunableFullTransmon(label::String, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) = 
+TunableFullTransmon(label::AbstractString, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) = 
   TunableFullTransmon(label, E_C, E_J, d, dim, fluxBias, fluxBias)
 
 #Helper function to calculate effective EJ for a transmon
@@ -58,7 +58,7 @@ end
 
 #Tunable Duffing approx. transmon 
 type TunableDuffingTransmon <: TunableTransmon
-    label::String
+    label::AbstractString
     E_C::Float64
     E_J::Float64 #sum of junction E_J's
     d::Float64 #asymmetry parameter
@@ -66,7 +66,7 @@ type TunableDuffingTransmon <: TunableTransmon
     fluxBias::Float64 # flux bias in units of Phi_0
     flux::Float64 #total flux in units of Phi_0
 end
-TunableDuffingTransmon(label::String, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) = TunableDuffingTransmon(label, E_C, E_J, d, dim, fluxBias, fluxBias)
+TunableDuffingTransmon(label::AbstractString, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) = TunableDuffingTransmon(label, E_C, E_J, d, dim, fluxBias, fluxBias)
 
 #Helper function to calculate effective EJ for a transmon
 scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2))
@@ -80,7 +80,7 @@ end
 
 #Basic two-level qubit
 type Qubit <: QSystem
-    label::String
+    label::AbstractString
     freq::Float64
 end
 dim(q::Qubit) = 2
@@ -88,7 +88,7 @@ hamiltonian(q::Qubit) = q.freq*number(q)
 
 #Duffing oscillator
 type Duffing <: QSystem
-    label::String
+    label::AbstractString
     freq::Float64
     alpha::Float64
     dim::Int

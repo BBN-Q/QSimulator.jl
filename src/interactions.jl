@@ -57,7 +57,7 @@ end
 #Flux control 
 type FluxTransmon <: ParametricInteraction
     flux::Field
-    transmon::String #refer to transmon by label in parent CompositeQSystem to avoid broken reference on copy
+    transmon::AbstractString #refer to transmon by label in parent CompositeQSystem to avoid broken reference on copy
     strength::Float64
 end
 FluxTransmon(flux::Field, transmon::TunableTransmon, strength::Float64) = FluxTransmon(flux, label(transmon), strength)
