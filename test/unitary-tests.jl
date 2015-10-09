@@ -1,6 +1,5 @@
 using Base.Test
 using QSimulator
-using QIP
 
 function test_1()
 

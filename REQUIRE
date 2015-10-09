@@ -2,5 +2,4 @@ julia 0.4
 ExpmV
 Grid
 HDF5
-QIP
 Iterators

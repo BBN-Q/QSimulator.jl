@@ -1,10 +1,8 @@
 module QSimulator
 
 using Grid,
-      Iterators,
-      QIP
+      Iterators
 
-import QIP.hamiltonian
 import Base: getindex, +
 
 include("base-types.jl")

@@ -1,5 +1,4 @@
 using Base.Test,
-      QIP,
       QSimulator
 
 let

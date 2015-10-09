@@ -1,6 +1,6 @@
 using Base.Test
 using QSimulator
-using QIP
+import QuantumInfo
 
 function test_1()
   q1 = Qubit("q1", 5.0)
@@ -42,15 +42,14 @@ function test_2()
 end
 
 function test_3()
-
   system = CompositeQSystem()
 
   @test_throws ErrorException hamiltonian(system,0.0)
 end
 
 function test_4()
-  sz = [0 0; 0 1];
-  sm = [0 1; 0 0];
+  sz = Float64[0 0; 0 1];
+  sm = Float64[0 1; 0 0];
 
   q1 = Qubit("q1", 1.0)
 
@@ -59,18 +58,15 @@ function test_4()
   L = zeros(Complex128, 4, 4)
 
   system += q1
+  @test_approx_eq norm(L-QuantumInfo.hamiltonian(sz)',2) 0.0
   QSimulator.liouvillian_dual_add!(L, system, 0.0)
-  @test_approx_eq norm(L-QIP.hamiltonian(sz)',2) 0.0
 
   system += Cooling("T1", 0.1, q1)
+  @test_approx_eq norm(L-(QuantumInfo.hamiltonian(sz)+.1*QuantumInfo.dissipator(sm))',2) 0.0
   QSimulator.liouvillian_dual_add!(L, system, 0.0)
-  @test_approx_eq norm(L-(QIP.hamiltonian(sz)+.1*QIP.dissipator(sm))',2) 0.0
 end
 
 function test_5()
-  sz = [0 0; 0 1];
-  sm = [0 1; 0 0];
-
   q1 = Qubit("q1", 0.0)
 
   system = CompositeQSystem()
@@ -85,9 +81,6 @@ function test_5()
 end
 
 function test_6()
-  sz = [0 0; 0 1];
-  sm = [0 1; 0 0];
-
   q1 = Qubit("q1", 0.0)
 
   system = CompositeQSystem()
@@ -104,9 +97,6 @@ function test_6()
 end
 
 function test_7()
-  sz = [0 0; 0 1];
-  sm = [0 1; 0 0];
-
   q1 = Qubit("q1", 0.0)
 
   system = CompositeQSystem()
