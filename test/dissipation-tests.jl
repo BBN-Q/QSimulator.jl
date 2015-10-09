@@ -58,12 +58,13 @@ function test_4()
   L = zeros(Complex128, 4, 4)
 
   system += q1
-  @test_approx_eq norm(L-QuantumInfo.hamiltonian(sz)',2) 0.0
+
   QSimulator.liouvillian_dual_add!(L, system, 0.0)
+  @test_approx_eq norm(L-QuantumInfo.hamiltonian(sz)',2) 0.0
 
   system += Cooling("T1", 0.1, q1)
-  @test_approx_eq norm(L-(QuantumInfo.hamiltonian(sz)+.1*QuantumInfo.dissipator(sm))',2) 0.0
   QSimulator.liouvillian_dual_add!(L, system, 0.0)
+  @test_approx_eq norm(L-(QuantumInfo.hamiltonian(sz)+.1*QuantumInfo.dissipator(sm))',2) 0.0
 end
 
 function test_5()
