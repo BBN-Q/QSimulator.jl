@@ -4,8 +4,8 @@ export ## Methods
        liouvillian_propagator,
        liouvillian_evolution
 
-const liblapack = Base.liblapack_name
-import Base.LinAlg: BlasChar, BlasInt, blas_int
+# const liblapack = Base.liblapack_name
+# import Base.LinAlg: BlasChar, BlasInt, blas_int
 
 using ExpmV
 
@@ -16,7 +16,7 @@ function expm_eigen(A::Matrix, t)
     # V * diagm(exp(t*D)) * V'
     return scale(F[:vectors], exp(t*F[:values])) * F[:vectors]'
 end
-
+#=
 function allocate_workspace(dim::Int)
     #Allocate workspace for Hermitian eigensolver for matrices of dimension dim
 
@@ -127,7 +127,7 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
     return scale(z, exp(t*w)) * z'
 
 end
-
+=#
 
 function unitary_propagator(sys::CompositeQSystem, 
                             timeStep::Float64, 
