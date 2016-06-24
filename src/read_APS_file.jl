@@ -12,7 +12,7 @@ function read_APS_file(filename, startIdx=0)
 
 	chanStrs = ["chan_1", "chan_2", "chan_3", "chan_4"]
 	mrkStrs = ["ch1m1", "ch2m1", "ch3m1", "ch4m1"]
-	AWGData = Dict(chan => Vector{Float64}[] for chan in chanStrs)
+	AWGData = [chan => Vector{Float64}[] for chan in chanStrs]
 
 	h5open(filename, "r") do f
 		for (ct, chanStr) in enumerate(chanStrs)
