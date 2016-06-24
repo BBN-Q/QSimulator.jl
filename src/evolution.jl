@@ -13,8 +13,7 @@ function expm_eigen(A::Matrix, t)
     #Calculates exp(t*A) via eigenvalue decomposition and assuming Hermitian matrix
     F = eigfact(Hermitian(A))
 
-    # V * diagm(exp(t*D)) * V'
-    return scale(F[:vectors], exp(t*F[:values])) * F[:vectors]'
+    return F[:vectors] * Diagonal(exp(t*F[:values])) * F[:vectors]'
 end
 #=
 function allocate_workspace(dim::Int)
@@ -25,8 +24,8 @@ function allocate_workspace(dim::Int)
     H = A + A'
 
 
-    #Make the initial call as a workspace query with lwork=-1 
-        # subroutine zheevr   ( 
+    #Make the initial call as a workspace query with lwork=-1
+        # subroutine zheevr   (
         #       character   JOBZ,
         #       character   RANGE,
         #       character   UPLO,
@@ -49,7 +48,7 @@ function allocate_workspace(dim::Int)
         #       integer     LRWORK,
         #       integer, dimension( * )     IWORK,
         #       integer     LIWORK,
-        #       integer     INFO )   
+        #       integer     INFO )
 
     jobz = 'V' # compute both eigenvalues and eigenvectors
     range = 'A' # all eigenvalues will be found
@@ -60,7 +59,7 @@ function allocate_workspace(dim::Int)
     il = blas_int(0) #lower number of eigenvalue to find: range = 'A'
     iu = blas_int(0) #upper number of eigenvalue to find: range = 'A'
     abstol = -1.0 # precision: negative for full precision
-    m = Array(BlasInt, 1) #number of non-zero eigenvalues found 
+    m = Array(BlasInt, 1) #number of non-zero eigenvalues found
     w = zeros(Float64, dim) #array for eigenvalues
     z = zeros(Complex128, (dim,dim)) #array for eigenvectors
     ldz = blas_int(dim) # number of rows in Z
@@ -82,14 +81,14 @@ function allocate_workspace(dim::Int)
                      Ptr{Float64}, Ptr{Complex128}, Ptr{BlasInt}, Ptr{BlasInt},
                      Ptr{Complex128}, Ptr{BlasInt}, Ptr{Float64}, Ptr{BlasInt},
                      Ptr{BlasInt},Ptr{BlasInt}, Ptr{BlasInt}),
-                    &jobz, &range, &uplo, &n, 
-                    A, &n, &vl, &vu, 
+                    &jobz, &range, &uplo, &n,
+                    A, &n, &vl, &vu,
                     &il, &iu, &abstol, m,
                     w, z, &ldz, isuppz,
                     work, &lwork, rwork, &lrwork,
                     iwork, &liwork, info)
 
-    #Update the work arrays 
+    #Update the work arrays
     lwork = blas_int(real(work[1]))
     work = Array(Complex128, lwork)
     lrwork = blas_int(rwork[1])
@@ -108,7 +107,7 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
     #Works via Hermitian eigensolver
     #This version requires preallocated workspace memory and destroys the input matrix A
 
-    #Directly call the LAPACK function 
+    #Directly call the LAPACK function
     ccall((:zheevr_64_, liblapack), Void,
                     (Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasChar}, Ptr{BlasInt},
                      Ptr{Complex128}, Ptr{BlasInt}, Ptr{Float64}, Ptr{Float64},
@@ -116,8 +115,8 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
                      Ptr{Float64}, Ptr{Complex128}, Ptr{BlasInt}, Ptr{BlasInt},
                      Ptr{Complex128}, Ptr{BlasInt}, Ptr{Float64}, Ptr{BlasInt},
                      Ptr{BlasInt},Ptr{BlasInt}, Ptr{BlasInt}),
-                    &jobz, &range, &uplo, &n, 
-                    A, &n, &vl, &vu, 
+                    &jobz, &range, &uplo, &n,
+                    A, &n, &vl, &vu,
                     &il, &iu, &abstol, m,
                     w, z, &ldz, isuppz,
                     work, &lwork, rwork, &lrwork,
@@ -129,10 +128,10 @@ function expm_eigen!(A::Matrix, t, jobz, range, uplo, n, vl, vu, il, iu, abstol,
 end
 =#
 
-function unitary_propagator(sys::CompositeQSystem, 
-                            timeStep::Float64, 
-                            startTime::Float64, 
-                            endTime::Float64; 
+function unitary_propagator(sys::CompositeQSystem,
+                            timeStep::Float64,
+                            startTime::Float64,
+                            endTime::Float64;
                             parallelize=true)
 
     #Preallocate Hamiltonian memory
@@ -174,9 +173,9 @@ function unitary_propagator(sys::CompositeQSystem,
 end
 
 function unitary_evolution{T<:Number}(state::Vector{T},
-                                      sys::CompositeQSystem, 
-                                      timeStep::Float64, 
-                                      startTime::Float64, 
+                                      sys::CompositeQSystem,
+                                      timeStep::Float64,
+                                      startTime::Float64,
                                       endTime::Float64)
 
     state_cp = copy(state)
@@ -195,7 +194,7 @@ function unitary_evolution{T<:Number}(state::Vector{T},
         hamiltonian_add!(Ham, sys, time)
         state_cp = expmv(-1im*2pi*timeStep,Ham,state_cp)
     end
-    
+
     if (endTime-times[end]) > timeStep
         hamiltonian_add!(Ham, sys, times[end]+timeStep)
         state_cp = expmv(-1im*2pi*(endTime-times[end]-timeStep),Ham,state_cp)
@@ -204,10 +203,10 @@ function unitary_evolution{T<:Number}(state::Vector{T},
     return state_cp
 end
 
-function liouvillian_propagator(sys::CompositeQSystem, 
-                                timeStep::Float64, 
-                                startTime::Float64, 
-                                endTime::Float64; 
+function liouvillian_propagator(sys::CompositeQSystem,
+                                timeStep::Float64,
+                                startTime::Float64,
+                                endTime::Float64;
                                 parallelize=true)
 
     #Preallocate memory
@@ -241,9 +240,9 @@ function liouvillian_propagator(sys::CompositeQSystem,
 end
 
 function liouvillian_evolution{T<:Number}(state::Matrix{T},
-                                          sys::CompositeQSystem, 
-                                          timeStep::Float64, 
-                                          startTime::Float64, 
+                                          sys::CompositeQSystem,
+                                          timeStep::Float64,
+                                          startTime::Float64,
                                           endTime::Float64)
 
     state_cp = copy(state[:])
@@ -270,4 +269,3 @@ function liouvillian_evolution{T<:Number}(state::Matrix{T},
 
     return reshape(state_cp,size(state,1),size(state,2))
 end
-

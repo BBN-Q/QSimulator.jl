@@ -8,15 +8,15 @@ export ## Types
        ## Methods
        hamiltonian
 
-#Resonator 
+#Resonator
 type Resonator <: QSystem
     label::AbstractString
     freq::Float64
     dim::Int
-end 
+end
 hamiltonian(r::Resonator) = r.freq*number(r)
 
-#Fixed frequency transmon 
+#Fixed frequency transmon
 type Transmon <: QSystem
     label::AbstractString
     E_C::Float64
@@ -32,7 +32,7 @@ end
 
 hamiltonian(t::Transmon) = sqrt(8*t.E_J*t.E_C)*number(t) - t.E_C/12*(X(t)^4)
 
-#Tunable transmon 
+#Tunable transmon
 
 abstract TunableTransmon <: QSystem
 
@@ -45,7 +45,7 @@ type TunableFullTransmon <: TunableTransmon
     fluxBias::Float64 # flux bias in units of Phi_0
     flux::Float64 #total flux in units of Phi_0
 end
-TunableFullTransmon(label::AbstractString, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) = 
+TunableFullTransmon(label::AbstractString, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) =
   TunableFullTransmon(label, E_C, E_J, d, dim, fluxBias, fluxBias)
 
 #Helper function to calculate effective EJ for a transmon
@@ -56,7 +56,7 @@ function hamiltonian(tt::TunableFullTransmon, t::Float64=0.0)
     return (sqrt(8*tt.E_C*myE_J)*number(tt) - (1.0/12)*tt.E_C*(X(tt)^4))
 end
 
-#Tunable Duffing approx. transmon 
+#Tunable Duffing approx. transmon
 type TunableDuffingTransmon <: TunableTransmon
     label::AbstractString
     E_C::Float64
@@ -67,9 +67,6 @@ type TunableDuffingTransmon <: TunableTransmon
     flux::Float64 #total flux in units of Phi_0
 end
 TunableDuffingTransmon(label::AbstractString, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) = TunableDuffingTransmon(label, E_C, E_J, d, dim, fluxBias, fluxBias)
-
-#Helper function to calculate effective EJ for a transmon
-scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2))
 
 function hamiltonian(tt::TunableDuffingTransmon, t::Float64=0.0)
     myE_J = tt.E_J*scale_EJ(tt.flux, tt.d)
