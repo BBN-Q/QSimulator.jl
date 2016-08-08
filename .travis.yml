@@ -3,6 +3,9 @@ julia:
   - 0.4
   - 0.5
   - nightly
+matrix:
+  allowed_failures:
+    - julia: nightly
 notifications:
   email: false
 # custom script to grab the unregistered ExpmV and QuantumInfo packages
