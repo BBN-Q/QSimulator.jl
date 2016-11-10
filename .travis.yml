@@ -8,10 +8,10 @@ matrix:
     - julia: nightly
 notifications:
   email: false
-# custom script to grab the unregistered ExpmV and QuantumInfo packages
+# custom script to grab the unregistered ExpmV package
 script:
  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
- - julia -e 'Pkg.clone("https://github.com/marcusps/ExpmV.jl.git"); Pkg.clone("https://github.com/BBN-Q/SchattenNorms.jl.git"); Pkg.clone("https://bitbucket.org/marcusps/quantuminfo.jl.git", "QuantumInfo")'
+ - julia -e 'Pkg.clone("https://github.com/marcusps/ExpmV.jl.git")'
  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("QSimulator"); Pkg.test("QSimulator"; coverage=true)'
 
 # necessary to run on new container-based infrastructure
