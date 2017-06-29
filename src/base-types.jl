@@ -17,30 +17,30 @@ export ## Types
        strength,
        X,Y
 
-abstract QSystem
+abstract type QSystem end
 
 label(q::QSystem) = q.label
 dim(q::QSystem) = q.dim
-raising(q::QSystem) = diagm(sqrt(1:(dim(q)-1)), -1)
-lowering(q::QSystem) = diagm(sqrt(1:(dim(q)-1)), 1)
+raising(q::QSystem) = diagm(sqrt.(1:(dim(q)-1)), -1)
+lowering(q::QSystem) = diagm(sqrt.(1:(dim(q)-1)), 1)
 number(q::QSystem) = raising(q) * lowering(q)
 X(q::QSystem) = raising(q) + lowering(q)
 Y(q::QSystem) = 1im*(raising(q) - lowering(q))
 hamiltonian(q::QSystem, t) = hamiltonian(q)
 
-abstract Control
+abstract type Control end
 label(c::Control) = c.label
 
-abstract Interaction
+abstract type Interaction end
 strength(i::Interaction) = i.strength
 hamiltonian(i::Interaction, t) = hamiltonian(i)
 
-abstract ParametricInteraction <: Interaction
+abstract type ParametricInteraction <: Interaction end
 
-abstract Dissipation
+abstract type Dissipation end
 
-typealias IndexSet Vector{Int}
-typealias ExpansionIndices Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}
+const IndexSet = Vector{Int}
+const ExpansionIndices = Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}
 
 # [todo] - Should COmpositeQSystem <: QSystem ?
 type CompositeQSystem

@@ -9,7 +9,7 @@ export ## Types
        hamiltonian
 
 #Resonator
-type Resonator <: QSystem
+mutable struct Resonator <: QSystem
     label::AbstractString
     freq::Float64
     dim::Int
@@ -17,7 +17,7 @@ end
 hamiltonian(r::Resonator) = r.freq*number(r)
 
 #Fixed frequency transmon
-type Transmon <: QSystem
+mutable struct Transmon <: QSystem
     label::AbstractString
     E_C::Float64
     E_J::Float64
@@ -33,10 +33,9 @@ end
 hamiltonian(t::Transmon) = sqrt(8*t.E_J*t.E_C)*number(t) - t.E_C/12*(X(t)^4)
 
 #Tunable transmon
+abstract type TunableTransmon <: QSystem end
 
-abstract TunableTransmon <: QSystem
-
-type TunableFullTransmon <: TunableTransmon
+mutable struct TunableFullTransmon <: TunableTransmon
     label::AbstractString
     E_C::Float64
     E_J::Float64 #sum of junction E_J's
@@ -57,7 +56,7 @@ function hamiltonian(tt::TunableFullTransmon, t::Float64=0.0)
 end
 
 #Tunable Duffing approx. transmon
-type TunableDuffingTransmon <: TunableTransmon
+mutable struct TunableDuffingTransmon <: TunableTransmon
     label::AbstractString
     E_C::Float64
     E_J::Float64 #sum of junction E_J's
@@ -76,7 +75,7 @@ function hamiltonian(tt::TunableDuffingTransmon, t::Float64=0.0)
 end
 
 #Basic two-level qubit
-type Qubit <: QSystem
+mutable struct Qubit <: QSystem
     label::AbstractString
     freq::Float64
 end
@@ -84,7 +83,7 @@ dim(q::Qubit) = 2
 hamiltonian(q::Qubit) = q.freq*number(q)
 
 #Duffing oscillator
-type Duffing <: QSystem
+mutable struct Duffing <: QSystem
     label::AbstractString
     freq::Float64
     alpha::Float64
