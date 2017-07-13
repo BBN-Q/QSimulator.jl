@@ -48,7 +48,10 @@ TunableFullTransmon(label::AbstractString, E_C::Float64, E_J::Float64, d::Float6
   TunableFullTransmon(label, E_C, E_J, d, dim, fluxBias, fluxBias)
 
 #Helper function to calculate effective EJ for a transmon
-scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2))
+# scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2))
+
+scale_EJ(flux::Float64, d::Float64) = sqrt(cos(π*flux)^2 + d^2*(sin(π*flux)^2))
+
 
 function hamiltonian(tt::TunableFullTransmon, t::Float64=0.0)
     myE_J = tt.E_J*scale_EJ(tt.flux, tt.d)
