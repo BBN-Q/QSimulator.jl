@@ -1,3 +1,5 @@
+using Optim
+
 export ## Types
        Duffing,
        Resonator,
@@ -24,13 +26,42 @@ mutable struct Transmon <: QSystem
     dim::Int
 end
 
-function Transmon(label::AbstractString, nu::Float64, alpha::Float64; dim=3)
-    E_C = abs(alpha)
-    E_J = (nu + E_C)^2 / (8 * E_C)
-    return Transmon(label, E_C, E_J, dim)
+"""
+Transmon(label::AbstractString, ν::Float64, α::Float64; dim=3)
+
+#Arguments
+* ν - 0 ↔ 1 frequency
+* α - anharmonicity
+"""
+# function Transmon(label::AbstractString, ν::Float64, α::Float64; dim=3)
+#     E_C = abs(α)
+#     E_J = (ν + E_C)^2 / (8 * E_C)
+#     return Transmon(label, E_C, E_J, dim)
+# end
+
+# hamiltonian(t::Transmon) = sqrt(8*t.E_J*t.E_C)*number(t) - t.E_C/12*(X(t)^4)
+function hamiltonian(t::Transmon)
+  N = floor(Int, dim(t)/2)
+  4 * t.E_C * diagm((-N:N).^2) - t.E_J  * 0.5 * (diagm(ones(dim(t)-1),-1) + diagm(ones(dim(t)-1),1))
 end
 
-hamiltonian(t::Transmon) = sqrt(8*t.E_J*t.E_C)*number(t) - t.E_C/12*(X(t)^4)
+"""
+Fit  E_C and E_J for a fixed frequency transmon given f_01 and anharmonicity
+"""
+function fit_fixed_transmon(f_01, α, dim)
+    # helper function for least squares difference between measured and calculated
+    function f(params)
+      E_C = params[1]
+      E_J  = params[2]
+      t = QSimulator.Transmon("dummy", E_C, E_J, dim)
+      levels = eigvals(hamiltonian(t))
+      test_f_01 = levels[2] - levels[1]
+      test_f_12 = levels[3] - levels[2]
+      ( test_f_01 - f_01)^2 + ( test_f_12 -  test_f_01 - α)^2
+    end
+    res = optimize(f, [abs(α), (f_01+abs(α))^2 / (8 * abs(α))] )
+    return res.minimizer[1], res.minimizer[2]
+end
 
 #Tunable transmon
 abstract type TunableTransmon <: QSystem end
@@ -41,11 +72,8 @@ mutable struct TunableFullTransmon <: TunableTransmon
     E_J::Float64 #sum of junction E_J's
     d::Float64 #asymmetry parameter
     dim::Int
-    fluxBias::Float64 # flux bias in units of Phi_0
     flux::Float64 #total flux in units of Phi_0
 end
-TunableFullTransmon(label::AbstractString, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) =
-  TunableFullTransmon(label, E_C, E_J, d, dim, fluxBias, fluxBias)
 
 #Helper function to calculate effective EJ for a transmon
 # scale_EJ(flux::Float64, d::Float64) = cos(pi*flux)*sqrt(1 + d^2*(tan(pi*flux)^2))
@@ -65,10 +93,8 @@ mutable struct TunableDuffingTransmon <: TunableTransmon
     E_J::Float64 #sum of junction E_J's
     d::Float64 #asymmetry parameter
     dim::Int
-    fluxBias::Float64 # flux bias in units of Phi_0
     flux::Float64 #total flux in units of Phi_0
 end
-TunableDuffingTransmon(label::AbstractString, E_C::Float64, E_J::Float64, d::Float64, dim::Int, fluxBias::Float64) = TunableDuffingTransmon(label, E_C, E_J, d, dim, fluxBias, fluxBias)
 
 function hamiltonian(tt::TunableDuffingTransmon, t::Float64=0.0)
     myE_J = tt.E_J*scale_EJ(tt.flux, tt.d)
@@ -93,3 +119,10 @@ mutable struct Duffing <: QSystem
     dim::Int
 end
 hamiltonian(s::Duffing) = (s.freq - 0.5*s.alpha)*number(s) + 0.5*s.alpha * number(s)^2
+
+"""
+Fit E_C, E_J and d for a tunable transmon given f_max, f_min and anharmonicty
+"""
+function fit_tunable_transmon()
+  0
+end

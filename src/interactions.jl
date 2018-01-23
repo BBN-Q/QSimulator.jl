@@ -51,10 +51,10 @@ function hamiltonian(scd::RotatingSemiClassicalDipole, t::Float64)
     return H
 end
 
-# ParametricInteractions are interactions which modify 
+# ParametricInteractions are interactions which modify
 # parameters of systems rather than linearly add new Hamiltonians
 
-#Flux control 
+#Flux control
 type FluxTransmon <: ParametricInteraction
     flux::Field
     transmon::AbstractString #refer to transmon by label in parent CompositeQSystem to avoid broken reference on copy
@@ -65,6 +65,5 @@ FluxTransmon(flux::Field, transmon::TunableTransmon, strength::Float64) = FluxTr
 #Set the flux in the associated transmon
 function update_params(sys::CompositeQSystem, ft::FluxTransmon, t::Float64)
     myTransmon = sys[ft.transmon]
-    myTransmon.flux = myTransmon.fluxBias + ft.strength*amplitude(ft.flux,t)
+    myTransmon.flux = ft.strength*amplitude(ft.flux,t)
 end
-
