@@ -30,57 +30,50 @@ function expand_add!(op, new_op, expand_idxs)
 end
 
 
-function expand(m::Matrix, actingOn::Vector, dims::Vector)
-    #Expand an operator onto a larger Hilbert space
-    # m: matrix form of  operator
-    # actingOn: array of which subsystem index the operator should be acting on
-    # dims: array of dimensions of all the subsystems
+"""
+    embed(m::Matrix, acting_on::Vector, dims::Vector)
 
-    @assert size(m, 1) == prod(dims[actingOn]) "Oops! Dimensions of matrix do not match dims argument."
+Embed a subsystem operator `m` acting on subystem indices `acting_on` into a larger tensor product
+space with subsystem dimensions `dims`.
+"""
+function embed(m::Matrix, acting_on::Vector, dims::Vector)
 
-    #Create the large matrix by tensoring on identity
+    @assert size(m, 1) == prod(dims[acting_on]) "Oops! Dimensions of operator do not match dims argument."
+
+    # create the large matrix by tensoring on identity terms to the operator
     l = length(dims)
-    eyeIndices = filter(x->!(x in actingOn), 1:l)
-    M = isempty(eyeIndices) ? m : kron(m, eye(eltype(m), prod(dims[eyeIndices])))
+    identity_idxs = filter(x->!(x in acting_on), 1:l)
+    M = isempty(identity_idxs) ? m : kron(m, eye(eltype(m), prod(dims[identity_idxs])))
 
-    #Reshape into multi-dimensional array given by subsystem dimensions
-    #Since we have a matrix we repeat for rows then columns
+    # reshape into multi-dimensional array given by subsystem dimensions
+    # since we have a matrix we repeat for rows then columns
     M = reshape(M, tuple([dims; dims]...))
 
-    #Permute magic
-    forwardPerm = [actingOn; eyeIndices]
-    reversePerm = invperm(forwardPerm)
-    #Handle the way tensor product indices work (last subsystem is fastest)
-    reversePerm = reverse((l+1) .- reversePerm)
-    M = permutedims(M, [reversePerm; reversePerm .+ l])
+    # permute magic
+    forward_perm = [acting_on; identity_idxs]
+    reverse_perm = invperm(forward_perm)
 
-    #Reshape back
+    # handle the way tensor product indices work (last subsystem is fastest)
+    reverse_perm = reverse((l+1) .- reverse_perm)
+    M = permutedims(M, [reverse_perm; reverse_perm .+ l])
+
+    # reshape back
     return reshape(M, prod(dims), prod(dims))
 end
 
-function expand(m::Matrix, indices::Vector, sizeM::Int )
-    M = zeros(eltype(m), (sizeM, sizeM))
-    for (ct, inds) in enumerate(indices)
-        M[inds] = m[ct]
-    end
-    return M
-end
+"""
+    embed_indices(acting_on::Vector, dims::Vector)
 
-function expand_add!{T<:Number,U<:Number}(M::AbstractMatrix{T}, m::AbstractMatrix{U}, indices::Vector; mult=1.0 )
-    #Add to certain indices of M with terms from m according to expansion indices.
-    for ct=1:length(indices)
-        # M[indices[ct]] += m[ct]
-        for idx = indices[ct]
-            M[idx] += mult*m[ct]
-        end
-    end
-end
-
-function expand_indices(actingOn::Vector, dims::Vector)
-    #Calculate the indices for expansion
-    actingOnDim = prod(dims[actingOn])
-    sm = (actingOnDim, actingOnDim)
-    lenm = actingOnDim^2;
-    M = expand(reshape([1:lenm;], sm), actingOn, dims)
-    return IndexSet[find(M .== x) for x in 1:lenm]
+Return the linear indices that map a subystem operation acting onn subystem indices `acting_on` into
+a larger tensor product space with subystem dimensions `dims`.
+"""
+function embed_indices(acting_on::Vector, dims::Vector)
+    # Strategy:
+    # 1. create a subystem matrix with elements equal to the linear index e.g. [1 2; 3 4]
+    dim_acting_on = prod(dims[acting_on])
+    m = reshape(collect(1:dim_acting_on^2), (dim_acting_on,dim_acting_on))
+    # 2. embed the matrix
+    M = embed(m, acting_on, dims)
+    # 3. find where the linear indices got embedded
+    return [find(M .== x) for x in 1:dim_acting_on^2]
 end
