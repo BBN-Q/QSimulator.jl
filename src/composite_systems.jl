@@ -1,3 +1,5 @@
+import Base.findin
+
 export CompositeQSystem,
        hamiltonian
 
@@ -11,6 +13,22 @@ end
 
 CompositeQSystem(qs) = CompositeQSystem(qs, [], [], prod(dim(q) for q in qs))
 
+
+# helper functions for CompositeQSystems
+dim(cqs::CompositeQSystem) = cqs.dim
+
+# TODO: fix these for heterogenous arrays of QSystems
+findin{T<:QSystem}(cqs::CompositeQSystem, s::Vector{T}) = findin(cqs.subsystems, s)
+findin(cqs::CompositeQSystem, s::QSystem) = findin(cqs, [s])
+findin(cqs::CompositeQSystem, s_label::Vector{String}) = findin([label(s) for s in cqs.subsystems], s_label)
+findin(cqs::CompositeQSystem, s_label::AbstractString) = findin(cqs, [s_label])
+
+""" Add a fixed subystem Hamiltonian to a CompositeQSystem """
+function add_hamiltonian!(cqs::CompositeQSystem, ham::Matrix{Complex128}, acting_on::AbstractString)
+    idxs = embed_indices()
+
+end
+
 """ Calculate the drift or natural Hamiltonian of a CompositeQSystem """
 function hamiltonian(cqs::CompositeQSystem)
     ham = zeros(Complex128, (dim(cqs), dim(cqs)))
@@ -21,10 +39,10 @@ end
 
 
 """ In place addition of an operator embedded into a larger Hilbert space given a set of expansion indices"""
-function expand_add!(op, new_op, expand_idxs)
+function expand_add!(op, added_op, expand_idxs)
     for ct = 1:length(expand_idxs)
         for idx = expand_idxs[ct]
-            op[idx] += new_op[ct]
+            op[idx] += added_op[ct]
         end
     end
 end
