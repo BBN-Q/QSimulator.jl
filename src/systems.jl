@@ -3,7 +3,18 @@ export Resonator,
        FixedTransmon,
        FixedDuffingTransmon,
        TunableDuffingTransmon,
-       hamiltonian
+       label,
+       dim
+
+export raising,
+       create,
+       lowering,
+       destroy,
+       number,
+       X,
+       Y
+
+export hamiltonian
 
 # atomic  quantum systems such as resonators or transmons
 abstract type QSystem end
