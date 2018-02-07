@@ -12,7 +12,9 @@ export raising,
        destroy,
        number,
        X,
-       Y
+       Y,
+       FlipFlop,
+       Dipole
 
 export hamiltonian
 
@@ -114,4 +116,14 @@ function fit_fixed_transmon(f_01, α, dim)
     end
     res = optimize(f, [abs(α), (f_01+abs(α))^2 / (8 * abs(α))] )
     return res.minimizer[1], res.minimizer[2]
+end
+
+# two body Hamiltonian terms
+function FlipFlop(a::QSystem, b::QSystem; ϕ=0.0)
+    # TODO: confirm sign of phase term
+    return exp(1im*ϕ) * raising(a) ⊗ lowering(b) + exp(-1im*ϕ) * lowering(a) ⊗ raising(b)
+end
+
+function Dipole(a::QSystem, b::QSystem)
+    return X(a) ⊗ X(b)
 end
