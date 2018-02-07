@@ -6,13 +6,12 @@ export CompositeQSystem,
 # tensor products of quantum systems
 mutable struct CompositeQSystem
     subsystems::Vector
-    fixed_Hs::Vector # tuple of Matrix and exansion indices
-    parametric_Hs::Vector # tuple of Functions and expansion indices
+    fixed_Hs::Vector{Tuple} # tuple of Matrix and exansion indices
+    parametric_Hs::Vector{Tuple} # tuple of Functions and expansion indices
     dim::Int
 end
 
 CompositeQSystem(qs) = CompositeQSystem(qs, [], [], prod(dim(q) for q in qs))
-
 
 # helper functions for CompositeQSystems
 dim(cqs::CompositeQSystem) = cqs.dim
@@ -24,17 +23,18 @@ findin(cqs::CompositeQSystem, s_label::Vector{String}) = findin([label(s) for s 
 findin(cqs::CompositeQSystem, s_label::AbstractString) = findin(cqs, [s_label])
 
 """ Add a fixed subystem Hamiltonian to a CompositeQSystem """
-function add_hamiltonian!(cqs::CompositeQSystem, ham::Matrix{Complex128}, acting_on::AbstractString)
-    idxs = embed_indices()
-
+function add_hamiltonian!{T<:Number}(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on::AbstractString)
+    idxs = embed_indices(findin(cqs, acting_on), [dim(s) for s in cqs.subsystems])
+    push!(cqs.fixed_Hs, (ham, idxs))
 end
 
 """ Calculate the drift or natural Hamiltonian of a CompositeQSystem """
 function hamiltonian(cqs::CompositeQSystem)
     ham = zeros(Complex128, (dim(cqs), dim(cqs)))
-    for h = cqs.fixed_Hs
-        expand_add!(ham, new_ham, expand_idxs)
+    for (new_ham, idxs) = cqs.fixed_Hs
+        expand_add!(ham, new_ham, idxs)
     end
+    return ham
 end
 
 
