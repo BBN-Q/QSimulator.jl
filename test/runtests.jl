@@ -2,5 +2,6 @@ using QSimulator
 
 using Base.Test
 
-r = Resonator("silly",  5.5, 3)
-@test QSimulator.raising(r) * QSimulator.lowering(r) == QSimulator.number(r)
+# test harmonic oscillator operator identity a†a = N
+r = Resonator("test", 5.5, 3)
+@test raising(r) * lowering(r) == number(r)
