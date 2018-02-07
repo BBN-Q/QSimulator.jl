@@ -18,6 +18,6 @@ function schrodinger(cqs::CompositeQSystem, ts::Vector)
     # initial condition of identity
     u0 = eye(Complex128, dim(cqs))
     prob = ODEProblem(schrodinger_eqn, u0, (0, ts[end]), ham)
-    sol = solve(prob)
+    sol = solve(prob; saveat=ts)
     return sol
 end
