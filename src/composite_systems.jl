@@ -1,7 +1,8 @@
 import Base.findin
 
 export CompositeQSystem,
-       hamiltonian
+       hamiltonian,
+       add_hamiltonian!
 
 # tensor products of quantum systems
 mutable struct CompositeQSystem
