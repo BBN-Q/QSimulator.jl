@@ -11,7 +11,7 @@ Compute the unitary evolution of a CompositeQSystem evaluted at ts.
 """
 function schrodinger(cqs::CompositeQSystem, ts::Vector)
     # dU = -iHU
-    ham = hamiltonian(cqs)
+    ham = 2pi * hamiltonian(cqs)
     function schrodinger_eqn(du, u, ham, t)
         du[:] = vec(-1im * ham * u)
     end
