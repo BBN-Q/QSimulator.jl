@@ -2,39 +2,45 @@
 
 using DifferentialEquations
 
+# TODO think about the API of a single "schrodinger" method for both unitary propagator and density matrix
 export schrodinger
 
 """
-    schrodinger(cqs::CompositeQSystem, ts::Float64)
+    schrodinger(cqs::CompositeQSystem, ts::Float64; u0::Matrix=[])
 
-Compute the unitary evolution of a CompositeQSystem evaluted at ts.
+Compute the unitary propagator evolution of a CompositeQSystem evaluted at ts.
 """
-function schrodinger(cqs::CompositeQSystem, ts::Vector)
+function schrodinger(cqs::CompositeQSystem, ts::Vector; u0=Matrix{Complex128}(0,0))
+    # schrodinger differential equation for unitary with in place update
     # dU/dt = -iHU
-    ham = 2pi * hamiltonian(cqs)
-    function schrodinger_eqn(du, u, ham, t)
+    function ode(du, u, ham, t)
         du[:] = vec(-1im * ham * u)
     end
-    # initial condition of identity
-    u0 = eye(Complex128, dim(cqs))
-    prob = ODEProblem(schrodinger_eqn, u0, (0, ts[end]), ham)
-    sol = solve(prob; saveat=ts)
-    return sol
+    # scale Hamiltonian from Hz to rad.
+    ham = 2pi * hamiltonian(cqs)
+    # if initial condition not passed start with identity
+    if isempty(u0)
+        u0 = eye(Complex128, dim(cqs))
+    end
+    prob = ODEProblem(ode, u0, (0, ts[end]), ham)
+    solve(prob; saveat=ts)
 end
 
 
 """
-    schrodinger(cqs::CompositeQSystem, ts::Float64, ρ_init::Matrix{Complex128})
+    schrodinger(cqs::CompositeQSystem, ts::Float64, ρ0::Matrix)
 
 Compute the unitary evolution of a CompositeQSystem from initial state ρ_init evaluted at ts.
 """
-function schrodinger(cqs::CompositeQSystem, ts::Vector, ρ_init::Matrix{Complex128})
+function schrodinger(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix)
+    # schrodinger differential equation for density matrix with in place update
     # dρ/dt = -i[H, ρ]
-    ham = 2pi * hamiltonian(cqs)
-    function schrodinger_eqn(dρ, ρ, ham, t)
+    function ode(dρ, ρ, ham, t)
         dρ[:] = vec(-1im * (ham*ρ - ρ*ham))
     end
-    prob = ODEProblem(schrodinger_eqn, ρ_init, (0, ts[end]), ham)
+    # scale Hamiltonian from Hz to rad.
+    ham = 2pi * hamiltonian(cqs)
+    prob = ODEProblem(ode, ρ0, (0, ts[end]), ham)
     sol = solve(prob; saveat=ts)
     return sol
 end
