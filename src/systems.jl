@@ -14,6 +14,7 @@ export raising,
        X,
        Y,
        FlipFlop,
+       XY,
        Dipole
 
 export hamiltonian
@@ -130,6 +131,8 @@ function FlipFlop(a::QSystem, b::QSystem; ϕ=0.0)
     phase = 1im*2π*ϕ
     return exp(phase) * raising(a) ⊗ lowering(b) + exp(-phase) * lowering(a) ⊗ raising(b)
 end
+
+const XY = FlipFlop
 
 function Dipole(a::QSystem, b::QSystem)
     return X(a) ⊗ X(b)
