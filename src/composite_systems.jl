@@ -24,9 +24,16 @@ findin(cqs::CompositeQSystem, s_label::Vector{String}) = findin([label(s) for s 
 findin(cqs::CompositeQSystem, s_label::AbstractString) = findin(cqs, [s_label])
 
 """ Add a fixed subystem Hamiltonian to a CompositeQSystem """
-function add_hamiltonian!{T<:Number}(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on::AbstractString)
-    idxs = embed_indices(findin(cqs, acting_on), [dim(s) for s in cqs.subsystems])
+function add_hamiltonian!{T<:Number}(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on)
+    idxs = embed_indices(cqs, acting_on)
     push!(cqs.fixed_Hs, (ham, idxs))
+end
+
+""" Add a parameterized Hamiltonian to a CompositeQSystem """
+# TODO how to do this dispatch vs adding a fixed Hamiltonian - Jameson says not to do this https://discourse.julialang.org/t/functions-and-callable-methods/2983/3
+function add_hamiltonian!(cqs::CompositeQSystem, ham::Function, acting_on)
+    idxs = embed_indices(findin(cqs, acting_on), [dim(s) for s in cqs.subsystems])
+    push!(cqs.parametric_Hs, (ham, idxs))
 end
 
 """ Calculate the drift or natural Hamiltonian of a CompositeQSystem """
@@ -38,6 +45,12 @@ function hamiltonian(cqs::CompositeQSystem)
     return ham
 end
 
+""" In place additions of the parametric Hamiltonians of a CQS at time t. """
+function add_parametric_hamiltonians!(ham, cqs::CompositeQSystem, t)
+    for (ham_adder!, idxs) = cqs.parametric_Hs
+        ham_adder!(ham, idxs, t)
+    end
+end
 
 """ In place addition of an operator embedded into a larger Hilbert space given a set of expansion indices"""
 function expand_add!(op, added_op, expand_idxs)
@@ -47,7 +60,6 @@ function expand_add!(op, added_op, expand_idxs)
         end
     end
 end
-
 
 """
     embed(m::Matrix, acting_on::Vector, dims::Vector)
@@ -96,3 +108,5 @@ function embed_indices(acting_on::Vector, dims::Vector)
     # 3. find where the linear indices got embedded
     return [find(M .== x) for x in 1:dim_acting_on^2]
 end
+
+embed_indices(cqs::CompositeQSystem, acting_on) = embed_indices(findin(cqs, acting_on), [dim(s) for s in cqs.subsystems])
