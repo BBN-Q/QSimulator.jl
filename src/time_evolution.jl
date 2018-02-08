@@ -2,15 +2,15 @@
 
 using DifferentialEquations
 
-# TODO think about the API of a single "schrodinger" method for both unitary propagator and density matrix
-export schrodinger
+export unitary_propagator,
+       unitary_state
 
 """
-    schrodinger(cqs::CompositeQSystem, ts::Float64; u0::Matrix=[])
+    schrodinger(cqs::CompositeQSystem, ts::Float64; u0::Matrix=Matrix{Complex128}(0,0))
 
 Compute the unitary propagator evolution of a CompositeQSystem evaluted at ts.
 """
-function schrodinger(cqs::CompositeQSystem, ts::Vector; u0=Matrix{Complex128}(0,0))
+function unitary_propagator(cqs::CompositeQSystem, ts::Vector; u0=Matrix{Complex128}(0,0))
     # schrodinger differential equation for unitary with in place update
     # dU/dt = -iHU
     function ode(du, u, ham, t)
@@ -23,16 +23,17 @@ function schrodinger(cqs::CompositeQSystem, ts::Vector; u0=Matrix{Complex128}(0,
         u0 = eye(Complex128, dim(cqs))
     end
     prob = ODEProblem(ode, u0, (0, ts[end]), ham)
-    solve(prob; saveat=ts)
+    sol = solve(prob; saveat=ts)
+    sol.u
 end
 
 
 """
-    schrodinger(cqs::CompositeQSystem, ts::Float64, ρ0::Matrix)
+    unitary_state(cqs::CompositeQSystem, ts::Float64, ρ0::Matrix)
 
-Compute the unitary evolution of a CompositeQSystem from initial state ρ_init evaluted at ts.
+Compute the unitary state evolution of a CompositeQSystem from initial state ρ_init evaluted at ts.
 """
-function schrodinger(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix)
+function unitary_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix)
     # schrodinger differential equation for density matrix with in place update
     # dρ/dt = -i[H, ρ]
     function ode(dρ, ρ, ham, t)
@@ -42,5 +43,5 @@ function schrodinger(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix)
     ham = 2pi * hamiltonian(cqs)
     prob = ODEProblem(ode, ρ0, (0, ts[end]), ham)
     sol = solve(prob; saveat=ts)
-    return sol
+    sol.u
 end
