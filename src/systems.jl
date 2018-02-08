@@ -119,9 +119,16 @@ function fit_fixed_transmon(f_01, α, dim)
 end
 
 # two body Hamiltonian terms
+
+"""
+    FlipFlop(a::QSystem, b::QSystem; ϕ=0.0)
+
+FlipFlop or XY interaction between two QSystems. Optional phase ϕ given in units of τ.
+"""
 function FlipFlop(a::QSystem, b::QSystem; ϕ=0.0)
     # TODO: confirm sign of phase term
-    return exp(1im*ϕ) * raising(a) ⊗ lowering(b) + exp(-1im*ϕ) * lowering(a) ⊗ raising(b)
+    phase = 1im*2π*ϕ
+    return exp(phase) * raising(a) ⊗ lowering(b) + exp(-phase) * lowering(a) ⊗ raising(b)
 end
 
 function Dipole(a::QSystem, b::QSystem)
