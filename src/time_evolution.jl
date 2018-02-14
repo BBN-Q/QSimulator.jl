@@ -16,7 +16,7 @@ function unitary_propagator(cqs::CompositeQSystem, ts::Vector; u0=Matrix{Complex
     # schrodinger differential equation for unitary with in place update
     # dU/dt = -iHU
     function ode(du, u, p, t)
-        ham = p[1] # fixed_ham
+        ham = copy(p[1]) # fixed_ham
         add_parametric_hamiltonians!(ham, p[2], t)
         du[:] = vec(-1im * ham * u)
     end
@@ -62,7 +62,7 @@ function unitary_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix)
     # schrodinger differential equation for density matrix with in place update
     # dρ/dt = -i[H, ρ]
     function ode(dρ, ρ, p, t)
-        ham = p[1]
+        ham = copy(p[1])
         add_parametric_hamiltonians!(ham, p[2], t)
         dρ[:] = vec(-1im * (ham*ρ - ρ*ham))
     end
