@@ -44,7 +44,7 @@ prop_suite = suite["unitary"]["propagator"]["rabi flops"] = BenchmarkGroup()
 state_suite = suite["unitary"]["pure state"]["rabi flops"] = BenchmarkGroup()
 
 # TODO replace when available in QSimulator
-function qubit_drive(q::QSimulator.QSystem, drive::Function)
+function qubit_drive(q::QSystem, drive::Function)
     function add_drive_ham!(ham, idxs, t)
         pulse = 2π * drive(t)
         drive_ham = real(pulse) * X(q) + imag(pulse) * Y(q)

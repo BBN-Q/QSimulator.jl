@@ -22,7 +22,7 @@ signal = Float64[real(ψ_init'*ψ) for ψ in ψs]
 
 # rabi flops should produce sinusoidal oscillations between ground and excited state
 # TODO remove when added to QSimulator package
-function qubit_drive(q::QSimulator.QSystem, drive::Function)
+function qubit_drive(q::QSystem, drive::Function)
     function add_drive_ham!(ham, idxs, t)
         pulse = 2π * drive(t)
         drive_ham = real(pulse) * X(q) + imag(pulse) * Y(q)
@@ -61,7 +61,7 @@ e_sim = [abs2(s[2]) for s in ψs]
 
 # parametric flux drive should produce flops between resonant states
 # TODO remove when added to QSimulator package
-function flux_drive(tt::QSimulator.QSystem, amp, freq)
+function flux_drive(tt::QSystem, amp, freq)
     function add_drive_ham!(ham, idxs, t)
         tt_ham = 2π * hamiltonian(tt, amp*sin(2π * freq * t))
         QSimulator.expand_add!(ham, tt_ham, idxs)
