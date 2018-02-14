@@ -69,8 +69,8 @@ add_hamiltonian!(cqs, 0.006*Dipole(q0, q1), [q0,q1])
 add_hamiltonian!(cqs, flux_drive(q1, 0.323, freq/1e3), q1)
 ψ0 = Complex128[0.0; 1.0; 0.0] ⊗ Complex128[1.0; 0.0; 0.0] # start in the 10 state
 ψs = unitary_state(cqs, times, ψ0);
-pop_10 = [abs2(ψ[4]) for ψ in ψs[2:end]]
-pop_01 = [abs2(ψ[2]) for ψ in ψs[2:end]]
+pop_10 = [abs2(ψ[4]) for ψ in ψs]
+pop_01 = [abs2(ψ[2]) for ψ in ψs]
 
 # population should oscillate between 01 and 10
 # there is additional lab frame jaggedness so relax tolerance
