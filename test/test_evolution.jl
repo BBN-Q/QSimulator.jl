@@ -12,6 +12,12 @@ signal = Float64[real(ψ_init'*ψ) for ψ in ψs]
 expected = 0.5 + 0.5*cos.(2π*qubit_freq * (linspace(0,1,201)))
 @test isapprox(signal, expected; rtol=1e-4, atol=1e-4)
 
+# check that the propagator gives the same result
+us = unitary_propagator(cqs, times)
+ψs = [u*ψ_init for u = us]
+signal = Float64[real(ψ_init'*ψ) for ψ in ψs]
+@test isapprox(signal, expected; rtol=1e-4, atol=1e-4)
+
 ########################### Rabi ##########################
 
 # rabi flops should produce sinusoidal oscillations between ground and excited state
@@ -43,6 +49,13 @@ g_expected = 0.5 + 0.5*cos.(2π*nutation_freq * times)
 @test isapprox(g_sim, g_expected; rtol=1e-2, atol=1e-2)
 @test isapprox(e_sim, 1-g_expected; rtol=1e-2, atol=1e-2)
 
+# check that the propagator gives the same result
+us = unitary_propagator(cqs, times)
+ψs = [u*ψ_init for u = us]
+g_sim = [abs2(s[1]) for s in ψs]
+e_sim = [abs2(s[2]) for s in ψs]
+@test isapprox(g_sim, g_expected; rtol=1e-2, atol=1e-2)
+@test isapprox(e_sim, 1-g_expected; rtol=1e-2, atol=1e-2)
 
 ########################### Parmetric Flux Drive ##########################
 
