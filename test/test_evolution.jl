@@ -4,7 +4,7 @@
 qubit_freq = 5.0
 q0 = FixedDuffingTransmon("q0", qubit_freq, -0.2, 3)
 cqs = CompositeQSystem([q0]);
-add_hamiltonian!(cqs, hamiltonian(q0), "q0")
+add_hamiltonian!(cqs, q0)
 times = collect(linspace(0,1,201))
 ψ_init = (1/sqrt(2)) * Complex128[1; 1; 0]
 ψs = unitary_state(cqs, times, ψ_init);
@@ -34,7 +34,7 @@ qubit_freq = 5.0
 nutation_freq = 0.02
 q0 = FixedDuffingTransmon("q0", qubit_freq, -0.2, 3)
 cqs = CompositeQSystem([q0]);
-add_hamiltonian!(cqs, hamiltonian(q0), "q0")
+add_hamiltonian!(cqs, q0)
 add_hamiltonian!(cqs, qubit_drive(q0, t -> nutation_freq*cos(2π*qubit_freq * t)), q0);
 ψ_init = Complex128[1; 0; 0]
 times = collect(linspace(0,100,101))

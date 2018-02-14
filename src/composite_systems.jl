@@ -29,6 +29,9 @@ function add_hamiltonian!{T<:Number}(cqs::CompositeQSystem, ham::AbstractMatrix{
     push!(cqs.fixed_Hs, (ham, idxs))
 end
 
+""" Add a fixed subystem Hamiltonian to a CompositeQSystem """
+add_hamiltonian!(cqs::CompositeQSystem, qs::QSystem) = add_hamiltonian!(cqs, hamiltonian(qs), qs)
+
 """ Add a parameterized Hamiltonian to a CompositeQSystem """
 # TODO how to do this dispatch vs adding a fixed Hamiltonian - Jameson says not to do this https://discourse.julialang.org/t/functions-and-callable-methods/2983/3
 function add_hamiltonian!(cqs::CompositeQSystem, ham::Function, acting_on)

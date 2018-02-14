@@ -14,7 +14,7 @@ state_suite = suite["unitary"]["pure state"]["free evolution"] = BenchmarkGroup(
 for n = 2:4
     q0 = FixedDuffingTransmon("q0", 5, -0.2, n)
     cqs = CompositeQSystem([q0])
-    add_hamiltonian!(cqs, hamiltonian(q0), "q0")
+    add_hamiltonian!(cqs, q0)
     times = collect(linspace(0,1.0,201))
     # superposition of all levels
     ψ0 = (1/sqrt(dim(cqs))) * ones(Complex128, dim(cqs))
@@ -57,7 +57,7 @@ nutation_freq = 0.02
 for n = 2:4
     q0 = FixedDuffingTransmon("q0", qubit_freq, -0.2, n)
     cqs = CompositeQSystem([q0]);
-    add_hamiltonian!(cqs, hamiltonian(q0), "q0")
+    add_hamiltonian!(cqs, q0)
     add_hamiltonian!(cqs, qubit_drive(q0, t -> nutation_freq*cos(2π*qubit_freq * t)), q0);
     ψ0 = zeros(Complex128, n)
     ψ0[1] = 1
@@ -65,7 +65,6 @@ for n = 2:4
     prop_suite["$n level transmon"] = @benchmarkable unitary_propagator($cqs, $times);
     state_suite["$n level transmon"] = @benchmarkable unitary_state($cqs, $times, $ψ0);
 end
-
 
 # Lab frame parmetric interaction between two transmons with spectators
 
