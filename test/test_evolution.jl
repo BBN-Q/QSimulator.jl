@@ -10,7 +10,7 @@ times = collect(linspace(0,1,201))
 ψs = unitary_state(cqs, times, ψ_init);
 signal = Float64[real(ψ_init'*ψ) for ψ in ψs]
 expected = 0.5 + 0.5*cos.(2π*qubit_freq * (linspace(0,1,201)))
-@test isapprox(signal, expected; rtol=1e-4, atol=1e-4)
+@test isapprox(signal, expected; rtol=1e-3, atol=1e-3)
 
 # check that the propagator gives the same result
 us = unitary_propagator(cqs, times)

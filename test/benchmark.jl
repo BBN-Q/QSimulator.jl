@@ -84,12 +84,14 @@ for n = 2:4
     q1 = TunableDuffingTransmon("q1",  0.172, 16.4, 0.55, 3)
 
     # add fixed frequency spectators
-    spectator_qs = [FixedDuffingTransmon("q$ct", 4.0 + 0.1*ct, -(0.2 + 0.01*ct), 3) for ct = 0:(n-3)]
+    spectator_qs = [FixedDuffingTransmon("q$ct", 4.0 + 0.1*ct, -(0.2 + 0.01*ct), 3) for ct = 2:(n-1)]
 
+    # should get an iSWAP interaction at ≈ 122 MHz with drive amplitude 0.323 Φ₀
+    mod_freq = 122.1
     all_qs = [q0, q1, spectator_qs...]
     cqs = CompositeQSystem(all_qs)
     add_hamiltonian!(cqs, q0)
-    add_hamiltonian!(cqs, flux_drive(q1, 0.323, freq/1e3), q1)
+    add_hamiltonian!(cqs, flux_drive(q1, 0.323, mod_freq/1e3), q1)
     add_hamiltonian!(cqs, 0.006*Dipole(q0, q1), [q0,q1])
 
     # add hamiltoians for spectators coupled to tunable transmon
@@ -98,9 +100,7 @@ for n = 2:4
         add_hamiltonian!(cqs, 0.006*Dipole(q, q1), [q,q1])
     end
 
-    # should get an iSWAP interaction at ≈ 122 MHz
-    freq = 122.1
-    times = collect(0.0:0.5:200)
+    times = collect(0:200)
     ψ0 = Complex128[0.0; 1.0; 0.0] ⊗ Complex128[1.0; 0.0; 0.0] # start in 10 state
     for ct = 1:n-2
         ψ0 = ψ0 ⊗ Complex128[1.0; 0.0; 0.0]
