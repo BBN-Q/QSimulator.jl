@@ -66,6 +66,49 @@ for n = 2:4
     state_suite["$n level transmon"] = @benchmarkable unitary_state($cqs, $times, $ψ0);
 end
 
-# Lab frame parmetric interaction between two transmons with spectators
+# Lab frame parametric interaction between two transmons with spectators
+prop_suite = suite["unitary"]["propagator"]["parametric 2Q gate"] = BenchmarkGroup()
+state_suite = suite["unitary"]["pure state"]["parametric 2Q gate"] = BenchmarkGroup()
 
-# Rotating frame parametric interaction between two trasmons with spectators
+# helper function to add flux drive
+# TODO remove when added to QSimulator
+function flux_drive(tt::QSystem, amp, freq)
+    function add_drive_ham!(ham, idxs, t)
+        tt_ham = 2π * hamiltonian(tt, amp*sin(2π * freq * t))
+        QSimulator.expand_add!(ham, tt_ham, idxs)
+    end
+end
+
+for n = 2:4
+    q0 = FixedDuffingTransmon("q0", 3.94015, -0.1807,  3)
+    q1 = TunableDuffingTransmon("q1",  0.172, 16.4, 0.55, 3)
+
+    # add fixed frequency spectators
+    spectator_qs = [FixedDuffingTransmon("q$ct", 4.0 + 0.1*ct, -(0.2 + 0.01*ct), 3) for ct = 0:(n-3)]
+
+    all_qs = [q0, q1, spectator_qs...]
+    cqs = CompositeQSystem(all_qs)
+    add_hamiltonian!(cqs, q0)
+    add_hamiltonian!(cqs, flux_drive(q1, 0.323, freq/1e3), q1)
+    add_hamiltonian!(cqs, 0.006*Dipole(q0, q1), [q0,q1])
+
+    # add hamiltoians for spectators coupled to tunable transmon
+    for q = all_qs[3:end]
+        add_hamiltonian!(cqs, q)
+        add_hamiltonian!(cqs, 0.006*Dipole(q, q1), [q,q1])
+    end
+
+    # should get an iSWAP interaction at ≈ 122 MHz
+    freq = 122.1
+    times = collect(0.0:0.5:200)
+    ψ0 = Complex128[0.0; 1.0; 0.0] ⊗ Complex128[1.0; 0.0; 0.0] # start in 10 state
+    for ct = 1:n-2
+        ψ0 = ψ0 ⊗ Complex128[1.0; 0.0; 0.0]
+    end
+
+    prop_suite["$n transmons"] = @benchmarkable unitary_propagator($cqs, $times)
+    state_suite["$n transmons"] = @benchmarkable unitary_state($cqs, $times, $ψ0)
+end
+
+
+# Rotating frame parametric interaction between two transmons with spectators
