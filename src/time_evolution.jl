@@ -13,12 +13,14 @@ export unitary_propagator,
 Compute the unitary propagator evolution of a CompositeQSystem evaluted at ts.
 """
 function unitary_propagator(cqs::CompositeQSystem, ts::Vector; u0=Matrix{Complex128}(0,0), t0=0.0)
-    # schrodinger differential equation for unitary
+    # schrodinger differential equation for unitary with in place update
     # dU/dt = -iHU
     function ode(du, u, p, t)
-        ham = copy(p[1]) # fixed_ham
-        add_parametric_hamiltonians!(ham, p[2], t)
-        du[:] = vec(-1im * ham * u)
+        ham = p[3] # preallocated workspace array
+        ham .= p[2] # start from fixed_ham
+        add_parametric_hamiltonians!(ham, p[1], t)
+        scale!(ham, -1im)
+        A_mul_B!(du, ham, u)
     end
     # scale Hamiltonian from Hz to rad.
     fixed_ham = 2pi * hamiltonian(cqs)
@@ -26,7 +28,8 @@ function unitary_propagator(cqs::CompositeQSystem, ts::Vector; u0=Matrix{Complex
     if isempty(u0)
         u0 = eye(Complex128, dim(cqs))
     end
-    prob = ODEProblem(ode, u0, (t0, float(ts[end])), (fixed_ham, cqs))
+    work_ham = similar(fixed_ham) # scratch space
+    prob = ODEProblem(ode, u0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham))
     save_start = ts[1]==t0 ? true : false #save t0 only if asked for
     sol = solve(prob; saveat=ts, save_start=save_start)
     sol.u
