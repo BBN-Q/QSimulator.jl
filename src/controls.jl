@@ -10,9 +10,12 @@ Given a function `drive` that returns the drive amplitude at time `t` return a f
 microwave drive hamiltonian.
 """
 function microwave_drive(q::QSystem, drive::Function)
+    const x_ham = X(q)
+    # TODO: specialize on whether control is complex to avoid branch below
+    const y_ham = Y(q)
     function add_drive_ham!(ham, idxs, t)
         pulse = 2π * drive(t)
-        drive_ham = real(pulse) * X(q) + imag(pulse) * Y(q)
+        drive_ham = real(pulse) * x_ham + imag(pulse) * y_ham
         QSimulator.expand_add!(ham, drive_ham, idxs)
     end
 end
