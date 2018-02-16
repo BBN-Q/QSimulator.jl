@@ -43,22 +43,13 @@ end
 prop_suite = suite["unitary"]["propagator"]["rabi flops"] = BenchmarkGroup()
 state_suite = suite["unitary"]["pure state"]["rabi flops"] = BenchmarkGroup()
 
-# TODO replace when available in QSimulator
-function qubit_drive(q::QSystem, drive::Function)
-    function add_drive_ham!(ham, idxs, t)
-        pulse = 2π * drive(t)
-        drive_ham = real(pulse) * X(q) + imag(pulse) * Y(q)
-        QSimulator.expand_add!(ham, drive_ham, idxs)
-    end
-end
-
 qubit_freq = 5.0
 nutation_freq = 0.02
 for n = 2:4
     q0 = FixedDuffingTransmon("q0", qubit_freq, -0.2, n)
     cqs = CompositeQSystem([q0]);
     add_hamiltonian!(cqs, q0)
-    add_hamiltonian!(cqs, qubit_drive(q0, t -> nutation_freq*cos(2π*qubit_freq * t)), q0);
+    add_hamiltonian!(cqs, microwave_drive(q0, t -> nutation_freq*cos(2π*qubit_freq * t)), q0);
     ψ0 = zeros(Complex128, n)
     ψ0[1] = 1
     times = collect(linspace(0,100,101))
@@ -71,14 +62,6 @@ prop_suite = suite["unitary"]["propagator"]["parametric 2Q gate"] = BenchmarkGro
 state_suite = suite["unitary"]["pure state"]["parametric 2Q gate"] = BenchmarkGroup()
 
 # helper function to add flux drive
-# TODO remove when added to QSimulator
-function flux_drive(tt::QSystem, amp, freq)
-    function add_drive_ham!(ham, idxs, t)
-        tt_ham = 2π * hamiltonian(tt, amp*sin(2π * freq * t))
-        QSimulator.expand_add!(ham, tt_ham, idxs)
-    end
-end
-
 for n = 2:4
     q0 = FixedDuffingTransmon("q0", 3.94015, -0.1807,  3)
     q1 = TunableDuffingTransmon("q1",  0.172, 16.4, 0.55, 3)
@@ -87,11 +70,12 @@ for n = 2:4
     spectator_qs = [FixedDuffingTransmon("q$ct", 4.0 + 0.1*ct, -(0.2 + 0.01*ct), 3) for ct = 2:(n-1)]
 
     # should get an iSWAP interaction at ≈ 122 MHz with drive amplitude 0.323 Φ₀
-    mod_freq = 122.1
+    mod_freq = 122.1/1e3
+    amp = 0.323
     all_qs = [q0, q1, spectator_qs...]
     cqs = CompositeQSystem(all_qs)
     add_hamiltonian!(cqs, q0)
-    add_hamiltonian!(cqs, flux_drive(q1, 0.323, mod_freq/1e3), q1)
+    add_hamiltonian!(cqs, flux_drive(q1, t -> sin(2π*freq*t)), q1)
     add_hamiltonian!(cqs, 0.006*Dipole(q0, q1), [q0,q1])
 
     # add hamiltoians for spectators coupled to tunable transmon
