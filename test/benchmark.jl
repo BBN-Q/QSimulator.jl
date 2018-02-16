@@ -75,7 +75,7 @@ for n = 2:4
     all_qs = [q0, q1, spectator_qs...]
     cqs = CompositeQSystem(all_qs)
     add_hamiltonian!(cqs, q0)
-    add_hamiltonian!(cqs, flux_drive(q1, t -> sin(2π*freq*t)), q1)
+    add_hamiltonian!(cqs, flux_drive(q1, t -> sin(2π*mod_freq*t)), q1)
     add_hamiltonian!(cqs, 0.006*Dipole(q0, q1), [q0,q1])
 
     # add hamiltoians for spectators coupled to tunable transmon
