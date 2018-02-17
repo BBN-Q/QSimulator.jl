@@ -43,7 +43,7 @@ end
 function hamiltonian(cqs::CompositeQSystem)
     ham = zeros(Complex128, (dim(cqs), dim(cqs)))
     for (new_ham, idxs) = cqs.fixed_Hs
-        expand_add!(ham, new_ham, idxs)
+        embed_add!(ham, new_ham, idxs)
     end
     return ham
 end
@@ -56,7 +56,8 @@ function add_parametric_hamiltonians!(ham, cqs::CompositeQSystem, t)
 end
 
 """ In place addition of an operator embedded into a larger Hilbert space given a set of expansion indices"""
-function expand_add!(op, added_op, expand_idxs)
+function embed_add!(op, added_op, expand_idxs)
+    # TODO explore performance of @inbounds
     for ct = 1:length(expand_idxs)
         for idx = expand_idxs[ct]
             op[idx] += added_op[ct]

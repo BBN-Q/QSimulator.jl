@@ -16,7 +16,7 @@ function microwave_drive(q::QSystem, drive::Function)
     function add_drive_ham!(ham, idxs, t)
         pulse = 2π * drive(t)
         drive_ham = real(pulse) * x_ham + imag(pulse) * y_ham
-        QSimulator.expand_add!(ham, drive_ham, idxs)
+        QSimulator.embed_add!(ham, drive_ham, idxs)
     end
 end
 
@@ -30,6 +30,6 @@ tunable qubit.
 function flux_drive(tt::QSystem, drive::Function)
     function add_drive_ham!(ham, idxs, t)
         tt_ham = 2π * hamiltonian(tt, drive(t))
-        QSimulator.expand_add!(ham, tt_ham, idxs)
+        QSimulator.embed_add!(ham, tt_ham, idxs)
     end
 end
