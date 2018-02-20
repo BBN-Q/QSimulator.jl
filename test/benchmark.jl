@@ -30,7 +30,7 @@ for n = 2:4
         add_hamiltonian!(cqs, hamiltonian(q), label(q))
     end
     for (qa,qb) = zip(qs[1:end-1], qs[2:end])
-        add_hamiltonian!(cqs, 0.005*Dipole(qa, qb), [qa, qb])
+        add_hamiltonian!(cqs, 0.005*dipole(qa, qb), [qa, qb])
     end
     times = collect(linspace(0,1.0,201))
     # superposition of all levels
@@ -76,12 +76,12 @@ for n = 2:4
     cqs = CompositeQSystem(all_qs)
     add_hamiltonian!(cqs, q0)
     add_hamiltonian!(cqs, flux_drive(q1, t -> sin(2π*mod_freq*t)), q1)
-    add_hamiltonian!(cqs, 0.006*Dipole(q0, q1), [q0,q1])
+    add_hamiltonian!(cqs, 0.006*dipole(q0, q1), [q0,q1])
 
     # add hamiltoians for spectators coupled to tunable transmon
     for q = all_qs[3:end]
         add_hamiltonian!(cqs, q)
-        add_hamiltonian!(cqs, 0.006*Dipole(q, q1), [q,q1])
+        add_hamiltonian!(cqs, 0.006*dipole(q, q1), [q,q1])
     end
 
     times = collect(0:200)

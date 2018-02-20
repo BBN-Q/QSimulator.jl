@@ -62,7 +62,7 @@ amp = 0.323
 times = collect(0.0:5:1000)
 cqs = CompositeQSystem([q0, q1])
 add_hamiltonian!(cqs, hamiltonian(q0), q0)
-add_hamiltonian!(cqs, 0.006*Dipole(q0, q1), [q0,q1])
+add_hamiltonian!(cqs, 0.006*dipole(q0, q1), [q0,q1])
 add_hamiltonian!(cqs, flux_drive(q1, t -> amp*sin(2π*freq*t)), q1)
 ψ0 = Complex128[0.0; 1.0; 0.0] ⊗ Complex128[1.0; 0.0; 0.0] # start in the 10 state
 ψs = unitary_state(cqs, times, ψ0);

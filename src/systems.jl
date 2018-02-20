@@ -14,9 +14,9 @@ export raising,
        number,
        X,
        Y,
-       FlipFlop,
+       flip_flop,
        XY,
-       Dipole
+       dipole
 
 export hamiltonian
 
@@ -125,18 +125,18 @@ end
 # two body Hamiltonian terms
 
 """
-    FlipFlop(a::QSystem, b::QSystem; ϕ=0.0)
+    flip_flop(a::QSystem, b::QSystem; ϕ=0.0)
 
 FlipFlop or XY interaction between two QSystems. Optional phase ϕ given in units of τ.
 """
-function FlipFlop(a::QSystem, b::QSystem; ϕ=0.0)
+function flip_flop(a::QSystem, b::QSystem; ϕ=0.0)
     # TODO: confirm sign of phase term
-    phase = 1im*2π*ϕ
-    return exp(phase) * raising(a) ⊗ lowering(b) + exp(-phase) * lowering(a) ⊗ raising(b)
+    phase = exp(1im*2π*ϕ)
+    return phase * raising(a) ⊗ lowering(b) + conj(phase) * lowering(a) ⊗ raising(b)
 end
 
-const XY = FlipFlop
+const XY = flip_flop
 
-function Dipole(a::QSystem, b::QSystem)
+function dipole(a::QSystem, b::QSystem)
     return X(a) ⊗ X(b)
 end
