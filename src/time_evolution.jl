@@ -85,6 +85,6 @@ function unitary_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
 end
 
 # add helper functions for saving at a single point
-unitary_propagator{T<:Number}(cqs::CompositeQSystem, t::T; u0=Matrix{Complex128}(0,0), t0=0.0) = unitary_propagator{T<:Number}(cqs, [t]; u0=u0, t0=t0)[1]
-unitary_state{T<:Number}(cqs::CompositeQSystem, t::T, ψ0::Vector; t0=0.0) = unitary_state(cqs, [t], ψ0=ψ0; t0=t0)[1]
-unitary_state{T<:Number}(cqs::CompositeQSystem, t::T, ρ0::Matrix; t0=0.0) = unitary_state(cqs, [t], ρ0=ρ0; t0=t0)[1]
+unitary_propagator{T<:Number}(cqs::CompositeQSystem, t::T; u0=Matrix{Complex128}(0,0), t0=0.0) = unitary_propagator(cqs, [t]; u0=u0, t0=t0)[1]
+unitary_state{T<:Number}(cqs::CompositeQSystem, t::T, ψ0::Vector; t0=0.0) = unitary_state(cqs, [t], ψ0; t0=t0)[1]
+unitary_state{T<:Number}(cqs::CompositeQSystem, t::T, ρ0::Matrix; t0=0.0) = unitary_state(cqs, [t], ρ0; t0=t0)[1]
