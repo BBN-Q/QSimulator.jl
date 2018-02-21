@@ -31,7 +31,7 @@ function unitary_propagator(cqs::CompositeQSystem, ts::Vector; u0=Matrix{Complex
     work_ham = similar(fixed_ham) # scratch space
     prob = ODEProblem(ode, u0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham))
     save_start = ts[1]==t0 ? true : false #save t0 only if asked for
-    sol = solve(prob; saveat=ts, save_start=save_start)
+    sol = solve(prob; saveat=ts, save_start=save_start, reltol=1e-6)
     sol.u
 end
 
@@ -56,7 +56,7 @@ function unitary_state(cqs::CompositeQSystem, ts::Vector, ψ0::Vector; t0=0.0)
     work_ham = similar(fixed_ham)
     prob = ODEProblem(ode, ψ0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham))
     save_start = ts[1]==t0 ? true : false #save t0 only if asked for
-    sol = solve(prob; saveat=ts, save_start=save_start)
+    sol = solve(prob; saveat=ts, save_start=save_start, reltol=1e-6)
     sol.u
 end
 
@@ -80,7 +80,7 @@ function unitary_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
     work_ham = similar(fixed_ham)
     prob = ODEProblem(ode, ρ0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham))
     save_start = ts[1]==t0 ? true : false #save t0 only if asked for
-    sol = solve(prob; saveat=ts, save_start=save_start)
+    sol = solve(prob; saveat=ts, save_start=save_start, reltol=1e-6)
     sol.u
 end
 
