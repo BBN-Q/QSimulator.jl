@@ -121,9 +121,7 @@ for n = 2:4
 
     diff_freq = q0.frequency - q1_freq
     # time dependent flip flop interaction
-    add_hamiltonian!(cqs,
-                    (ham,idxs,t) -> QSimulator.embed_add!(ham, (2π*0.006)*flip_flop(q0,q1; ϕ=diff_freq*t), idxs),
-                    [q0,q1])
+    add_hamiltonian!(cqs, rotating_flip_flop(q0, q1, 0.006, diff_freq), [q0,q1])
     add_hamiltonian!(cqs, flux_drive(q1, t -> amp*sin(2π*freq*t)), q1)
 
     # add hamiltoians for spectators coupled to tunable transmon
@@ -132,9 +130,9 @@ for n = 2:4
         # add rotating frame Hamiltonian shifts
         add_hamiltonian!(cqs, -q.frequency*number(q), q)
         diff_freq = q1_freq - q.frequency
-        add_hamiltonian!(cqs,
-                        (ham,idxs,t) -> QSimulator.embed_add!(ham, (2π*0.006)*flip_flop(q1,q; ϕ=diff_freq*t), idxs),
-                        [q1,q])
+        add_hamiltonian!(cqs, rotating_flip_flop(q1, q, 0.006, diff_freq), [q1,q])
+    end
+
     times = collect(0:200)
     ψ0 = Complex128[0.0; 1.0; 0.0] ⊗ Complex128[0.0; 1.0; 0.0] # start in 11 state
     for ct = 1:n-2
