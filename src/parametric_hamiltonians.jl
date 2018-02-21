@@ -1,4 +1,4 @@
-# helper function to add time varyinig control Hamiltonian's
+# helper function to add time varying control Hamiltonian's
 
 export microwave_drive,
        flux_drive

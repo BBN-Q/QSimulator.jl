@@ -6,6 +6,6 @@ const ⊗ = kron
 
 include("systems.jl")
 include("composite_systems.jl")
-include("controls.jl")
+include("parametric_hamiltonians.jl")
 include("time_evolution.jl")
 end
