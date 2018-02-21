@@ -58,11 +58,11 @@ for n = 2:4
 end
 
 # Lab frame parametric interaction between two transmons with spectators
-prop_suite = suite["unitary"]["propagator"]["parametric 2Q gate"] = BenchmarkGroup()
-state_suite = suite["unitary"]["pure state"]["parametric 2Q gate"] = BenchmarkGroup()
+prop_suite = suite["unitary"]["propagator"]["lab frame parametric 2Q gate"] = BenchmarkGroup()
+state_suite = suite["unitary"]["pure state"]["lab frame parametric 2Q gate"] = BenchmarkGroup()
 
 # helper function to add flux drive
-for n = 2:4
+for n = 2:3
     q0 = FixedDuffingTransmon("q0", 3.94015, -0.1807,  3)
     q1 = TunableDuffingTransmon("q1",  0.172, 16.4, 0.55, 3)
 
@@ -96,3 +96,51 @@ end
 
 
 # Rotating frame parametric interaction between two transmons with spectators
+prop_suite = suite["unitary"]["propagator"]["rotating frame parametric 2Q gate"] = BenchmarkGroup()
+state_suite = suite["unitary"]["pure state"]["rotating frame parametric 2Q gate"] = BenchmarkGroup()
+
+for n = 2:4
+
+    q0 = FixedDuffingTransmon("q0", 3.94015, -0.1807,  3)
+    q1 = TunableDuffingTransmon("q1",  0.172, 16.4, 0.55, 3)
+
+    # add fixed frequency spectators
+    spectator_qs = [FixedDuffingTransmon("q$ct", 4.0 + 0.1*ct, -(0.2 + 0.01*ct), 3) for ct = 2:(n-1)]
+
+    # should get an CZ02 interaction at ≈ 115 MHz
+    freq = 115.5/1e3
+    amp = 0.245
+
+    all_qs = [q0, q1, spectator_qs...]
+    cqs = CompositeQSystem(all_qs)
+    add_hamiltonian!(cqs, q0)
+    # add rotating frame Hamiltonian shifts
+    add_hamiltonian!(cqs, -q0.frequency*number(q0), q0)
+    q1_freq = hamiltonian(q1, 0.0)[2,2]
+    add_hamiltonian!(cqs, -q1_freq*number(q1), q1)
+
+    diff_freq = q0.frequency - q1_freq
+    # time dependent flip flop interaction
+    add_hamiltonian!(cqs,
+                    (ham,idxs,t) -> QSimulator.embed_add!(ham, (2π*0.006)*flip_flop(q0,q1; ϕ=diff_freq*t), idxs),
+                    [q0,q1])
+    add_hamiltonian!(cqs, flux_drive(q1, t -> amp*sin(2π*freq*t)), q1)
+
+    # add hamiltoians for spectators coupled to tunable transmon
+    for q = all_qs[3:end]
+        add_hamiltonian!(cqs, q)
+        # add rotating frame Hamiltonian shifts
+        add_hamiltonian!(cqs, -q.frequency*number(q), q)
+        diff_freq = q1_freq - q.frequency
+        add_hamiltonian!(cqs,
+                        (ham,idxs,t) -> QSimulator.embed_add!(ham, (2π*0.006)*flip_flop(q1,q; ϕ=diff_freq*t), idxs),
+                        [q1,q])
+    times = collect(0:200)
+    ψ0 = Complex128[0.0; 1.0; 0.0] ⊗ Complex128[0.0; 1.0; 0.0] # start in 11 state
+    for ct = 1:n-2
+        ψ0 = ψ0 ⊗ Complex128[1.0; 0.0; 0.0]
+    end
+
+    prop_suite["$n transmons"] = @benchmarkable unitary_propagator($cqs, $times)
+    state_suite["$n transmons"] = @benchmarkable unitary_state($cqs, $times, $ψ0);
+end
