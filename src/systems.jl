@@ -59,14 +59,6 @@ function scale_EJ(E_J, flux, d)
 end
 
 
-""" Transmon Hamiltonian in the charge basis """
-function hamiltonian(t::TunableTransmon, flux)
-  N = floor(Int, dim(t)/2)
-  scaled_EJ = scale_EJ(t.E_J, flux, t.d)
-  4 * t.E_C * diagm((-N:N).^2) - scaled_EJ  * 0.5 * (diagm(ones(dim(t)-1),-1) + diagm(ones(dim(t)-1),1))
-end
-
-
 mutable struct FixedTransmon <: QSystem
     label::AbstractString
     E_C::Float64
@@ -84,11 +76,17 @@ function hamiltonian(cqs::CompositeQSystem)
 end
 
 """ Transmon Hamiltonian in the charge basis """
-function hamiltonian(t::FixedTransmon, flux::Float64)
+function hamiltonian(t::FixedTransmon)
   N = floor(Int, dim(t)/2)
   4 * t.E_C * diagm((-N:N).^2) - 0.5*t.E_J*(diagm(ones(dim(t)-1),-1) + diagm(ones(dim(t)-1),1))
 end
 
+""" Transmon Hamiltonian in the charge basis """
+function hamiltonian(t::TunableTransmon, flux)
+  N = floor(Int, dim(t)/2)
+  scaled_EJ = scale_EJ(t.E_J, flux, t.d)
+  4 * t.E_C * diagm((-N:N).^2) - scaled_EJ  * 0.5 * (diagm(ones(dim(t)-1),-1) + diagm(ones(dim(t)-1),1))
+end
 
 mutable struct FixedDuffingTransmon <: QSystem
     label::AbstractString
