@@ -74,6 +74,15 @@ mutable struct FixedTransmon <: QSystem
     dim::Int
 end
 
+""" Calculate the drift or natural Hamiltonian of a CompositeQSystem """
+function hamiltonian(cqs::CompositeQSystem)
+    ham = zeros(Complex128, (dim(cqs), dim(cqs)))
+    for (new_ham, idxs) = cqs.fixed_Hs
+        embed_add!(ham, new_ham, idxs)
+    end
+    return ham
+end
+
 """ Transmon Hamiltonian in the charge basis """
 function hamiltonian(t::FixedTransmon, flux::Float64)
   N = floor(Int, dim(t)/2)
@@ -100,7 +109,7 @@ end
 function hamiltonian(t::TunableDuffingTransmon, flux)
     scaled_EJ = scale_EJ(t.E_J, flux, t.d)
     ωₚ = sqrt(8*t.E_C*scaled_EJ)
-    return diagm([(ωₚ-t.E_C/2)*ct - t.E_C/2*ct^2 for ct in 0:(t.dim-1)])
+    return diagm([(ωₚ - t.E_C / 2) * ct - t.E_C / 2 * ct^2 for ct in 0:(t.dim-1)])
 end
 
 
