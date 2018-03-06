@@ -7,8 +7,9 @@ export CompositeQSystem,
 # tensor products of quantum systems
 mutable struct CompositeQSystem
     subsystems::Vector
-    fixed_Hs::Vector{Tuple} # tuple of Matrix and exansion indices
+    fixed_Hs::Vector{Tuple} # tuple of Matrix and expansion indices
     parametric_Hs::Vector{Tuple} # tuple of Functions and expansion indices
+    c_op::Vector{Tuple} # tuple of Matrix and expansion indices for collapse operators
     dim::Int
 end
 
