@@ -80,10 +80,12 @@ expected_10 = 0.5 +  0.5*cos.(2π*(1/145) * times)
 ########################## ME Solver #################################
 qubit_freq = 5.0
 q0 = FixedDuffingTransmon("q0", qubit_freq, -0.2, 3)
-cqs = CompositeQSystem([q0]);
+cqs = CompositeQSystem([q0])
 add_hamiltonian!(cqs, q0)
-add_hamiltonian!(cqs, microwave_drive(q0, t -> 0.02*cos(2π*qubit_freq * t)), q0);
-ψ_init = Complex128[1; 0; 0]
-ρ0 = ψ_init * ψ_init'
+add_hamiltonian!(cqs, microwave_drive(q0, t -> 0.02*cos(2π*qubit_freq * t)), q0)
+sig = sqrt(2pi * 0.0003) * lowering(q0)
+add_c_op!(cqs, sig, [q0])
+ψ0 = Complex128[1; 0; 0]
+ρ0 = ψ0 * ψ0'
 times = collect(linspace(0,100,101))
 ρs = me_propagator(cqs, times, ρ0)
