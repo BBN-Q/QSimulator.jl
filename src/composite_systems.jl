@@ -59,7 +59,7 @@ end
 """
     embed(m::Matrix, acting_on::Vector, dims::Vector)
 
-Embed a subsystem operator `m` acting on subystem indices `acting_on` into a larger tensor product
+Embed a subsystem operator `m` acting on subsystem indices `acting_on` into a larger tensor product
 space with subsystem dimensions `dims`.
 """
 function embed(m::Matrix, acting_on::Vector, dims::Vector)
@@ -90,8 +90,8 @@ end
 """
     embed_indices(acting_on::Vector, dims::Vector)
 
-Return the linear indices that map a subystem operation acting onn subystem indices `acting_on` into
-a larger tensor product space with subystem dimensions `dims`.
+Return the linear indices that map a subystem operation acting on subystem indices `acting_on` into
+a larger tensor product space with subsystem dimensions `dims`.
 """
 function embed_indices(acting_on::Vector, dims::Vector)
     # Strategy:
