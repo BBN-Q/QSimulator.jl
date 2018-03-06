@@ -75,3 +75,15 @@ pop_01 = [abs2(ψ[2]) for ψ in ψs]
 expected_10 = 0.5 +  0.5*cos.(2π*(1/145) * times)
 @test isapprox(pop_10, expected_10; rtol=2e-2, atol=2e-2)
 @test isapprox(pop_01, 1 .- expected_10; rtol=2e-2, atol=2e-2)
+
+
+########################## ME Solver #################################
+qubit_freq = 5.0
+q0 = FixedDuffingTransmon("q0", qubit_freq, -0.2, 3)
+cqs = CompositeQSystem([q0]);
+add_hamiltonian!(cqs, q0)
+add_hamiltonian!(cqs, microwave_drive(q0, t -> 0.02*cos(2π*qubit_freq * t)), q0);
+ψ_init = Complex128[1; 0; 0]
+ρ0 = ψ_init * ψ_init'
+times = collect(linspace(0,100,101))
+ρs = me_propagator(cqs, times, ρ0)
