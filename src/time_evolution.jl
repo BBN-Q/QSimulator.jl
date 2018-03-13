@@ -6,7 +6,7 @@ import QSimulator.add_parametric_hamiltonians!
 
 export unitary_propagator,
        unitary_state,
-       me_propagator
+       me_state
 
 """
     schrodinger(cqs::CompositeQSystem, ts::Float64; u0::Matrix=Matrix{Complex128}(0,0), t0=0.0)
@@ -67,7 +67,7 @@ end
 
 Compute the master equation evolution of a CompositeQSystem from initial density matrix ρ0 evaluted at ts.
 """
-function me_propagator(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
+function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
     # schrodinger differential equation for density matrix with in place update
     # dρ/dt = -i[H, ρ]
     function ode(dρ, ρ, p, t)
@@ -96,4 +96,4 @@ end
 # add helper functions for saving at a single point
 unitary_propagator{T<:Number}(cqs::CompositeQSystem, t::T; u0=Matrix{Complex128}(0,0), t0=0.0) = unitary_propagator(cqs, [t]; u0=u0, t0=t0)[1]
 unitary_state{T<:Number}(cqs::CompositeQSystem, t::T, ψ0::Vector; t0=0.0) = unitary_state(cqs, [t], ψ0; t0=t0)[1]
-me_propagator{T<:Number}(cqs::CompositeQSystem, t::T, ρ0::Matrix; t0=0.0) = unitary_state(cqs, [t], ρ0; t0=t0)[1]
+me_state{T<:Number}(cqs::CompositeQSystem, t::T, ρ0::Matrix; t0=0.0) = unitary_state(cqs, [t], ρ0; t0=t0)[1]

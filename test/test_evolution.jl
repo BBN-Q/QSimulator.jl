@@ -88,4 +88,4 @@ add_c_op!(cqs, sig, [q0])
 ψ0 = Complex128[1; 0; 0]
 ρ0 = ψ0 * ψ0'
 times = collect(linspace(0,100,101))
-ρs = me_propagator(cqs, times, ρ0)
+ρs = me_state(cqs, times, ρ0)
