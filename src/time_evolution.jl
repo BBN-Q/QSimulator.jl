@@ -79,7 +79,7 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
         for (c_op, idxs) = p[1].c_op
             c_mat .= p[4] # start with empty array
             embed_add!(c_mat, c_op, idxs)
-            dρ .+= c_mat*ρ*c_mat' - .5*(c_mat'*c_mat*ρ + ρ*c_mat'*c_mat)
+            dρ .+= c_mat*ρ*c_mat' .- .5.*c_mat'*c_mat*ρ .- .5.*ρ*c_mat'*c_mat
         end
     end
     # scale Hamiltonian from Hz to rad/s.
