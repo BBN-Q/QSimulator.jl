@@ -1,7 +1,6 @@
 import Base.findin
 
 export CompositeQSystem,
-       hamiltonian,
        add_hamiltonian!
 
 # tensor products of quantum systems
