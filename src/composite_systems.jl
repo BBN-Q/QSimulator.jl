@@ -1,7 +1,6 @@
 import Base.findin
 
 export CompositeQSystem,
-       hamiltonian,
        add_hamiltonian!
 
 # tensor products of quantum systems
@@ -39,15 +38,6 @@ function add_hamiltonian!(cqs::CompositeQSystem, ham::Function, acting_on)
     push!(cqs.parametric_Hs, (ham, idxs))
 end
 
-""" Calculate the drift or natural Hamiltonian of a CompositeQSystem """
-function hamiltonian(cqs::CompositeQSystem)
-    ham = zeros(Complex128, (dim(cqs), dim(cqs)))
-    for (new_ham, idxs) = cqs.fixed_Hs
-        embed_add!(ham, new_ham, idxs)
-    end
-    return ham
-end
-
 """ In place additions of the parametric Hamiltonians of a CQS at time t. """
 function add_parametric_hamiltonians!(ham, cqs::CompositeQSystem, t)
     for (ham_adder!, idxs) = cqs.parametric_Hs
@@ -68,7 +58,7 @@ end
 """
     embed(m::Matrix, acting_on::Vector, dims::Vector)
 
-Embed a subsystem operator `m` acting on subystem indices `acting_on` into a larger tensor product
+Embed a subsystem operator `m` acting on subsystem indices `acting_on` into a larger tensor product
 space with subsystem dimensions `dims`.
 """
 function embed(m::Matrix, acting_on::Vector, dims::Vector)
@@ -99,8 +89,8 @@ end
 """
     embed_indices(acting_on::Vector, dims::Vector)
 
-Return the linear indices that map a subystem operation acting onn subystem indices `acting_on` into
-a larger tensor product space with subystem dimensions `dims`.
+Return the linear indices that map a subystem operation acting on subystem indices `acting_on` into
+a larger tensor product space with subsystem dimensions `dims`.
 """
 function embed_indices(acting_on::Vector, dims::Vector)
     # Strategy:

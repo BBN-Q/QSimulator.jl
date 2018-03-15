@@ -18,9 +18,7 @@ export raising,
        XY,
        dipole
 
-export hamiltonian
-
-# atomic  quantum systems such as resonators or transmons
+""" atomic  quantum systems such as resonators or transmons """
 abstract type QSystem end
 
 label(q::QSystem) = q.label
@@ -35,15 +33,14 @@ number(q::QSystem) = raising(q) * lowering(q)
 X(q::QSystem) = raising(q) + lowering(q)
 Y(q::QSystem) = 1im*(raising(q) - lowering(q))
 
-# linear resonator
+""" linear resonator """
 mutable struct Resonator <: QSystem
     label::AbstractString
     frequency::Float64
     dim::Int
 end
-hamiltonian(r::Resonator) = r.frequency * number(r)
 
-# full Transmon
+""" full Transmon """
 mutable struct TunableTransmon <: QSystem
     label::AbstractString
     E_C::Float64
@@ -52,20 +49,11 @@ mutable struct TunableTransmon <: QSystem
     dim::Int
 end
 
-""" Scale the effective E_J given an asymmetry  paramter and flux threading the loop  in Φ_0 """
+""" Scale the effective E_J given an asymmetry paramter and flux threading the loop  in Φ_0 """
 function scale_EJ(E_J, flux, d)
     flux_rad = π*flux
     E_J * sqrt(cos(flux_rad)^2 + d^2*(sin(flux_rad)^2))
 end
-
-
-""" Transmon Hamiltonian in the charge basis """
-function hamiltonian(t::TunableTransmon, flux)
-  N = floor(Int, dim(t)/2)
-  scaled_EJ = scale_EJ(t.E_J, flux, t.d)
-  4 * t.E_C * diagm((-N:N).^2) - scaled_EJ  * 0.5 * (diagm(ones(dim(t)-1),-1) + diagm(ones(dim(t)-1),1))
-end
-
 
 mutable struct FixedTransmon <: QSystem
     label::AbstractString
@@ -74,20 +62,12 @@ mutable struct FixedTransmon <: QSystem
     dim::Int
 end
 
-""" Transmon Hamiltonian in the charge basis """
-function hamiltonian(t::FixedTransmon, flux::Float64)
-  N = floor(Int, dim(t)/2)
-  4 * t.E_C * diagm((-N:N).^2) - 0.5*t.E_J*(diagm(ones(dim(t)-1),-1) + diagm(ones(dim(t)-1),1))
-end
-
-
 mutable struct FixedDuffingTransmon <: QSystem
     label::AbstractString
     frequency::Float64
     anharmonicity::Float64
     dim::Int
 end
-hamiltonian(t::FixedDuffingTransmon) = (t.frequency - 0.5*t.anharmonicity)*number(t) + 0.5*t.anharmonicity * number(t)^2
 
 mutable struct TunableDuffingTransmon <: QSystem
     label::AbstractString
@@ -96,13 +76,6 @@ mutable struct TunableDuffingTransmon <: QSystem
     d::Float64 #asymmetry parameter
     dim::Int
 end
-
-function hamiltonian(t::TunableDuffingTransmon, flux)
-    scaled_EJ = scale_EJ(t.E_J, flux, t.d)
-    ωₚ = sqrt(8*t.E_C*scaled_EJ)
-    return diagm([(ωₚ-t.E_C/2)*ct - t.E_C/2*ct^2 for ct in 0:(t.dim-1)])
-end
-
 
 """
 Fit  E_C and E_J for a fixed frequency transmon given f_01 and anharmonicity
