@@ -83,9 +83,20 @@ q0 = FixedDuffingTransmon("q0", qubit_freq, -0.2, 3)
 cqs = CompositeQSystem([q0])
 add_hamiltonian!(cqs, q0)
 add_hamiltonian!(cqs, microwave_drive(q0, t -> 0.02*cos(2π*qubit_freq * t)), q0)
-sig = sqrt(2pi * 0.0003) * lowering(q0)
-add_c_op!(cqs, sig, [q0])
+
+T1 = 50. # in ns
+γ1 = 1. / T1
+c_op = sqrt(γ1) * lowering(q0)
+add_c_op!(cqs, c_op, [q0])
+
 ψ0 = Complex128[1; 0; 0]
 ρ0 = ψ0 * ψ0'
 times = collect(linspace(0,100,101))
 ρs = me_state(cqs, times, ρ0)
+
+ρ00 = [real(ρ[1, 1]) for ρ in ρs]
+
+model_t2(x, p) = (exp.(-x ./ p[1]) .* cos.(2π .* p[2] .* x .- p[3]) + 1.0) / 2.0
+
+fit = curve_fit(model_t2, times, ρ00, [T1, .02, 0])
+@test abs(fit.param[1] - 4. * T1 / 3.) < 1.
