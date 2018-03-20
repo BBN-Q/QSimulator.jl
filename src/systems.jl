@@ -24,7 +24,7 @@ abstract type QSystem end
 label(q::QSystem) = q.label
 dim(q::QSystem) = q.dim
 
-""" some basic operators """
+# some basic operators
 raising(q::QSystem) = diagm(sqrt.(1:(dim(q)-1)), -1)
 const create = raising
 lowering(q::QSystem) = diagm(sqrt.(1:(dim(q)-1)), 1)
