@@ -2,14 +2,14 @@ import Base.findin
 
 export CompositeQSystem,
        add_hamiltonian!,
-       add_c_op!
+       add_lind_op!
 
 # tensor products of quantum systems
 mutable struct CompositeQSystem
     subsystems::Vector
     fixed_Hs::Vector{Tuple} # tuple of Matrix and expansion indices
     parametric_Hs::Vector{Tuple} # tuple of Functions and expansion indices
-    c_op::Vector{Tuple} # tuple of Matrix and expansion indices for collapse operators
+    lind_op::Vector{Tuple} # tuple of Matrix and expansion indices for collapse operators
     dim::Int
 end
 
@@ -48,9 +48,9 @@ function add_parametric_hamiltonians!(ham, cqs::CompositeQSystem, t)
 end
 
 """ In place addition of collapse operators to a CompositeQSystem """
-function add_c_op!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, c_op::AbstractMatrix{T}, acting_on::Array{Q})
-    idxs = QSimulator_git.embed_indices(cqs, acting_on)
-    push!(cqs.c_op, (c_op, idxs))
+function add_lind_op!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting_on::Array{Q})
+    idxs = QSimulator.embed_indices(cqs, acting_on)
+    push!(cqs.lind_op, (lind_op, idxs))
 end
 
 """ In place addition of an operator embedded into a larger Hilbert space given a set of expansion indices"""

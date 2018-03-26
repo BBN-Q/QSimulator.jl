@@ -63,9 +63,10 @@ end
 
 
 """
-    unitary_state(cqs::CompositeQSystem, ts::Float64, ρ0::Matrix, t0=0.0)
+    me_state(cqs::CompositeQSystem, ts::Float64, ρ0::Matrix, t0=0.0)
 
-Compute the master equation evolution of a CompositeQSystem from initial density matrix ρ0 evaluted at ts.
+Compute the master equation evolution of a CompositeQSystem from initial density
+matrix ρ0 evaluted at ts.
 """
 function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
     # schrodinger differential equation for density matrix with in place update
@@ -75,17 +76,17 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
         ham .= p[2] # start from fixed_ham
         add_parametric_hamiltonians!(ham, p[1], t)
         dρ .= -1im * (ham*ρ - ρ*ham)
-        c_mat = p[5]
-        for (c_op, idxs) = p[1].c_op
-            c_mat .= p[4] # start with empty array
-            embed_add!(c_mat, c_op, idxs)
-            dρ .+= c_mat*ρ*c_mat' .- .5.*c_mat'*c_mat*ρ .- .5.*ρ*c_mat'*c_mat
+        lind_mat = p[5]
+        for (lind_op, idxs) = p[1].lind_op
+            lind_mat .= p[4] # start with empty array
+            embed_add!(lind_mat, lind_op, idxs)
+            dρ .+= lind_mat*ρ*lind_mat' .- .5.*lind_mat'*lind_mat*ρ .- .5.*ρ*lind_mat'*lind_mat
         end
     end
     # scale Hamiltonian from Hz to rad/s.
     fixed_ham = 2pi * hamiltonian(cqs)
     work_ham = similar(fixed_ham)
-    bare_lind = zeros(size(fixed_ham))
+    bare_lind = zeros(Complex128, size(fixed_ham))
     work_lind = similar(fixed_ham)
     prob = ODEProblem(ode, ρ0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham, bare_lind, work_lind))
     save_start = ts[1]==t0 ? true : false #save t0 only if asked for
