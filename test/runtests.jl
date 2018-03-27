@@ -1,4 +1,5 @@
 using QSimulator
+using LsqFit
 
 using Base.Test
 
