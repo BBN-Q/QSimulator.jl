@@ -13,7 +13,7 @@ mutable struct CompositeQSystem
     dim::Int
 end
 
-CompositeQSystem(qs) = CompositeQSystem(qs, [], [], prod(dim(q) for q in qs))
+CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], prod(dim(q) for q in qs))
 
 # helper functions for CompositeQSystems
 dim(cqs::CompositeQSystem) = cqs.dim
