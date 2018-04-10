@@ -40,5 +40,5 @@ function hamiltonian(t::MatthieuTransmon, flux)
     t_params = [t.E_C, EJ1, EJ2]
     f01 = matthieu_f01(t_params, flux)
     η = matthieu_η(t_params, flux)
-    return diagm([0, f01, 2f01 - η])
+    return diagm([0., f01, 2.*f01 - η])
 end
