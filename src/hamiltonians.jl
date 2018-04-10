@@ -33,3 +33,12 @@ function hamiltonian(t::TunableDuffingTransmon, flux)
     ωₚ = sqrt(8*t.E_C*scaled_EJ)
     return diagm([(ωₚ - t.E_C / 2) * ct - t.E_C / 2 * ct^2 for ct in 0:(t.dim-1)])
 end
+
+function hamiltonian(t::MatthieuTransmon, flux)
+    EJ1 = .5 * (t.d + 1) * t.E_J
+    EJ2 = t.E_J - EJ1
+    t_params = [t.E_C, EJ1, EJ2]
+    f01 = matthieu_f01(t_params, flux)
+    η = matthieu_η(t_params, flux)
+    return diagm([0, f01, 2f01 - η])
+end
