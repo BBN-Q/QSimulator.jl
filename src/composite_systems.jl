@@ -10,10 +10,11 @@ mutable struct CompositeQSystem
     fixed_Hs::Vector{Tuple} # tuple of Matrix and expansion indices
     parametric_Hs::Vector{Tuple} # tuple of Functions and expansion indices
     lind_op::Vector{Tuple} # tuple of Matrix and expansion indices for collapse operators
+    time_dependent_lind_op::Vector{Tuple} # tuple of Matrix, expansion indices, and time-dependent function for collapse operators
     dim::Int
 end
 
-CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], prod(dim(q) for q in qs))
+CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], [], prod(dim(q) for q in qs))
 
 # helper functions for CompositeQSystems
 dim(cqs::CompositeQSystem) = cqs.dim
@@ -25,7 +26,7 @@ findin(cqs::CompositeQSystem, s_label::Vector{String}) = findin([label(s) for s 
 findin(cqs::CompositeQSystem, s_label::AbstractString) = findin(cqs, [s_label])
 
 """ Add a fixed subystem Hamiltonian to a CompositeQSystem """
-function add_hamiltonian!{T<:Number}(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on)
+function add_hamiltonian!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}})
     idxs = embed_indices(cqs, acting_on)
     push!(cqs.fixed_Hs, (ham, idxs))
 end
@@ -35,22 +36,28 @@ add_hamiltonian!(cqs::CompositeQSystem, qs::QSystem) = add_hamiltonian!(cqs, ham
 
 """ Add a parameterized Hamiltonian to a CompositeQSystem """
 # TODO how to do this dispatch vs adding a fixed Hamiltonian - Jameson says not to do this https://discourse.julialang.org/t/functions-and-callable-methods/2983/3
-function add_hamiltonian!(cqs::CompositeQSystem, ham::Function, acting_on)
+function add_hamiltonian!{Q<:QSystem}(cqs::CompositeQSystem, ham::Function, acting_on::Union{Q, Array{Q}})
     idxs = embed_indices(findin(cqs, acting_on), [dim(s) for s in cqs.subsystems])
     push!(cqs.parametric_Hs, (ham, idxs))
 end
 
 """ In place additions of the parametric Hamiltonians of a CQS at time t. """
-function add_parametric_hamiltonians!(ham, cqs::CompositeQSystem, t)
+function add_parametric_hamiltonians!{T<:Number}(ham::AbstractMatrix{T}, cqs::CompositeQSystem, t)
     for (ham_adder!, idxs) = cqs.parametric_Hs
         ham_adder!(ham, idxs, t)
     end
 end
 
 """ In place addition of collapse operators to a CompositeQSystem """
-function add_lind_op!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting_on::Array{Q})
-    idxs = QSimulator.embed_indices(cqs, acting_on)
+function add_lind_op!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}})
+    idxs = embed_indices(cqs, acting_on)
     push!(cqs.lind_op, (lind_op, idxs))
+end
+
+""" In place addition of collapse operators to a CompositeQSystem """
+function add_lind_op!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}}, time_func::Function)
+    idxs = embed_indices(cqs, acting_on)
+    push!(cqs.time_dependent_lind_op, (lind_op, idxs, time_func))
 end
 
 """ In place addition of an operator embedded into a larger Hilbert space given a set of expansion indices"""
