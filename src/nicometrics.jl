@@ -69,7 +69,7 @@ PT_ANH = [
 
 function xieff(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1})
     EC, EJ1, EJ2 = t_params
-    return sqrt.((2. * EC) ./ sqrt.((EJ1 ^ 2 + EJ2 ^ 2) .+ (2. * EJ1 * EJ2) .* cos.(ϕ)))
+    return sqrt.((2. * EC) ./ sqrt.((EJ1 ^ 2 + EJ2 ^ 2) .+ (2. * EJ1 * EJ2) .* cos.(2π*ϕ)))
 end
 
 function matthieu_sum(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}, PT::Array{<:Array{<:Number, 1}, 1})
