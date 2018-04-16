@@ -72,15 +72,15 @@ function xieff(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1})
     return sqrt.((2. * EC) ./ sqrt.((EJ1 ^ 2 + EJ2 ^ 2) .+ (2. * EJ1 * EJ2) .* cos.(2π*ϕ)))
 end
 
-function matthieu_sum(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}, PT::Array{<:Array{<:Number, 1}, 1})
+function mathieu_sum(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}, PT::Array{<:Array{<:Number, 1}, 1})
     EC = t_params[1]
     xi = xieff(t_params, ϕ)
     series_term = par -> par[1] * (xi .^ par[3]) / (2 ^ par[2])
     return EC * sum(map(series_term, PT))
 end
 
-matthieu_f01(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}) = matthieu_sum(t_params, ϕ, PT_FREQ)
-matthieu_f01(t_params::Array{<:Float64, 1}, ϕ::Number) = matthieu_f01(t_params, [ϕ])[end]
+mathieu_f01(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}) = mathieu_sum(t_params, ϕ, PT_FREQ)
+mathieu_f01(t_params::Array{<:Float64, 1}, ϕ::Number) = mathieu_f01(t_params, [ϕ])[end]
 
-matthieu_η(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}) = matthieu_sum(t_params, ϕ, PT_ANH)
-matthieu_η(t_params::Array{<:Float64, 1}, ϕ::Number) = matthieu_η(t_params, [ϕ])[end]
+mathieu_η(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}) = mathieu_sum(t_params, ϕ, PT_ANH)
+mathieu_η(t_params::Array{<:Float64, 1}, ϕ::Number) = mathieu_η(t_params, [ϕ])[end]

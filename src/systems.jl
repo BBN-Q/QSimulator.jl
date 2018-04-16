@@ -4,7 +4,7 @@ export QSystem,
        FixedTransmon,
        FixedDuffingTransmon,
        TunableDuffingTransmon,
-       MatthieuTransmon,
+       MathieuTransmon,
        label,
        dim
 
@@ -78,7 +78,7 @@ mutable struct TunableDuffingTransmon <: QSystem
     dim::Int
 end
 
-mutable struct MatthieuTransmon <: QSystem
+mutable struct MathieuTransmon <: QSystem
     label::AbstractString
     E_C::Float64
     E_J::Float64 #sum of junction E_J's
