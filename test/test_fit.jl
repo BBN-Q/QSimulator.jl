@@ -2,10 +2,9 @@
 
 f_01 = 5 # f_01 transition frequency
 α = -0.2 # anharmonicity
-dim = 3 # dimension
-
+dim = 3 # dimensionality of system
 # Fit EC and EJ
-EC_fit, EJ_fit = QSimulator.fit_fixed_transmon(f_01, α, dim)
+EC_fit, EJ_fit = QSimulator.fit_fixed_transmon(f_01, α)
 
 # Verify that fit EC and EJ are consisent with f_01 and α
 q0 = FixedTransmon("Test", EC_fit, EJ_fit, dim)
@@ -21,12 +20,12 @@ fit_α = fit_f_12 - fit_f_01
 f_01_max = 5 # f_01 transition frequency at 0 flux
 f_01_min = 4 # f_01 transition frequency at 1/2 flux
 α_max = -0.2 # anharmonicity at 0 flux
-dim = 3 # dimension
+dim = 3 # dimensionality of system
 model_fit = [TunableTransmon, TunableDuffingTransmon]
 
 for model = model_fit
     # Fit EC and EJ
-    EC_fit, EJ_fit, d_fit = QSimulator.fit_tunable_transmon(f_01_max, f_01_min, α_max, dim, model)
+    EC_fit, EJ_fit, d_fit = QSimulator.fit_tunable_transmon(f_01_max, f_01_min, α_max, model)
 
     # # Verify that fit EC and EJ are consisent with f_01 and α
     q1 = model("Test", EC_fit, EJ_fit, d_fit, dim)
