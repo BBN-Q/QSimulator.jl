@@ -88,6 +88,12 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
             embed_add!(lind_mat, time_func(t) * lind_op, idxs)
             dρ .+= lind_mat*ρ*lind_mat' .- .5.*lind_mat'*lind_mat*ρ .- .5.*ρ*lind_mat'*lind_mat
         end
+
+        for (lind_op, idxs) = p[1].functional_lind_op
+            lind_mat .= p[4] # start with empty array
+            embed_add!(lind_mat, [el(t) for el in lind_op], idxs)
+            dρ .+= lind_mat*ρ*lind_mat' .- .5.*lind_mat'*lind_mat*ρ .- .5.*ρ*lind_mat'*lind_mat
+        end
     end
     # scale Hamiltonian from Hz to rad/s.
     fixed_ham = 2pi * hamiltonian(cqs)

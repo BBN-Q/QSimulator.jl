@@ -11,10 +11,11 @@ mutable struct CompositeQSystem
     parametric_Hs::Vector{Tuple} # tuple of Functions and expansion indices
     lind_op::Vector{Tuple} # tuple of Matrix and expansion indices for collapse operators
     time_dependent_lind_op::Vector{Tuple} # tuple of Matrix, expansion indices, and time-dependent function for collapse operators
+    functional_lind_op::Vector{Tuple}
     dim::Int
 end
 
-CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], [], prod(dim(q) for q in qs))
+CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], [], [], prod(dim(q) for q in qs))
 
 # helper functions for CompositeQSystems
 dim(cqs::CompositeQSystem) = cqs.dim
@@ -58,6 +59,12 @@ end
 function add_lind_op!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}}, time_func::Function)
     idxs = embed_indices(cqs, acting_on)
     push!(cqs.time_dependent_lind_op, (lind_op, idxs, time_func))
+end
+
+""" In place addition of collapse operators to a CompositeQSystem """
+function add_lind_op!{Q<:QSystem}(cqs::CompositeQSystem, lind_op::AbstractMatrix{Function}, acting_on::Union{Q, Array{Q}})
+    idxs = embed_indices(cqs, acting_on)
+    push!(cqs.functional_lind_op, (lind_op, idxs))
 end
 
 """ In place addition of an operator embedded into a larger Hilbert space given a set of expansion indices"""
