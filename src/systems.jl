@@ -88,7 +88,7 @@ function fit_fixed_transmon(f_01, α)
       E_C = params[1]
       E_J  = params[2]
       t = FixedTransmon("dummy", E_C, E_J, 3)
-      levels = eigvals(hamiltonian(t))
+      levels = sort(real(eigvals(hamiltonian(t))))
       test_f_01 = levels[2] - levels[1]
       test_f_12 = levels[3] - levels[2]
       return ( test_f_01 - f_01)^2 + ( test_f_12 -  test_f_01 - α)^2
@@ -108,8 +108,8 @@ function fit_tunable_transmon{T<:QSystem}(f_01_max, f_01_min, α_max, model::Typ
       E_J  = params[2]
       d = params[3]
       t = model("dummy", E_C, E_J, d, 3)
-      levels_fmax = eigvals(hamiltonian(t, 0))
-      levels_fmin = eigvals(hamiltonian(t, 0.5))
+      levels_fmax = sort(real(eigvals(hamiltonian(t, 0))))
+      levels_fmin = sort(real(eigvals(hamiltonian(t, 0.5))))
       test_f_01_max = levels_fmax[2] - levels_fmax[1]
       test_f_12_max = levels_fmax[3] - levels_fmax[2]
       test_f_01_min = levels_fmin[2] - levels_fmin[1]
