@@ -1,4 +1,4 @@
-PT_FREQ = [
+const PT_FREQ = [
     [4., 0, -1],
     [-1., 0, 0],
     [-1., 2, 1],
@@ -33,7 +33,7 @@ PT_FREQ = [
     [-518667194120793070334115565427490753019904133., 116, 30]
 ]
 
-PT_ANH = [
+const PT_ANH = [
     [1., 0, 0],
     [9., 4, 1],
     [81., 7, 2],
@@ -67,20 +67,20 @@ PT_ANH = [
     [384886904723357410697832985058012690322303378753., 116, 30]
 ]
 
-function xieff(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1})
-    EC, EJ1, EJ2 = t_params
-    return sqrt.((2. * EC) ./ sqrt.((EJ1 ^ 2 + EJ2 ^ 2) .+ (2. * EJ1 * EJ2) .* cos.(2π*ϕ)))
+function xieff(t_params::Tuple{Float64, Float64, Float64}, ϕ::Vector{<:Number})
+    EC, EJ₁, EJ₂ = t_params
+    return sqrt.((2. * EC) ./ sqrt.((EJ₁ ^ 2 + EJ₂ ^ 2) .+ (2. * EJ₁ * EJ₂) .* cos.(2π*ϕ)))
 end
 
-function mathieu_sum(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}, PT::Array{<:Array{<:Number, 1}, 1})
+function mathieu_sum(t_params::Tuple{Float64, Float64, Float64}, ϕ::Vector{<:Number}, PT::Array{<:Array{<:Number, 1}, 1})
     EC = t_params[1]
     xi = xieff(t_params, ϕ)
     series_term = par -> par[1] * (xi .^ par[3]) / (2 ^ par[2])
-    return EC * sum(map(series_term, PT))
+    return EC * reduce((x,y) -> x + series_term(y), 0, PT)
 end
 
-mathieu_f01(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}) = mathieu_sum(t_params, ϕ, PT_FREQ)
-mathieu_f01(t_params::Array{<:Float64, 1}, ϕ::Number) = mathieu_f01(t_params, [ϕ])[end]
+mathieu_f01(t_params::Tuple{Float64, Float64, Float64}, ϕ::Vector{<:Number}) = mathieu_sum(t_params, ϕ, PT_FREQ)
+mathieu_f01(t_params::Tuple{Float64, Float64, Float64}, ϕ::Number) = mathieu_f01(t_params, [ϕ])[end]
 
-mathieu_η(t_params::Array{<:Float64, 1}, ϕ::Array{<:Number, 1}) = mathieu_sum(t_params, ϕ, PT_ANH)
-mathieu_η(t_params::Array{<:Float64, 1}, ϕ::Number) = mathieu_η(t_params, [ϕ])[end]
+mathieu_η(t_params::Tuple{Float64, Float64, Float64}, ϕ::Vector{<:Number}) = mathieu_sum(t_params, ϕ, PT_ANH)
+mathieu_η(t_params::Tuple{Float64, Float64, Float64}, ϕ::Number) = mathieu_η(t_params, [ϕ])[end]

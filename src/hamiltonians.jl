@@ -35,9 +35,9 @@ function hamiltonian(t::TunableDuffingTransmon, flux)
 end
 
 function hamiltonian(t::MathieuTransmon, flux)
-    EJ1 = .5 * (t.d + 1) * t.E_J
-    EJ2 = t.E_J - EJ1
-    t_params = [t.E_C, EJ1, EJ2]
+    EJ₁ = .5 * (t.d + 1) * t.E_J
+    EJ₂ = t.E_J - EJ1
+    t_params = (t.E_C, EJ₁, EJ₂)
     f01 = mathieu_f01(t_params, flux)
     η = mathieu_η(t_params, flux)
     return diagm([0., f01, 2. * f01 - η])
