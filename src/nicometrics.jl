@@ -67,20 +67,22 @@ const PT_ANH = [
     [384886904723357410697832985058012690322303378753., 116, 30]
 ]
 
-function xieff(t_params::Tuple{Float64, Float64, Float64}, ϕ::Vector{<:Number})
+const PT_FREQ_PRE = [[par[3], par[1] / (2 ^ par[2])] for par in PT_FREQ]
+
+const PT_ANH_PRE = [[par[3], par[1] / (2 ^ par[2])] for par in PT_ANH]
+
+function xieff(t_params::Tuple{Float64, Float64, Float64}, ϕ::Union{Vector{<:Number}, <:Number})
     EC, EJ₁, EJ₂ = t_params
     return sqrt.((2. * EC) ./ sqrt.((EJ₁ ^ 2 + EJ₂ ^ 2) .+ (2. * EJ₁ * EJ₂) .* cos.(2π*ϕ)))
 end
 
-function mathieu_sum(t_params::Tuple{Float64, Float64, Float64}, ϕ::Vector{<:Number}, PT::Array{<:Array{<:Number, 1}, 1})
+function mathieu_sum(t_params::Tuple{Float64, Float64, Float64}, ϕ::Union{Vector{<:Number}, <:Number}, PT::Array{<:Array{<:Number, 1}, 1})
     EC = t_params[1]
     xi = xieff(t_params, ϕ)
-    series_term = par -> par[1] * (xi .^ par[3]) / (2 ^ par[2])
-    return EC * reduce((x,y) -> x + series_term(y), 0, PT)
+    series_term = par -> par[2] * (xi .^ par[1])
+    return EC * mapreduce(series_term, +, PT)
 end
 
-mathieu_f01(t_params::Tuple{Float64, Float64, Float64}, ϕ::Vector{<:Number}) = mathieu_sum(t_params, ϕ, PT_FREQ)
-mathieu_f01(t_params::Tuple{Float64, Float64, Float64}, ϕ::Number) = mathieu_f01(t_params, [ϕ])[end]
+mathieu_f01(t_params::Tuple{Float64, Float64, Float64}, ϕ) = mathieu_sum(t_params, ϕ, PT_FREQ_PRE)
 
-mathieu_η(t_params::Tuple{Float64, Float64, Float64}, ϕ::Vector{<:Number}) = mathieu_sum(t_params, ϕ, PT_ANH)
-mathieu_η(t_params::Tuple{Float64, Float64, Float64}, ϕ::Number) = mathieu_η(t_params, [ϕ])[end]
+mathieu_η(t_params::Tuple{Float64, Float64, Float64}, ϕ) = mathieu_sum(t_params, ϕ, PT_ANH_PRE)
