@@ -36,7 +36,7 @@ end
 
 function hamiltonian(t::MathieuTransmon, flux)
     EJ₁ = .5 * (t.d + 1) * t.E_J
-    EJ₂ = t.E_J - EJ1
+    EJ₂ = t.E_J - EJ₁
     t_params = (t.E_C, EJ₁, EJ₂)
     f01 = mathieu_f01(t_params, flux)
     η = mathieu_η(t_params, flux)
