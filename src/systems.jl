@@ -4,6 +4,7 @@ export QSystem,
        FixedTransmon,
        FixedDuffingTransmon,
        TunableDuffingTransmon,
+       MathieuTransmon,
        label,
        dim
 
@@ -70,6 +71,14 @@ mutable struct FixedDuffingTransmon <: QSystem
 end
 
 mutable struct TunableDuffingTransmon <: QSystem
+    label::AbstractString
+    E_C::Float64
+    E_J::Float64 #sum of junction E_J's
+    d::Float64 #asymmetry parameter
+    dim::Int
+end
+
+mutable struct MathieuTransmon <: QSystem
     label::AbstractString
     E_C::Float64
     E_J::Float64 #sum of junction E_J's
