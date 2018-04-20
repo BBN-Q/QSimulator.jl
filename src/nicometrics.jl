@@ -1,3 +1,11 @@
+# Perturbative expansion of the Matheiu functions for the energy levels of a tunable transmon. The
+# expansion is performed in the dimensionless  paramter ξ = √(2EC/EJ). Each 3 element vector v below
+# gives a term  (v[1]/2^v[2]) * ξ
+#
+# For details see  Didier, N., Sete, E. A., da Silva, M. P., & Rigetti, C. (2017). Analytical
+# modeling of parametrically-modulated transmon qubits. http://arxiv.org/abs/1706.06566
+
+# pertubative expansion coefficients for the 0 ↔ 1 transisition
 const PT_FREQ = [
     [4., 0, -1],
     [-1., 0, 0],
@@ -33,6 +41,7 @@ const PT_FREQ = [
     [-518667194120793070334115565427490753019904133., 116, 30]
 ]
 
+# pertubative expansion coefficients for the anharmonicity
 const PT_ANH = [
     [1., 0, 0],
     [9., 4, 1],
@@ -67,16 +76,21 @@ const PT_ANH = [
     [384886904723357410697832985058012690322303378753., 116, 30]
 ]
 
+# precalcualte the coefficients
 const PT_FREQ_PRE = [[par[3], par[1] / (2 ^ par[2])] for par in PT_FREQ]
 
 const PT_ANH_PRE = [[par[3], par[1] / (2 ^ par[2])] for par in PT_ANH]
 
+""" Calculate the dimensionless transmon paramter ξ = √(2EC/EJ) """
 function xieff(t_params::Tuple{Float64, Float64, Float64}, ϕ::Union{Vector{<:Number}, <:Number})
     EC, EJ₁, EJ₂ = t_params
     return sqrt.((2. * EC) ./ sqrt.((EJ₁ ^ 2 + EJ₂ ^ 2) .+ (2. * EJ₁ * EJ₂) .* cos.(2π*ϕ)))
 end
 
-function mathieu_sum(t_params::Tuple{Float64, Float64, Float64}, ϕ::Union{Vector{<:Number}, <:Number}, PT::Array{<:Array{<:Number, 1}, 1})
+""" Calculate sum of the pertubative expansion """
+function mathieu_sum(t_params::Tuple{Float64, Float64, Float64},
+                     ϕ::Union{Vector{<:Number}, <:Number},
+                     PT::Array{<:Array{<:Number, 1}, 1})
     EC = t_params[1]
     xi = xieff(t_params, ϕ)
     series_term = par -> par[2] * (xi .^ par[1])
