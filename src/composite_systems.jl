@@ -26,43 +26,43 @@ findin(cqs::CompositeQSystem, s::QSystem) = findin(cqs, [s])
 findin(cqs::CompositeQSystem, s_label::Vector{String}) = findin([label(s) for s in cqs.subsystems], s_label)
 findin(cqs::CompositeQSystem, s_label::AbstractString) = findin(cqs, [s_label])
 
-""" Add a fixed subystem Hamiltonian to a CompositeQSystem """
-function add_hamiltonian!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}})
+""" Add a subsystem static Hamiltonian matrix to a CompositeQSystem """
+function add_hamiltonian!(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}}) where {T<:Number, Q<:QSystem}
     idxs = embed_indices(cqs, acting_on)
     push!(cqs.fixed_Hs, (ham, idxs))
 end
 
-""" Add a fixed subystem Hamiltonian to a CompositeQSystem """
+""" Add a subystem Hamiltonian to a CompositeQSystem """
 add_hamiltonian!(cqs::CompositeQSystem, qs::QSystem) = add_hamiltonian!(cqs, hamiltonian(qs), qs)
 
-""" Add a parameterized Hamiltonian to a CompositeQSystem """
+""" Add a time parameterized subsystem Hamiltonian to a CompositeQSystem """
 # TODO how to do this dispatch vs adding a fixed Hamiltonian - Jameson says not to do this https://discourse.julialang.org/t/functions-and-callable-methods/2983/3
-function add_hamiltonian!{Q<:QSystem}(cqs::CompositeQSystem, ham::Function, acting_on::Union{Q, Array{Q}})
+function add_hamiltonian!(cqs::CompositeQSystem, ham::Function, acting_on::Union{Q, Array{Q}}) where {Q<:QSystem}
     idxs = embed_indices(findin(cqs, acting_on), [dim(s) for s in cqs.subsystems])
     push!(cqs.parametric_Hs, (ham, idxs))
 end
 
 """ In place additions of the parametric Hamiltonians of a CQS at time t. """
-function add_parametric_hamiltonians!{T<:Number}(ham::AbstractMatrix{T}, cqs::CompositeQSystem, t)
+function add_parametric_hamiltonians!(ham::AbstractMatrix{T}, cqs::CompositeQSystem, t) where {T<:Number}
     for (ham_adder!, idxs) = cqs.parametric_Hs
         ham_adder!(ham, idxs, t)
     end
 end
 
-""" In place addition of collapse operators to a CompositeQSystem """
-function add_lind_op!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}})
+""" Add a subystem collapse static operator matrix to a CompositeQSystem """
+function add_lind_op!(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}}) where {T<:Number, Q<:QSystem}
     idxs = embed_indices(cqs, acting_on)
     push!(cqs.lind_op, (lind_op, idxs))
 end
 
-""" In place addition of collapse operators to a CompositeQSystem """
-function add_lind_op!{T<:Number, Q<:QSystem}(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}}, time_func::Function)
+""" Add a subystem time dependent collapse operator matrix to a CompositeQSystem """
+function add_lind_op!(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}}, time_func::Function) where {T<:Number, Q<:QSystem}
     idxs = embed_indices(cqs, acting_on)
     push!(cqs.time_dependent_lind_op, (lind_op, idxs, time_func))
 end
 
 """ In place addition of collapse operators to a CompositeQSystem """
-function add_lind_op!{Q<:QSystem}(cqs::CompositeQSystem, lind_op::AbstractMatrix{Function}, acting_on::Union{Q, Array{Q}})
+function add_lind_op!(cqs::CompositeQSystem, lind_op::AbstractMatrix{Function}, acting_on::Union{Q, Array{Q}}) where {Q<:QSystem}
     idxs = embed_indices(cqs, acting_on)
     push!(cqs.functional_lind_op, (lind_op, idxs))
 end
