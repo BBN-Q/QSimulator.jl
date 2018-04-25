@@ -93,7 +93,7 @@ add_hamiltonian!(cqs, microwave_drive(q0, t -> 0.02*cos(2π*qubit_freq * t)), q0
 T1 = 50. # in ns
 γ1 = 1. / T1
 lind_op = sqrt(γ1) * lowering(q0)
-add_lind_op!(cqs, lind_op, [q0])
+add_lindblad!(cqs, lind_op, [q0])
 
 ψ0 = Complex128[1; 0; 0]
 ρ0 = ψ0 * ψ0'
