@@ -83,7 +83,7 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
             dρ .+= lind_mat*ρ*lind_mat' .- .5.*lind_mat'*lind_mat*ρ .- .5.*ρ*lind_mat'*lind_mat
         end
 
-        for (lind_op, idxs, time_func) = p[1].parametric_Ls
+        for (lind_op, idxs) = p[1].parametric_Ls
             lind_mat .= p[4] # start with empty array
             embed_add!(lind_mat, lind_op(t), idxs)
             dρ .+= lind_mat*ρ*lind_mat' .- .5.*lind_mat'*lind_mat*ρ .- .5.*ρ*lind_mat'*lind_mat

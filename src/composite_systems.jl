@@ -55,7 +55,7 @@ function add_lindblad!(cqs::CompositeQSystem, lind_op::AbstractMatrix{T}, acting
 end
 
 """ Add a subystem time dependent collapse operator matrix to a CompositeQSystem """
-function add_lindblad!(cqs::CompositeQSystem, lind_op::Function, acting_on::Union{Q, Array{Q}}, time_func::Function) where Q<:QSystem
+function add_lindblad!(cqs::CompositeQSystem, lind_op::Function, acting_on::Union{Q, Array{Q}}) where Q<:QSystem
     idxs = embed_indices(cqs, acting_on)
     push!(cqs.parametric_Ls, (lind_op, idxs))
 end
