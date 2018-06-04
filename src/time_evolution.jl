@@ -77,9 +77,15 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
         add_parametric_hamiltonians!(ham, p[1], t)
         dρ .= -1im * (ham*ρ - ρ*ham)
         lind_mat = p[5]
-        for (lind_op, idxs) = p[1].lind_op
+        for (lind_op, idxs) = p[1].fixed_Ls
             lind_mat .= p[4] # start with empty array
             embed_add!(lind_mat, lind_op, idxs)
+            dρ .+= lind_mat*ρ*lind_mat' .- .5.*lind_mat'*lind_mat*ρ .- .5.*ρ*lind_mat'*lind_mat
+        end
+
+        for (lind_op, idxs) = p[1].parametric_Ls
+            lind_mat .= p[4] # start with empty array
+            embed_add!(lind_mat, lind_op(t), idxs)
             dρ .+= lind_mat*ρ*lind_mat' .- .5.*lind_mat'*lind_mat*ρ .- .5.*ρ*lind_mat'*lind_mat
         end
     end
