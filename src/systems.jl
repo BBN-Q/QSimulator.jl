@@ -8,7 +8,9 @@ export QSystem,
        TunableDuffingTransmon,
        MathieuTransmon,
        label,
-       dim
+       dim,
+       fit_fixed_transmon,
+       fit_tunable_transmon
 
 export raising,
        create,
@@ -91,12 +93,12 @@ end
 """
 Fit  E_C and E_J for a fixed frequency transmon given f_01 and anharmonicity
 """
-function fit_fixed_transmon(f_01, α)
+function fit_fixed_transmon(f_01, α, dim)
     # helper function for least squares difference between measured and calculated
     function f(params)
       E_C = params[1]
       E_J  = params[2]
-      t = FixedTransmon("dummy", E_C, E_J, 3)
+      t = FixedTransmon("dummy", E_C, E_J, dim)
       levels = sort(real(eigvals(hamiltonian(t))))
       test_f_01 = levels[2] - levels[1]
       test_f_12 = levels[3] - levels[2]
@@ -110,13 +112,13 @@ end
 Fit  E_C, E_J, and d for either the TunableTransmon or TunableDuffingTransmon
 model given the qubit frequencies at 0 and 1/2 flux, and the anharmonicity at 0 flux.
 """
-function fit_tunable_transmon{T<:QSystem}(f_01_max, f_01_min, α_max, model::Type{T})
+function fit_tunable_transmon(f_01_max, f_01_min, α_max, dim, model::Type{T}) where {T<:QSystem}
     # helper function for least squares difference between measured and calculated
     function f(params)
       E_C = params[1]
       E_J  = params[2]
       d = params[3]
-      t = model("dummy", E_C, E_J, d, 3)
+      t = model("dummy", E_C, E_J, d, dim)
       levels_fmax = sort(real(eigvals(hamiltonian(t, 0))))
       levels_fmin = sort(real(eigvals(hamiltonian(t, 0.5))))
       test_f_01_max = levels_fmax[2] - levels_fmax[1]
