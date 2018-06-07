@@ -1,3 +1,5 @@
+using Optim
+
 export QSystem,
        Resonator,
        TunableTransmon,
@@ -6,7 +8,9 @@ export QSystem,
        TunableDuffingTransmon,
        MathieuTransmon,
        label,
-       dim
+       dim,
+       fit_fixed_transmon,
+       fit_tunable_transmon
 
 export raising,
        create,
@@ -95,13 +99,41 @@ function fit_fixed_transmon(f_01, α, dim)
       E_C = params[1]
       E_J  = params[2]
       t = FixedTransmon("dummy", E_C, E_J, dim)
-      levels = eigvals(hamiltonian(t))
+      levels = sort(real(eigvals(hamiltonian(t))))
       test_f_01 = levels[2] - levels[1]
       test_f_12 = levels[3] - levels[2]
-      ( test_f_01 - f_01)^2 + ( test_f_12 -  test_f_01 - α)^2
+      return ( test_f_01 - f_01)^2 + ( test_f_12 -  test_f_01 - α)^2
     end
     res = optimize(f, [abs(α), (f_01+abs(α))^2 / (8 * abs(α))] )
     return res.minimizer[1], res.minimizer[2]
+end
+
+"""
+Fit  E_C, E_J, and d for either the TunableTransmon or TunableDuffingTransmon
+model given the qubit frequencies at 0 and 1/2 flux, and the anharmonicity at 0 flux.
+"""
+function fit_tunable_transmon(f_01_max, f_01_min, α_max, dim, model::Type{T}) where {T<:QSystem}
+    # helper function for least squares difference between measured and calculated
+    function f(params)
+      E_C = params[1]
+      E_J  = params[2]
+      d = params[3]
+      t = model("dummy", E_C, E_J, d, dim)
+      levels_fmax = sort(real(eigvals(hamiltonian(t, 0))))
+      levels_fmin = sort(real(eigvals(hamiltonian(t, 0.5))))
+      test_f_01_max = levels_fmax[2] - levels_fmax[1]
+      test_f_12_max = levels_fmax[3] - levels_fmax[2]
+      test_f_01_min = levels_fmin[2] - levels_fmin[1]
+      (test_f_01_max - f_01_max)^2 + (test_f_12_max -  test_f_01_max - α_max)^2 +
+      (test_f_01_min - f_01_min)^2
+    end
+
+    EC_guess = abs(α_max)
+    EJ_guess = (f_01_max+abs(α_max))^2 / (8 * abs(α_max))
+    d_guess = (f_01_min+abs(α_max))^2 / (8 * EJ_guess * abs(α_max))
+
+    res = optimize(f, [EC_guess, EJ_guess, d_guess])
+    return res.minimizer[1], res.minimizer[2], res.minimizer[3]
 end
 
 # two body Hamiltonian terms

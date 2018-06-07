@@ -8,3 +8,4 @@ r = Resonator("test", 5.5, 3)
 @test raising(r) * lowering(r) == number(r)
 
 include("test_evolution.jl")
+include("test_fit.jl")
