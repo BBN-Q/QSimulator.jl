@@ -9,7 +9,7 @@ export unitary_propagator,
        me_state
 
 """
-    schrodinger(cqs::CompositeQSystem, ts::Float64; u0::Matrix=Matrix{Complex128}(0,0), t0=0.0)
+    unitary_propagator(cqs::CompositeQSystem, ts::Float64; u0::Matrix=Matrix{Complex128}(0,0), t0=0.0)
 
 Compute the unitary propagator evolution of a CompositeQSystem evaluted at ts.
 """
