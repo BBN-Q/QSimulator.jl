@@ -41,10 +41,10 @@ function add_hamiltonian!(cqs::CompositeQSystem, ham::Function, acting_on::Union
     push!(cqs.parametric_Hs, (ham, idxs))
 end
 
-""" In place additions of the parametric Hamiltonians of a CQS at time t. """
-function add_parametric_hamiltonians!(ham::AbstractMatrix{T}, cqs::CompositeQSystem, t) where T<:Number
-    for (ham_adder!, idxs) = cqs.parametric_Hs
-        ham_adder!(ham, idxs, t)
+""" Add the parametric hamiltonians from a CompositeQSystem to a Hamiltonian matrix, in place. """
+function add_parametric_hamiltonians!(ham::Matrix{<:Number}, cqs::CompositeQSystem, t::Real)
+    for (ham_func, idxs) = cqs.parametric_Hs
+        embed_add!(ham, ham_func(t), idxs)
     end
 end
 
