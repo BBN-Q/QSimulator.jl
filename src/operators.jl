@@ -7,7 +7,7 @@ export raising, lowering, number, X, Y, X_Y, rotating_operator,
 
 raising(q::QSystem, ϕ::Real=0.0) = diagm(sqrt.(1:(dim(q)-1)), -1) * exp(1im*2π*ϕ)
 lowering(q::QSystem, ϕ::Real=0.0) = diagm(sqrt.(1:(dim(q)-1)), 1) * exp(-1im*2π*ϕ)
-number(q::QSystem) = diagm(collect(Float64, 0:dim(q)-1))
+number(q::QSystem) = diagm(collect(Complex128, 0:dim(q)-1))
 
 X(q::QSystem, ϕ::Real=0.0) = raising(q, ϕ) + lowering(q, ϕ)
 X(qs::Vector{<:QSystem}, ϕs::Vector{<:Real}) = reduce(⊗, [X(q, ϕ) for (q, ϕ) in zip(qs, ϕs)])
