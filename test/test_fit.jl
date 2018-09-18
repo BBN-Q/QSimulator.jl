@@ -29,15 +29,20 @@ f01_analytic = analytic_levels[2] - analytic_levels[1]
 f_01_max = 5 # f_01 transition frequency at 0 flux
 f_01_min = 4 # f_01 transition frequency at 1/2 flux
 α_max = -0.2 # anharmonicity at 0 flux
-dims = [101, 3]
-fit_model = [TunableTransmon, TunableDuffingTransmon]
+# dims = [101, 3]
+# fit_model = [TunableTransmon, TunableDuffingTransmon]
+
+dims = [3]
+fit_model = [PerturbativeTransmon]
 
 for (model, dim) = zip(fit_model, dims)
     # Fit EC and EJ
     fit_EC, fit_EJ, fit_d = QSimulator.fit_tunable_transmon(f_01_max, f_01_min, α_max, dim, model)
 
+    fit_EJ1, fit_EJ2 = QSimulator.asymmetry_to_EJs(fit_EJ, fit_d)
+
     # Verify that fit EC and EJ are consisent with f_01 and α
-    q1 = model("Test", fit_EC, fit_EJ, fit_d, dim)
+    q1 = model("Test", dim, TransmonSpec(fit_EC, fit_EJ1, fit_EJ2))
     fit_levels_max = eigvals(hamiltonian(q1, 0))
     fit_levels_min = eigvals(hamiltonian(q1, 0.5))
     fit_f_01_max = fit_levels_max[2]-fit_levels_max[1]

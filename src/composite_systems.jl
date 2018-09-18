@@ -119,3 +119,12 @@ function embed_indices(acting_on::Vector, dims::Vector)
 end
 
 embed_indices(cqs::CompositeQSystem, acting_on) = embed_indices(findin(cqs, acting_on), [dim(s) for s in cqs.subsystems])
+
+""" Calculate the static part of the Hamiltonian of a CompositeQSystem """
+function hamiltonian(cqs::CompositeQSystem)
+    ham = zeros(Complex128, (dim(cqs), dim(cqs)))
+    for (new_ham, idxs) in cqs.fixed_Hs
+        embed_add!(ham, new_ham, idxs)
+    end
+    return ham
+end

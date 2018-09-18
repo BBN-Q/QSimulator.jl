@@ -103,6 +103,6 @@ end
 
 mathieu_f01(t_params::Tuple{Float64, Float64, Float64}, ϕ) = mathieu_sum(t_params, ϕ, PT_FREQ_PRE)
 
-mathieu_η(t_params::Tuple{Float64, Float64, Float64}, ϕ) = mathieu_sum(t_params, ϕ, PT_ANH_PRE)
+mathieu_η(t_params::Tuple{Float64, Float64, Float64}, ϕ) = -mathieu_sum(t_params, ϕ, PT_ANH_PRE)
 
 end
