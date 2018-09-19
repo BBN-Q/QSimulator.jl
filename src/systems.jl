@@ -198,6 +198,7 @@ end
 ######################################################
 
 export TunableTransmon, FixedTransmon, FixedDuffingTransmon, TunableDuffingTransmon
+export fit_fixed_transmon, fit_tunable_transmon
 export MathieuTransmon, create, destroy
 
 function Resonator(label::AbstractString, frequency::Real, dim::Int)
