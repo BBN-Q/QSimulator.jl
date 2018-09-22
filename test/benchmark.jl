@@ -27,7 +27,7 @@ for n = 2:4
     qs = [FixedDuffingTransmon("q$ct", 4.0 + 0.1*ct, -(0.2 + 0.01*ct), 3) for ct = 0:(n-1)]
     cqs = CompositeQSystem(qs)
     for q = qs
-        add_hamiltonian!(cqs, hamiltonian(q), label(q))
+        add_hamiltonian!(cqs, hamiltonian(q), q)
     end
     for (qa,qb) = zip(qs[1:end-1], qs[2:end])
         add_hamiltonian!(cqs, 0.005*dipole(qa, qb), [qa, qb])
@@ -115,11 +115,11 @@ for n = 2:4
     cqs = CompositeQSystem(all_qs)
     add_hamiltonian!(cqs, q0)
     # add rotating frame Hamiltonian shifts
-    add_hamiltonian!(cqs, -q0.frequency*number(q0), q0)
+    add_hamiltonian!(cqs, -spec(q0).frequency*number(q0), q0)
     q1_freq = hamiltonian(q1, 0.0)[2,2]
     add_hamiltonian!(cqs, -q1_freq*number(q1), q1)
 
-    diff_freq = q0.frequency - q1_freq
+    diff_freq = spec(q0).frequency - q1_freq
     # time dependent flip flop interaction
     add_hamiltonian!(cqs, rotating_flip_flop(q0, q1, 0.006, diff_freq), [q0,q1])
     add_hamiltonian!(cqs, flux_drive(q1, t -> amp*sin(2π*freq*t)), q1)
@@ -128,8 +128,8 @@ for n = 2:4
     for q = all_qs[3:end]
         add_hamiltonian!(cqs, q)
         # add rotating frame Hamiltonian shifts
-        add_hamiltonian!(cqs, -q.frequency*number(q), q)
-        diff_freq = q1_freq - q.frequency
+        add_hamiltonian!(cqs, -spec(q).frequency*number(q), q)
+        diff_freq = q1_freq - spec(q).frequency
         add_hamiltonian!(cqs, rotating_flip_flop(q1, q, 0.006, diff_freq), [q1,q])
     end
 
