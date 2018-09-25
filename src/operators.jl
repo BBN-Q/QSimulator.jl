@@ -1,5 +1,5 @@
 export raising, lowering, number, X, Y, X_Y, rotating_operator,
-       decay, dephasing
+       decay, dephasing, dipole_drive, flux_drive
 
 ######################################################
 # Primitives
@@ -33,7 +33,9 @@ T1 decay for a QSystem.
 ## returns
 The lindblad operator for decay.
 """
-decay(qs::QSystem, γ::Real) = sqrt(γ) * lowering(qs)
+function decay(qs::QSystem, γ::Real)
+    return sqrt(γ) * lowering(qs)
+end
 
 """
     dephasing(qs::QSystem, γ::Real)
@@ -47,14 +49,63 @@ Dephasing for a QSystem.
 ## returns
 The lindblad operator for decay.
 """
-dephasing(qs::QSystem, γ::Real) = sqrt(2γ) * number(qs)
+function dephasing(qs::QSystem, γ::Real)
+    return sqrt(2γ) * number(qs)
+end
 
+"""
+    dipole_drive(qs::QSystem, drive::Function)
+
+Given some function of time, return a function applying a time dependent
+dipole Hamiltonian.
+
+## args
+* `qs`: a QSystem.
+* `drive`: a function of time returning a real or complex value. The real
+    part couples to X and the imaginary part couples to Y.
+
+## returns
+A function of time.
+"""
+function dipole_drive(qs::QSystem, drive::Function)
+    x_ham = X(qs)
+    y_ham = Y(qs)
+    function ham(t)
+        pulse = drive(t)
+        return real(pulse) * x_ham + imag(pulse) * y_ham
+    end
+    return ham
+end
+
+
+"""
+    flux_drive(qs::QSystem, drive::Function)
+
+Given some function of time, return a function applying a
+time dependent Hamiltonian.
+
+## args
+* `qs`: a QSystem with a method of `hamiltonian` accepting a function of time.
+* `drive`: a function of time returning a real value.
+
+## returns
+A function of time.
+"""
+function flux_drive(qs::QSystem, drive::Function)
+    ham(t) = hamiltonian(qs, drive(t))
+    return ham
+end
 
 ######################################################
 # Backwards compatibility
 ######################################################
 
-export dipole, flip_flop, XY, rotating_flip_flop
+export microwave_drive, dipole, flip_flop, XY, rotating_flip_flop
+
+function microwave_drive(q::QSystem, drive::Function)
+    warn("Deprecation warning: microwave_drive.")
+    return dipole_drive(q, drive)
+end
 
 function dipole(a::QSystem, b::QSystem)
     warn("Deprecation warning: dipole.")
@@ -71,12 +122,8 @@ function flip_flop(a::QSystem, b::QSystem; ϕ::Real=0.0)
     return .5 * X_Y([a, b], [ϕ, 0.0])
 end
 
-function create(q::QSystem)
-    warn("Deprecation warning: create.")
-    return raising(q)
-end
-
-function destroy(q::QSystem)
-    warn("Deprecation warning: destroy.")
-    return lowering(q)
+function rotating_flip_flop(a::QSystem, b::QSystem, strength::Real, freq::Real)
+    warn("Deprecation warning: rotating_flip_flop.")
+    op(t) = .5 * strength * X_Y([a, b], [freq, 0.0] * t)
+    return op
 end
