@@ -81,7 +81,7 @@ dim(c::CompositeQSystem) = prod([dim(s) for s in c.subSystems])
 
 function find_subsystem_pos(c::CompositeQSystem, s::QSystem)
     @assert s in c.subSystems "Oops! Subsystem not found."
-    findin(c.subSystems, [s])
+    findall(in([s]), c.subSystems)
 end
 
 find_subsystem_pos(c::CompositeQSystem, i::Interaction) = [find_subsystem_pos(c, i.system1); find_subsystem_pos(c, i.system2)]
@@ -91,7 +91,7 @@ find_subsystem_pos(c::CompositeQSystem, i::RotatingSemiClassicalDipole) = find_s
 
 function find_subsystem_pos(c::CompositeQSystem, d::Dissipation)
     @assert d in c.dissipators "Oops! Dissipator not found in composite system."
-    findin(c.subSystems, [d.system])
+    findall(in([d.system]), c.subSystems)
 end
 
 function hamiltonian(c::CompositeQSystem, t::Float64=0.0)

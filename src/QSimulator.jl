@@ -14,7 +14,7 @@ speye(dim::Integer) = sparse(one(Float64) * LinearAlgebra.I, dim, dim)
 speye(::Type{T}, dim::Integer) where T = sparse(one(T) * LinearAlgebra.I, dim, dim)
 
 # `findin(a, b)` is deprecated, use `findall((in)(b), a)`
-findin(a, b) = findall((in)(b), a) # :)
+findall(in(b), a) = findall((in)(b), a) # :)
 
 include("base-types.jl")
 include("systems.jl")
