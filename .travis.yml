@@ -1,9 +1,11 @@
 language: julia
 julia:
   - 0.6
+  - 0.7
   - nightly
 matrix:
   allowed_failures:
+    - julia: 0.7
     - julia: nightly
 notifications:
   email: false
@@ -12,8 +14,7 @@ before_install:
 # custom script to grab the unregistered ExpmV package
 script:
  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
- - julia -e 'Pkg.clone("https://github.com/marcusps/ExpmV.jl.git")'
- - julia -e 'Pkg.add("Optim")'
+ - julia -e '(VERSION >= v"0.7" && using Pkg); Pkg.add("Optim"); Pkg.clone("https://github.com/marcusps/ExpmV.jl.git");'
  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("QSimulator"); Pkg.test("QSimulator"; coverage=true)'
 
 # necessary to run on new container-based infrastructure
