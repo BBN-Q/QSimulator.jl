@@ -1,6 +1,5 @@
 language: julia
 julia:
-  - 0.5
   - 0.6
   - nightly
 matrix:
@@ -16,3 +15,6 @@ script:
 
 # necessary to run on new container-based infrastructure
 sudo: false
+
+before_install:
+  - sudo apt-get update
