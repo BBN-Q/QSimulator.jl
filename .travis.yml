@@ -7,14 +7,14 @@ matrix:
     - julia: nightly
 notifications:
   email: false
+before_install:
+- sudo apt-get update
 # custom script to grab the unregistered ExpmV package
 script:
  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
  - julia -e 'Pkg.clone("https://github.com/marcusps/ExpmV.jl.git")'
+ - julia -e 'Pkg.add("Optim")'
  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("QSimulator"); Pkg.test("QSimulator"; coverage=true)'
 
 # necessary to run on new container-based infrastructure
 sudo: false
-
-before_install:
-  - sudo apt-get update
