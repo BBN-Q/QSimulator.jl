@@ -1,6 +1,9 @@
 # QSimulator
+Travis CI:
 
-[![Build Status](https://travis-ci.org/BBN-Q/QSimulator.jl.svg)](https://travis-ci.org/BBN-Q/QSimulator.jl)
+master: [![Build Status](https://travis-ci.org/BBN-Q/QSimulator.jl.svg)](https://travis-ci.org/BBN-Q/QSimulator.jl)
+
+v0.2: [![Build Status](https://travis-ci.org/BBN-Q/QSimulator.jl.svg?branch=v0.2)](https://travis-ci.org/BBN-Q/QSimulator.jl)
 
 Unitary and Lindbladian evolution of quantum states in Julia.
 
