@@ -5,8 +5,6 @@
 # For details see  Didier, N., Sete, E. A., da Silva, M. P., & Rigetti, C. (2017). Analytical
 # modeling of parametrically-modulated transmon qubits. http://arxiv.org/abs/1706.06566
 
-module Nicometrics
-
 export mathieu_f01, mathieu_η
 
 # pertubative expansion coefficients for the 0 ↔ 1 transisition
@@ -104,5 +102,3 @@ end
 mathieu_f01(t_params::Tuple{Float64, Float64, Float64}, ϕ) = mathieu_sum(t_params, ϕ, PT_FREQ_PRE)
 
 mathieu_η(t_params::Tuple{Float64, Float64, Float64}, ϕ) = -mathieu_sum(t_params, ϕ, PT_ANH_PRE)
-
-end
