@@ -4,9 +4,7 @@
 # For details see  Didier, N., Sete, E. A., da Silva, M. P., & Rigetti, C. (2017). Analytical
 # modeling of parametrically-modulated transmon qubits. http://arxiv.org/abs/1706.06566
 
-export perturbative_transmon_freq, perturbative_transmon_anharm, PERTURBATIVE_NUM_TERMS,
-       fourier_coef_modulation,
-       fourier_coef_transmon_freq, fourier_coef_transmon_anharm, renormalization_coef, MAX_HARMONIC
+export perturbative_transmon_freq, perturbative_transmon_anharm, PERTURBATIVE_NUM_TERMS
 
 # pertubative expansion coefficients for the 0 ↔ 1 transisition
 const PT_FREQ = [
