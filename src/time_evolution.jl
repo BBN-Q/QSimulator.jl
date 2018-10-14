@@ -78,13 +78,13 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
         for (lind_op, idxs) = p[1].fixed_Ls
             lind_mat .= p[4] # start with empty array
             embed_add!(lind_mat, lind_op, idxs)
-            dρ .+= 2π * (lind_mat*ρ*lind_mat' .- .5.*lind_mat'*lind_mat*ρ .- .5.*ρ*lind_mat'*lind_mat)
+            dρ .+= 2π * (lind_mat*ρ*lind_mat' .- .5 .* lind_mat'*lind_mat*ρ .- .5 .* ρ*lind_mat'*lind_mat)
         end
 
         for (lind_op, idxs) = p[1].parametric_Ls
             lind_mat .= p[4] # start with empty array
             embed_add!(lind_mat, lind_op(t), idxs)
-            dρ .+= 2π * (lind_mat*ρ*lind_mat' .- .5.*lind_mat'*lind_mat*ρ .- .5.*ρ*lind_mat'*lind_mat)
+            dρ .+= 2π * (lind_mat*ρ*lind_mat' .- .5 .* lind_mat'*lind_mat*ρ .- .5 .* ρ*lind_mat'*lind_mat)
         end
     end
     fixed_ham = hamiltonian(cqs)
@@ -98,6 +98,6 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
 end
 
 # add helper functions for saving at a single point
-unitary_propagator{T<:Number}(cqs::CompositeQSystem, t::T; u0=Matrix{Complex128}(0,0), t0=0.0) = unitary_propagator(cqs, [t]; u0=u0, t0=t0)[1]
-unitary_state{T<:Number}(cqs::CompositeQSystem, t::T, ψ0::Vector; t0=0.0) = unitary_state(cqs, [t], ψ0; t0=t0)[1]
-me_state{T<:Number}(cqs::CompositeQSystem, t::T, ρ0::Matrix; t0=0.0) = me_state(cqs, [t], ρ0; t0=t0)[1]
+unitary_propagator(cqs::CompositeQSystem, t::T; u0=Matrix{Complex128}(0,0), t0=0.0) where {T<:Number} = unitary_propagator(cqs, [t]; u0=u0, t0=t0)[1]
+unitary_state(cqs::CompositeQSystem, t::T, ψ0::Vector; t0=0.0) where {T<:Number} = unitary_state(cqs, [t], ψ0; t0=t0)[1]
+me_state(cqs::CompositeQSystem, t::T, ρ0::Matrix; t0=0.0) where {T<:Number} = me_state(cqs, [t], ρ0; t0=t0)[1]

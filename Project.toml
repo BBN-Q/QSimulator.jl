@@ -1,0 +1,8 @@
+name = "QSimulator"
+uuid = "84ebd660-cff8-11e8-33d2-5334dd07f13c"
+authors = []
+version = "0.1.0"
+
+[deps]
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"

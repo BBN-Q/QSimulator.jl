@@ -1,5 +1,3 @@
-import Base.findin
-
 export CompositeQSystem,
        add_hamiltonian!,
        add_lindblad!
@@ -20,7 +18,7 @@ CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], [], prod(dim(q) for q in
 dim(cqs::CompositeQSystem) = cqs.dim
 
 # TODO: fix these for heterogenous arrays of QSystems
-findin{T<:QSystem}(cqs::CompositeQSystem, s::Vector{T}) = findin(cqs.subsystems, s)
+findin(cqs::CompositeQSystem, s::Vector{T}) where T = findin(cqs.subsystems, s)
 findin(cqs::CompositeQSystem, s::QSystem) = findin(cqs, [s])
 findin(cqs::CompositeQSystem, s_label::Vector{String}) = findin([label(s) for s in cqs.subsystems], s_label)
 findin(cqs::CompositeQSystem, s_label::AbstractString) = findin(cqs, [s_label])
