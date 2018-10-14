@@ -1,7 +1,7 @@
 using QSimulator
 using LsqFit
 
-using Base.Test
+using Test
 
 # test harmonic oscillator operator identity a†a = N
 r = Resonator("test", 3, QSimulator.ResonatorSpec(5.5))

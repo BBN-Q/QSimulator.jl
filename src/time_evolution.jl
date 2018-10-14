@@ -1,6 +1,7 @@
 # solvers for time evolution of quantum systems
 
 using DifferentialEquations
+using LinearAlgebra: I, rmul!, mul!
 
 import QSimulator.add_parametric_hamiltonians!
 
@@ -9,24 +10,26 @@ export unitary_propagator,
        me_state
 
 """
-    unitary_propagator(cqs::CompositeQSystem, ts::Float64; u0::Matrix=Matrix{Complex128}(0,0), t0=0.0)
+    unitary_propagator(cqs::CompositeQSystem, ts::Float64; u0::Matrix=Matrix{ComplexF64}(0,0), t0=0.0)
 
 Compute the unitary propagator evolution of a CompositeQSystem evaluted at ts.
 """
-function unitary_propagator(cqs::CompositeQSystem, ts::Vector; u0=Matrix{Complex128}(0,0), t0=0.0)
+function unitary_propagator(cqs::CompositeQSystem, ts::Vector;
+    u0::Union{Matrix{ComplexF64}, Nothing}=nothing, t0=0.0)
     # schrodinger differential equation for unitary with in place update
     # dU/dt = -iHU
     function ode(du, u, p, t)
         ham = p[3] # preallocated workspace array
         ham .= p[2] # start from fixed_ham
         add_parametric_hamiltonians!(ham, p[1], t)
-        scale!(ham, -2π * 1im)
-        A_mul_B!(du, ham, u)
+        rmul!(ham, -2π * 1im)
+        mul!(du, ham, u)
     end
     fixed_ham = hamiltonian(cqs)
     # if initial condition not passed start with identity
-    if isempty(u0)
-        u0 = eye(Complex128, dim(cqs))
+    if u0 == nothing
+        d = dim(cqs)
+        u0 = Matrix{ComplexF64}(I, d, d)
     end
     work_ham = similar(fixed_ham) # scratch space
     prob = ODEProblem(ode, u0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham))
@@ -48,8 +51,8 @@ function unitary_state(cqs::CompositeQSystem, ts::Vector, ψ0::Vector; t0=0.0)
         ham = p[3] # preallocated workspace array
         ham .= p[2] # start from fixed_ham
         add_parametric_hamiltonians!(ham, p[1], t)
-        scale!(ham, -2π * 1im)
-        A_mul_B!(dψ, ham, ψ)
+        rmul!(ham, -2π * 1im)
+        mul!(dψ, ham, ψ)
     end
     fixed_ham = hamiltonian(cqs)
     work_ham = similar(fixed_ham)
@@ -89,7 +92,7 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
     end
     fixed_ham = hamiltonian(cqs)
     work_ham = similar(fixed_ham)
-    bare_lind = zeros(Complex128, size(fixed_ham))
+    bare_lind = zeros(ComplexF64, size(fixed_ham))
     work_lind = similar(fixed_ham)
     prob = ODEProblem(ode, ρ0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham, bare_lind, work_lind))
     save_start = ts[1]==t0 ? true : false #save t0 only if asked for
@@ -98,6 +101,6 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
 end
 
 # add helper functions for saving at a single point
-unitary_propagator(cqs::CompositeQSystem, t::T; u0=Matrix{Complex128}(0,0), t0=0.0) where {T<:Number} = unitary_propagator(cqs, [t]; u0=u0, t0=t0)[1]
+unitary_propagator(cqs::CompositeQSystem, t::T; u0::Union{Matrix{ComplexF64}, Nothing}=nothing, t0=0.0) where {T<:Number} = unitary_propagator(cqs, [t]; u0=u0, t0=t0)[1]
 unitary_state(cqs::CompositeQSystem, t::T, ψ0::Vector; t0=0.0) where {T<:Number} = unitary_state(cqs, [t], ψ0; t0=t0)[1]
 me_state(cqs::CompositeQSystem, t::T, ρ0::Matrix; t0=0.0) where {T<:Number} = me_state(cqs, [t], ρ0; t0=t0)[1]

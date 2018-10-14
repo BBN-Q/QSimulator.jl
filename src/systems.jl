@@ -1,4 +1,5 @@
 using Optim: optimize
+using LinearAlgebra: diagm, eigvals
 
 export QSpec, TransmonSpec, DuffingSpec, ResonatorSpec, HermitianSpec
 export QSystem, label, dim, spec
@@ -69,7 +70,7 @@ struct Resonator <: QSystem
     spec::ResonatorSpec
 end
 
-hamiltonian(r::Resonator) = diagm([spec(r).frequency * n for n in 0:dim(r)-1])
+hamiltonian(r::Resonator) = diagm(0 => [spec(r).frequency * n for n in 0:dim(r)-1])
 
 ######################################################
 # DuffingTransmon
@@ -77,7 +78,7 @@ hamiltonian(r::Resonator) = diagm([spec(r).frequency * n for n in 0:dim(r)-1])
 
 function duffing_hamiltonian(ω::Real, η::Real, dimension::Int)
     n = collect(0:dimension-1)
-    return diagm((ω - 0.5 * η) * n + 0.5 * η * n.^2)
+    return diagm(0 => (ω - 0.5 * η) * n + 0.5 * η * n.^2)
 end
 
 struct DuffingTransmon <: QSystem
@@ -130,8 +131,8 @@ function hamiltonian(t::ChargeBasisTransmon, ϕ::Real=0.0)
     s = spec(t)
     EJ = sqrt(s.EJ1^2 + s.EJ2^2 + 2 * s.EJ1 * s.EJ2 * cos(2π * ϕ))
     EC = s.EC
-    charging_term = 4 * EC * diagm((-N:N).^2)
-    tunneling_term = -0.5 * EJ * (diagm(ones(dim(t)-1),-1) + diagm(ones(dim(t)-1),1))
+    charging_term = 4 * EC * diagm(0 => (-N:N).^2)
+    tunneling_term = -0.5 * EJ * (diagm(-1 => ones(dim(t)-1)) + diagm(1 => ones(dim(t)-1)))
     return charging_term + tunneling_term
 end
 
@@ -202,7 +203,7 @@ export fit_fixed_transmon, fit_tunable_transmon
 export MathieuTransmon, create, destroy
 
 function Resonator(label::AbstractString, frequency::Real, dim::Int)
-    warn("Deprecation warning: Resonator.")
+    @warn "Deprecation warning: Resonator."
     return Resonator(label, dim, ResonatorSpec(frequency))
 end
 
@@ -223,7 +224,7 @@ function TunableTransmon(label::AbstractString,
     E_J::Real, # sum of junction E_J's
     d::Real, # juntion asymmetry parameter
     dim::Int)
-    warn("Deprecation warning: TunableTransmon.")
+    @warn "Deprecation warning: TunableTransmon."
     EJ1, EJ2 = asymmetry_to_EJs(E_J, d)
     return ChargeBasisTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2))
 end
@@ -232,7 +233,7 @@ function FixedTransmon(label::AbstractString,
     E_C::Real,
     E_J::Real, # sum of junction E_J's
     dim::Int)
-    warn("Deprecation warning: FixedTransmon.")
+    @warn "Deprecation warning: FixedTransmon."
     EJ1, EJ2 = E_J, 0.0
     return ChargeBasisTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2))
 end
@@ -241,7 +242,7 @@ function FixedDuffingTransmon(label::AbstractString,
     frequency::Real,
     anharmonicity::Real,
     dim::Int)
-    warn("Deprecation warning: FixedDuffingTransmon.")
+    @warn "Deprecation warning: FixedDuffingTransmon."
     return DuffingTransmon(label, dim, DuffingSpec(frequency, anharmonicity))
 end
 
@@ -250,7 +251,7 @@ function TunableDuffingTransmon(label::AbstractString,
     E_J::Real, #sum of junction E_J's
     d::Real, #asymmetry parameter
     dim::Int)
-    warn("Deprecation warning: TunableDuffingTransmon.")
+    @warn "Deprecation warning: TunableDuffingTransmon."
     EJ1, EJ2 = asymmetry_to_EJs(E_J, d)
     return PerturbativeTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2))
 end
@@ -260,19 +261,19 @@ function MathieuTransmon(label::AbstractString,
     E_J::Real, #sum of junction E_J's
     d::Real, #asymmetry parameter
     dim::Int)
-    warn("Deprecation warning: MathieuTransmon.")
+    @warn "Deprecation warning: MathieuTransmon."
     EJ1, EJ2 = asymmetry_to_EJs(E_J, d)
     return PerturbativeTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2))
 end
 
 function fit_fixed_transmon(ω, η, dim)
-    warn("Deprecation waring: fit_fixed_transmon.")
+    @warn "Deprecation waring: fit_fixed_transmon."
     t = fit_transmon(ω, ω, η, ChargeBasisTransmon, dim)
     return t.EC, t.EJ1 + t.EJ2
 end
 
 function fit_tunable_transmon(f_max, f_min, η_max, dim, model::Type{T}) where {T<:QSystem}
-    warn("Deprecation waring: fit_tunable_transmon.")
+    @warn "Deprecation waring: fit_tunable_transmon."
     t = fit_transmon(f_max, f_min, η_max, model, dim)
     EJ, d = EJs_to_asymmetry(t.EJ1, t.EJ2)
     return t.EC, EJ, d

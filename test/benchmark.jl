@@ -15,9 +15,9 @@ for n = 2:4
     q0 = FixedDuffingTransmon("q0", 5, -0.2, n)
     cqs = CompositeQSystem([q0])
     add_hamiltonian!(cqs, q0)
-    times = collect(linspace(0,1.0,201))
+    times = collect(range(0,stop=1.0,length=201))
     # superposition of all levels
-    ψ0 = (1/sqrt(dim(cqs))) * ones(Complex128, dim(cqs))
+    ψ0 = (1/sqrt(dim(cqs))) * ones(ComplexF64, dim(cqs))
     prop_suite["single transmon ($n levels)"] = @benchmarkable unitary_propagator($cqs, $times);
     state_suite["single transmon ($n levels)"] = @benchmarkable unitary_state($cqs, $times, $ψ0);
 end
@@ -32,9 +32,9 @@ for n = 2:4
     for (qa,qb) = zip(qs[1:end-1], qs[2:end])
         add_hamiltonian!(cqs, 0.005*dipole(qa, qb), [qa, qb])
     end
-    times = collect(linspace(0,1.0,201))
+    times = collect(range(0,stop=1.0,length=201))
     # superposition of all levels
-    ψ0 = (1/sqrt(dim(cqs))) * ones(Complex128, dim(cqs))
+    ψ0 = (1/sqrt(dim(cqs))) * ones(ComplexF64, dim(cqs))
     prop_suite["dipole chain ($n transmons)"] = @benchmarkable unitary_propagator($cqs, $times);
     state_suite["dipole chain ($n transmons)"] = @benchmarkable unitary_state($cqs, $times, $ψ0);
 end
@@ -50,9 +50,9 @@ for n = 2:4
     cqs = CompositeQSystem([q0]);
     add_hamiltonian!(cqs, q0)
     add_hamiltonian!(cqs, microwave_drive(q0, t -> nutation_freq*cos(2π*qubit_freq * t)), q0);
-    ψ0 = zeros(Complex128, n)
+    ψ0 = zeros(ComplexF64, n)
     ψ0[1] = 1
-    times = collect(linspace(0,100,101))
+    times = collect(range(0,stop=100,length=101))
     prop_suite["$n level transmon"] = @benchmarkable unitary_propagator($cqs, $times);
     state_suite["$n level transmon"] = @benchmarkable unitary_state($cqs, $times, $ψ0);
 end
@@ -85,9 +85,9 @@ for n = 2:3
     end
 
     times = collect(0:200)
-    ψ0 = Complex128[0.0; 1.0; 0.0] ⊗ Complex128[1.0; 0.0; 0.0] # start in 10 state
+    ψ0 = ComplexF64[0.0; 1.0; 0.0] ⊗ ComplexF64[1.0; 0.0; 0.0] # start in 10 state
     for ct = 1:n-2
-        ψ0 = ψ0 ⊗ Complex128[1.0; 0.0; 0.0]
+        ψ0 = ψ0 ⊗ ComplexF64[1.0; 0.0; 0.0]
     end
 
     prop_suite["$n transmons"] = @benchmarkable unitary_propagator($cqs, $times)
@@ -134,9 +134,9 @@ for n = 2:4
     end
 
     times = collect(0:200)
-    ψ0 = Complex128[0.0; 1.0; 0.0] ⊗ Complex128[0.0; 1.0; 0.0] # start in 11 state
+    ψ0 = ComplexF64[0.0; 1.0; 0.0] ⊗ ComplexF64[0.0; 1.0; 0.0] # start in 11 state
     for ct = 1:n-2
-        ψ0 = ψ0 ⊗ Complex128[1.0; 0.0; 0.0]
+        ψ0 = ψ0 ⊗ ComplexF64[1.0; 0.0; 0.0]
     end
 
     prop_suite["$n transmons"] = @benchmarkable unitary_propagator($cqs, $times)

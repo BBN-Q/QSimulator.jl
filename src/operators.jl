@@ -1,3 +1,5 @@
+using LinearAlgebra: diagm
+
 export raising, lowering, number, X, Y, X_Y, rotating_operator,
        decay, dephasing, dipole_drive, flux_drive
 
@@ -5,9 +7,9 @@ export raising, lowering, number, X, Y, X_Y, rotating_operator,
 # Primitives
 ######################################################
 
-raising(q::QSystem, ϕ::Real=0.0) = diagm(sqrt.(1:(dim(q)-1)), -1) * exp(1im*2π*ϕ)
-lowering(q::QSystem, ϕ::Real=0.0) = diagm(sqrt.(1:(dim(q)-1)), 1) * exp(-1im*2π*ϕ)
-number(q::QSystem) = diagm(collect(Complex128, 0:dim(q)-1))
+raising(q::QSystem, ϕ::Real=0.0) = diagm(-1 => sqrt.(1:(dim(q)-1))) * exp(1im*2π*ϕ)
+lowering(q::QSystem, ϕ::Real=0.0) = diagm(1 => sqrt.(1:(dim(q)-1))) * exp(-1im*2π*ϕ)
+number(q::QSystem) = diagm(0 => collect(ComplexF64, 0:dim(q)-1))
 
 X(q::QSystem, ϕ::Real=0.0) = raising(q, ϕ) + lowering(q, ϕ)
 X(qs::Vector{<:QSystem}, ϕs::Vector{<:Real}) = reduce(⊗, [X(q, ϕ) for (q, ϕ) in zip(qs, ϕs)])
@@ -103,27 +105,27 @@ end
 export microwave_drive, dipole, flip_flop, XY, rotating_flip_flop
 
 function microwave_drive(q::QSystem, drive::Function)
-    warn("Deprecation warning: microwave_drive.")
+    @warn "Deprecation warning: microwave_drive."
     return dipole_drive(q, drive)
 end
 
 function dipole(a::QSystem, b::QSystem)
-    warn("Deprecation warning: dipole.")
+    @warn "Deprecation warning: dipole."
     return X([a, b])
 end
 
 function XY(a::QSystem, b::QSystem; ϕ::Real=0.0)
-    warn("Deprecation warning: XY.")
+    @warn "Deprecation warning: XY."
     return .5 * X_Y([a, b], [ϕ, 0.0])
 end
 
 function flip_flop(a::QSystem, b::QSystem; ϕ::Real=0.0)
-    warn("Deprecation warning: flip_flop.")
+    @warn "Deprecation warning: flip_flop."
     return .5 * X_Y([a, b], [ϕ, 0.0])
 end
 
 function rotating_flip_flop(a::QSystem, b::QSystem, strength::Real, freq::Real)
-    warn("Deprecation warning: rotating_flip_flop.")
+    @warn "Deprecation warning: rotating_flip_flop."
     op(t) = .5 * strength * X_Y([a, b], [freq, 0.0] * t)
     return op
 end

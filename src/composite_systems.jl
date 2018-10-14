@@ -1,6 +1,8 @@
+using LinearAlgebra: I
+
 export CompositeQSystem,
        add_hamiltonian!,
-       add_lindblad!
+       add_lindblad!, find_indices
 
 # tensor products of quantum systems
 mutable struct CompositeQSystem
@@ -18,10 +20,9 @@ CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], [], prod(dim(q) for q in
 dim(cqs::CompositeQSystem) = cqs.dim
 
 # TODO: fix these for heterogenous arrays of QSystems
-findin(cqs::CompositeQSystem, s::Vector{T}) where T = findin(cqs.subsystems, s)
-findin(cqs::CompositeQSystem, s::QSystem) = findin(cqs, [s])
-findin(cqs::CompositeQSystem, s_label::Vector{String}) = findin([label(s) for s in cqs.subsystems], s_label)
-findin(cqs::CompositeQSystem, s_label::AbstractString) = findin(cqs, [s_label])
+find_indices(cqs::CompositeQSystem, s::QSystem) = findall(cqs.subsystems .== s)
+find_indices(cqs::CompositeQSystem, s_label::AbstractString) = findall(label.(cqs.subsystems) .== s)
+find_indices(cqs::CompositeQSystem, s::Vector) = vcat([find_indices(cqs, _s) for _s in s]...)
 
 """ Add a subsystem static Hamiltonian matrix to a CompositeQSystem """
 function add_hamiltonian!(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}}) where {T<:Number, Q<:QSystem}
@@ -32,10 +33,10 @@ end
 """ Add a subystem Hamiltonian to a CompositeQSystem """
 add_hamiltonian!(cqs::CompositeQSystem, qs::QSystem) = add_hamiltonian!(cqs, hamiltonian(qs), qs)
 
-""" Add a time parameterized subsystem Hamiltonian to a CompositeQSystem """
 # TODO how to do this dispatch vs adding a fixed Hamiltonian - Jameson says not to do this https://discourse.julialang.org/t/functions-and-callable-methods/2983/3
+""" Add a time parameterized subsystem Hamiltonian to a CompositeQSystem """
 function add_hamiltonian!(cqs::CompositeQSystem, ham::Function, acting_on::Union{Q, Array{Q}}) where Q<:QSystem
-    idxs = embed_indices(findin(cqs, acting_on), [dim(s) for s in cqs.subsystems])
+    idxs = embed_indices(find_indices(cqs, acting_on), [dim(s) for s in cqs.subsystems])
     push!(cqs.parametric_Hs, (ham, idxs))
 end
 
@@ -81,7 +82,8 @@ function embed(m::Matrix, acting_on::Vector, dims::Vector)
     # create the large matrix by tensoring on identity terms to the operator
     l = length(dims)
     identity_idxs = filter(x->!(x in acting_on), 1:l)
-    M = isempty(identity_idxs) ? m : kron(m, eye(eltype(m), prod(dims[identity_idxs])))
+    d = prod(dims[identity_idxs])
+    M = isempty(identity_idxs) ? m : kron(m, Matrix{eltype(m)}(I, d, d))
 
     # reshape into multi-dimensional array given by subsystem dimensions
     # since we have a matrix we repeat for rows then columns
@@ -113,14 +115,15 @@ function embed_indices(acting_on::Vector, dims::Vector)
     # 2. embed the matrix
     M = embed(m, acting_on, dims)
     # 3. find where the linear indices got embedded
-    return [find(M .== x) for x in 1:dim_acting_on^2]
+    f(A) = (LinearIndices(A))[findall(A)]
+    return [f(M .== x) for x in 1:dim_acting_on^2]
 end
 
-embed_indices(cqs::CompositeQSystem, acting_on) = embed_indices(findin(cqs, acting_on), [dim(s) for s in cqs.subsystems])
+embed_indices(cqs::CompositeQSystem, acting_on) = embed_indices(find_indices(cqs, acting_on), [dim(s) for s in cqs.subsystems])
 
 """ Calculate the static part of the Hamiltonian of a CompositeQSystem """
 function hamiltonian(cqs::CompositeQSystem)
-    ham = zeros(Complex128, (dim(cqs), dim(cqs)))
+    ham = zeros(ComplexF64, (dim(cqs), dim(cqs)))
     for (new_ham, idxs) in cqs.fixed_Hs
         embed_add!(ham, new_ham, idxs)
     end

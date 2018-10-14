@@ -5,16 +5,16 @@ qubit_freq = 5.0
 q0 = DuffingTransmon("q0", 3, DuffingSpec(qubit_freq, -0.2))
 cqs = CompositeQSystem([q0]);
 add_hamiltonian!(cqs, q0)
-times = collect(linspace(0,1,201))
-ψ_init = (1/sqrt(2)) * Complex128[1; 1; 0]
+times = collect(range(0,stop=1,length=201))
+ψ_init = (1/sqrt(2)) * ComplexF64[1; 1; 0]
 ψs = unitary_state(cqs, times, ψ_init);
 signal = Float64[real(ψ_init'*ψ) for ψ in ψs]
-expected = 0.5 + 0.5*cos.(2π*qubit_freq * (linspace(0,1,201)))
+expected = 0.5 .+ 0.5*cos.(2π*qubit_freq * (range(0,stop=1,length=201)))
 @test isapprox(signal, expected; rtol=1e-3, atol=1e-3)
 
 # check that the propagator gives the same result
 us = unitary_propagator(cqs, times)
-ψs = [u*ψ_init for u = us]
+ψs = [u*ψ_init for u in us]
 signal = Float64[real(ψ_init'*ψ) for ψ in ψs]
 @test isapprox(signal, expected; rtol=1e-4, atol=1e-4)
 
@@ -27,8 +27,8 @@ q0 = DuffingTransmon("q0", 3, DuffingSpec(qubit_freq, -0.2))
 cqs = CompositeQSystem([q0]);
 add_hamiltonian!(cqs, q0)
 add_hamiltonian!(cqs, microwave_drive(q0, t -> nutation_freq*cos(2π*qubit_freq * t)), q0);
-ψ_init = Complex128[1; 0; 0]
-times = collect(linspace(0,100,101))
+ψ_init = ComplexF64[1; 0; 0]
+times = collect(range(0,stop=100,length=101))
 ψs = unitary_state(cqs, times, ψ_init);
 
 g_sim = [abs2(s[1]) for s in ψs]
@@ -36,9 +36,9 @@ e_sim = [abs2(s[2]) for s in ψs]
 
 # we would normally expect a factor of 0.5 from lab -> rotating frame but by defining the qubit
 # drive in terms of X rather than 0.5 X undoes that
-g_expected = 0.5 + 0.5*cos.(2π*nutation_freq * times)
+g_expected = 0.5 .+ 0.5*cos.(2π*nutation_freq * times)
 @test isapprox(g_sim, g_expected; rtol=1e-2, atol=1e-2)
-@test isapprox(e_sim, 1-g_expected; rtol=1e-2, atol=1e-2)
+@test isapprox(e_sim, 1 .- g_expected; rtol=1e-2, atol=1e-2)
 
 # check that the propagator gives the same result
 us = unitary_propagator(cqs, times)
@@ -46,7 +46,7 @@ us = unitary_propagator(cqs, times)
 g_sim = [abs2(s[1]) for s in ψs]
 e_sim = [abs2(s[2]) for s in ψs]
 @test isapprox(g_sim, g_expected; rtol=1e-2, atol=1e-2)
-@test isapprox(e_sim, 1-g_expected; rtol=1e-2, atol=1e-2)
+@test isapprox(e_sim, 1 .- g_expected; rtol=1e-2, atol=1e-2)
 
 ########################### Parmetric Flux Drive ##########################
 
@@ -54,7 +54,6 @@ e_sim = [abs2(s[2]) for s in ψs]
 # parameters from Blue Launch paper
 q0 = DuffingTransmon("q0", 3, DuffingSpec(3.94015, -0.1807))
 q1 = PerturbativeTransmon("q1", 3, TransmonSpec(.172, 12.71, 3.69))
-
 
 # should get an iSWAP interaction at 118.3 MHz
 freq = 118.3/1e3
@@ -64,7 +63,7 @@ cqs = CompositeQSystem([q0, q1])
 add_hamiltonian!(cqs, hamiltonian(q0), q0)
 add_hamiltonian!(cqs, 0.006*dipole(q0, q1), [q0,q1])
 add_hamiltonian!(cqs, flux_drive(q1, t -> amp*sin(2π*freq*t)), q1)
-ψ0 = Complex128[0.0; 1.0; 0.0] ⊗ Complex128[1.0; 0.0; 0.0] # start in the 10 state
+ψ0 = ComplexF64[0.0; 1.0; 0.0] ⊗ ComplexF64[1.0; 0.0; 0.0] # start in the 10 state
 ψs = unitary_state(cqs, times, ψ0);
 pop_10 = [abs2(ψ[4]) for ψ in ψs]
 pop_01 = [abs2(ψ[2]) for ψ in ψs]
@@ -72,10 +71,9 @@ pop_01 = [abs2(ψ[2]) for ψ in ψs]
 # population should oscillate between 01 and 10
 # there is additional lab frame jaggedness so relax tolerance
 # TODO: calculated analytical expected g
-expected_10 = 0.5 +  0.5*cos.(2π*(1/143.5) * times)
+expected_10 = 0.5 .+ 0.5*cos.(2π*(1/143.5) * times)
 @test isapprox(pop_10, expected_10; rtol=2e-2, atol=2e-2)
 @test isapprox(pop_01, 1 .- expected_10; rtol=2e-2, atol=2e-2)
-
 
 ########################## ME Solver #################################
 # This tests the decay of a driven two level system. Added to the hamiltonian is
@@ -94,14 +92,14 @@ T1 = 50. # in ns
 γ = 1/(2π * T1) # in GHz
 add_lindblad!(cqs, decay(q0, γ), [q0])
 
-ψ0 = Complex128[1; 0; 0]
+ψ0 = ComplexF64[1; 0; 0]
 ρ0 = ψ0 * ψ0'
-times = collect(linspace(0,100,101))
+times = collect(range(0,stop=100,length=101))
 ρs = me_state(cqs, times, ρ0)
 
 ρ00 = [real(ρ[1, 1]) for ρ in ρs]
 
-model_t2(x, p) = (exp.(-x ./ p[1]) .* cos.(2π .* p[2] .* x .- p[3]) + 1.0) / 2.0
+model_t2(x, p) = (exp.(-x ./ p[1]) .* cos.(2π .* p[2] .* x .- p[3]) .+ 1.0) ./ 2.0
 
 fit = curve_fit(model_t2, times, ρ00, [T1, .02, 0])
 @test abs(fit.param[1] - 4. * T1 / 3.) < 1.
