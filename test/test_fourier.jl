@@ -1,3 +1,4 @@
+using Test, QSimulator
 using QuadGK: quadgk
 using PyPlot
 const plt = PyPlot
