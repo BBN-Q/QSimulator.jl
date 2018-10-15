@@ -9,3 +9,4 @@ r = Resonator("test", 3, QSimulator.ResonatorSpec(5.5))
 
 include("test_evolution.jl")
 include("test_fit.jl")
+include("test_fourier.jl")
