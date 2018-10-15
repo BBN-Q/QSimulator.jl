@@ -53,7 +53,9 @@ struct LiteralHermitian <: QSystem
     dim::Int
     spec::HermitianSpec
 
-    LiteralHermitian(label::AbstractString, hermitian_spec::HermitianSpec) = new(label, size(hermitian_spec.matrix, 1), hermitian_spec)
+    function LiteralHermitian(label::AbstractString, hermitian_spec::HermitianSpec)
+        return new(label, size(hermitian_spec.matrix, 1), hermitian_spec)
+    end
 end
 
 hamiltonian(q::LiteralHermitian) = spec(q).matrix
@@ -74,9 +76,9 @@ hamiltonian(r::Resonator) = diagm(0 => [spec(r).frequency * n for n in 0:dim(r)-
 # DuffingTransmon
 ######################################################
 
-function duffing_hamiltonian(ω::Real, η::Real, dimension::Int)
+function duffing_hamiltonian(freq::Real, anharm::Real, dimension::Int)
     n = collect(0:dimension-1)
-    return diagm(0 => (ω - 0.5 * η) * n + 0.5 * η * n.^2)
+    return diagm(0 => (freq - 0.5 * anharm) * n + 0.5 * anharm * n.^2)
 end
 
 struct DuffingTransmon <: QSystem
@@ -85,7 +87,13 @@ struct DuffingTransmon <: QSystem
     spec::DuffingSpec
 end
 
-hamiltonian(t::DuffingTransmon) = duffing_hamiltonian(spec(t).frequency, spec(t).anharmonicity, dim(t))
+function hamiltonian(t::DuffingTransmon)
+    return duffing_hamiltonian(spec(t).frequency, spec(t).anharmonicity, dim(t))
+end
+
+function hamiltonian(t::DuffingTransmon, frequency::Real)
+    return duffing_hamiltonian(frequency, spec(t).anharmonicity, dim(t))
+end
 
 ######################################################
 # PerturbativeTransmon
