@@ -19,10 +19,11 @@ CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], [], prod(dim(q) for q in
 # helper functions for CompositeQSystems
 dim(cqs::CompositeQSystem) = cqs.dim
 
-# TODO: fix these for heterogenous arrays of QSystems
-find_indices(cqs::CompositeQSystem, s::QSystem) = findall(cqs.subsystems .== s)
-find_indices(cqs::CompositeQSystem, s_label::AbstractString) = findall(label.(cqs.subsystems) .== s)
-find_indices(cqs::CompositeQSystem, s::Vector) = vcat([find_indices(cqs, _s) for _s in s]...)
+find_indices(cqs::CompositeQSystem, s::QSystem) = findall([sub == s for sub in cqs.subsystems])
+find_indices(cqs::CompositeQSystem, s_label::AbstractString) = findall([label(sub) == s_label for sub in cqs.subsystems])
+function find_indices(cqs::CompositeQSystem, s::Union{Vector{<:QSystem}, Vector{<:AbstractString}})
+    return vcat([find_indices(cqs, _s) for _s in s]...)
+end
 
 """ Add a subsystem static Hamiltonian matrix to a CompositeQSystem """
 function add_hamiltonian!(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}}) where {T<:Number, Q<:QSystem}

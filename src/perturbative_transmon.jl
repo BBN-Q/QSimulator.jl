@@ -174,13 +174,13 @@ end
 export mathieu_f01, mathieu_η
 
 function mathieu_f01(t_params::Tuple{Float64, Float64, Float64}, ϕ::Real)
-    # @warn "Deprecation warning: mathieu_f01."
+    @warn "Deprecation warning: mathieu_f01."
     EC, EJ1, EJ2 = t_params
     return perturbative_transmon_freq(EC, EJ1, EJ2, ϕ, num_terms=PERTURBATIVE_NUM_TERMS)
 end
 
 function mathieu_η(t_params::Tuple{Float64, Float64, Float64}, ϕ)
-    # @warn "Deprecation warning: mathieu_η."
+    @warn "Deprecation warning: mathieu_η."
     EC, EJ1, EJ2 = t_params
     return perturbative_transmon_anharm(EC, EJ1, EJ2, ϕ, num_terms=PERTURBATIVE_NUM_TERMS)
 end
