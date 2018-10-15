@@ -4,7 +4,7 @@
 # For details see  Didier, N., Sete, E. A., da Silva, M. P., & Rigetti, C. (2017). Analytical
 # modeling of parametrically-modulated transmon qubits. http://arxiv.org/abs/1706.06566
 
-export perturbative_transmon_freq, perturbative_transmon_anharm, PERTURBATIVE_NUM_TERMS
+export perturbative_transmon_freq, perturbative_transmon_anharm
 
 # pertubative expansion coefficients for the 0 ↔ 1 transisition
 const PT_FREQ = [
@@ -82,7 +82,6 @@ const PT_FREQ_PRE = [[par[3], par[1] / (2 ^ par[2])] for par in PT_FREQ]
 const PT_ANH_PRE = [[par[3], par[1] / (2 ^ par[2])] for par in PT_ANH]
 const MAX_NUM_TERMS = length(PT_FREQ)
 const PERTURBATIVE_NUM_TERMS = 10 # default number of terms to use
-const MAXDER = 20 # expansion for fourier coefficients
 
 """
     xi_effective(EC::Real, EJ1::Real, EJ2::Real, ϕ::Real)

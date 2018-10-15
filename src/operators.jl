@@ -1,6 +1,6 @@
 using LinearAlgebra: diagm
 
-export raising, lowering, number, X, Y, X_Y, rotating_operator,
+export raising, lowering, number, X, Y, X_Y,
        decay, dephasing, dipole_drive, flux_drive
 
 ######################################################

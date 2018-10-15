@@ -1,8 +1,6 @@
 using LinearAlgebra: I
 
-export CompositeQSystem,
-       add_hamiltonian!,
-       add_lindblad!, find_indices
+export CompositeQSystem, add_hamiltonian!, add_lindblad!
 
 # tensor products of quantum systems
 mutable struct CompositeQSystem
