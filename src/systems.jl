@@ -132,7 +132,7 @@ function hamiltonian(t::ChargeBasisTransmon, ϕ::Real=0.0)
     EJ = sqrt(s.EJ1^2 + s.EJ2^2 + 2 * s.EJ1 * s.EJ2 * cos(2π * ϕ))
     EC = s.EC
     charging_term = 4 * EC * diagm(0 => (-N:N).^2)
-    tunneling_term = -0.5 * EJ * (diagm(-1 => ones(dim(t)-1)) + diagm(1 => ones(dim(t)-1)))
+    tunneling_term = -0.5 * EJ * diagm(-1 => ones(dim(t)-1), 1 => ones(dim(t)-1))
     return charging_term + tunneling_term
 end
 
