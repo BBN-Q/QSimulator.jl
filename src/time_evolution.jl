@@ -5,9 +5,7 @@ using LinearAlgebra: I, rmul!, mul!
 
 import QSimulator.add_parametric_hamiltonians!
 
-export unitary_propagator,
-       unitary_state,
-       me_state
+export unitary_propagator, unitary_state, me_state
 
 """
     unitary_propagator(cqs::CompositeQSystem, ts::Float64; u0::Matrix=Matrix{ComplexF64}(0,0), t0=0.0)

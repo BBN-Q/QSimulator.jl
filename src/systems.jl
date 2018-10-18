@@ -3,10 +3,8 @@ using LinearAlgebra: diagm, eigvals
 
 export QSpec, TransmonSpec, DuffingSpec, ResonatorSpec, HermitianSpec
 export QSystem, label, dim, spec
-export LiteralHermitian, Resonator, DuffingTransmon, PerturbativeTransmon
-export ChargeBasisTransmon, CHARGE_NUM_TERMS
+export LiteralHermitian, Resonator, DuffingTransmon, PerturbativeTransmon, ChargeBasisTransmon
 export hamiltonian, duffing_from_transmon, fit_transmon
-export scale_EJ
 
 ######################################################
 # QSpec - the physical parameters defining a quantum system
@@ -201,6 +199,7 @@ end
 export TunableTransmon, FixedTransmon, FixedDuffingTransmon, TunableDuffingTransmon
 export fit_fixed_transmon, fit_tunable_transmon
 export MathieuTransmon, create, destroy
+export scale_EJ
 
 function Resonator(label::AbstractString, frequency::Real, dim::Int)
     @warn "Deprecation warning: Resonator."
