@@ -94,10 +94,10 @@ uuid = "c5cfe0b6-c10a-51a5-87e3-fd79235949f0"
 version = "0.3.2"
 
 [[DiffEqBase]]
-deps = ["Compat", "IteratorInterfaceExtensions", "LinearAlgebra", "Pkg", "RecipesBase", "RecursiveArrayTools", "Requires", "StaticArrays", "Statistics", "TableTraits", "Test", "TreeViews"]
-git-tree-sha1 = "59a9b1b4e16ecb4fae9fa060490097214554edfa"
+deps = ["Compat", "IteratorInterfaceExtensions", "LinearAlgebra", "Pkg", "RecipesBase", "RecursiveArrayTools", "Requires", "Roots", "StaticArrays", "Statistics", "TableTraits", "Test", "TreeViews"]
+git-tree-sha1 = "8ddcad49b1c44e0d8f3e20259357f604eabc57bc"
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
-version = "4.27.1"
+version = "4.28.1"
 
 [[DiffEqBiological]]
 deps = ["Compat", "DataStructures", "DiffEqBase", "DiffEqJump", "MacroTools", "Random", "Reexport", "Statistics", "SymEngine", "Test"]

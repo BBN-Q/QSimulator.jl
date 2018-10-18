@@ -10,7 +10,8 @@ Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "LsqFit"]
