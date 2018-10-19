@@ -13,7 +13,7 @@ parks = [0.0, 0.25]
 	times = collect(0.0:.01:50)
 	for park in parks
 		ϕ(t) = park + amp * sin(2π * freq * t)
-		ω(t) = perturbative_transmon_freq(EC, EJ1, EJ2, ϕ(t))
+		ω(t) = 2π * perturbative_transmon_freq(EC, EJ1, EJ2, ϕ(t))
 		fs = FourierSeries(ω, freq, harmonics)
 		ans = eval_series(fs, times)
 		@test isapprox(ω.(times), ans, rtol=1e-9)
@@ -26,10 +26,10 @@ parks = [0.0, 0.25]
 end
 
 @testset "rotating_frame_series" begin
-	times = collect(0.0:.05:10)
+	times = collect(0.0:.01:1)
 	for park in parks
 		ϕ(t) = park + amp * sin(2π * freq * t)
-		ω(t) = perturbative_transmon_freq(EC, EJ1, EJ2, ϕ(t))
+		ω(t) = 2π * perturbative_transmon_freq(EC, EJ1, EJ2, ϕ(t))
 		fs = FourierSeries(ω, freq, harmonics)
 		Φ(t) = exp(1im * quadgk(ω, 0.0, t)[1])
 		cfs = rotating_frame_series(fs, harmonics)
