@@ -100,8 +100,8 @@ end
 
 function hamiltonian(t::PerturbativeTransmon, ϕ::Real=0.0)
     s = spec(t)
-    ω = mathieu_f01((s.EC, s.EJ1, s.EJ2), ϕ)
-    η = mathieu_η((s.EC, s.EJ1, s.EJ2), ϕ)
+    ω = perturbative_transmon_freq(s.EC, s.EJ1, s.EJ2, ϕ, num_terms=PERTURBATIVE_NUM_TERMS)
+    η = perturbative_transmon_anharm(s.EC, s.EJ1, s.EJ2, ϕ, num_terms=PERTURBATIVE_NUM_TERMS)
     return duffing_hamiltonian(ω, η, dim(t))
 end
 
