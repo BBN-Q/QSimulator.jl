@@ -1,4 +1,5 @@
 include("test_operators.jl")
 include("test_systems.jl")
 include("test_fourier.jl")
-include("integration_tests.jl")
+include("test_utils.jl")
+include("integration_tests.jl.jl")
