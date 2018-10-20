@@ -2,36 +2,29 @@ using QuadGK: quadgk
 
 export FourierSeries, eval_series, rotating_frame_series
 
-const OFFSET = 2.0 # a good default offset for fourier_coefficient
-# both for calculating FourierSeries for frequency under modulation
-# and for calculating renormalization couplings
-
 """
-    fourier_coefficient(f::Function, frequency::Real, harmonic::Int, offset::Number=OFFSET)
+    fourier_coefficient(f::Function, frequency::Real, harmonic::Int)
 
-Calculate the fourier coefficient
-`1/T ∫_0^T f(τ) e^(-2πi * frequency * harmonic * τ) dτ`
-of a periodic function `f`. Optionally add a constant to the integrand so
-that the integral is nonzero (this helps with convergence).
+Calculate the fourier coefficient `1/T ∫_0^T f(τ) e^(-2πi * frequency * harmonic * τ) dτ`
+of a periodic function `f`.
 
 # args
 * `f`: the function of one variable.
 * `frequency`: the frequency of periodicity of `f`.
 * `harmonic`: the desired harmonic.
-* `offset`: the optional offset of the integral.
 
 # returns
 The fourier coefficient.
 """
-function fourier_coefficient(f::Function, frequency::Real, harmonic::Int, offset::Number=OFFSET)
+function fourier_coefficient(f::Function, frequency::Real, harmonic::Int)
     T = 1/frequency
-    g(τ) = offset/T + f(τ) * exp(-2π * 1im * frequency * harmonic * τ)
-    integral, _ = quadgk(g, 0.0, T)
-    return (integral - offset)/T
+    g(t) = f(t) * exp(-2π * 1im * frequency * harmonic * t)
+    integral, _ = quadgk(g, 0.0, T, atol=sqrt(eps(T)))
+    return integral/T
 end
 
 """
-Representation of a Fourier series `f(t) = ∑ A_n e^(iωnt)`
+Representation of a Fourier series `f(t) = ∑ Aₙ e^(iωnt)`
 """
 struct FourierSeries
     frequency::Real
@@ -39,7 +32,7 @@ struct FourierSeries
 end
 
 """
-    FourierSeries(f::Function, frequency::Real, harmonics::Vector{Int}, offsets::Union{Vector{<:Number}, Nothing}=nothing)
+    FourierSeries(f::Function, frequency::Real, harmonics::Vector{Int})
 
 Construct a FourierSeries from a periodic function `f` on given harmonics.
 
@@ -47,14 +40,12 @@ Construct a FourierSeries from a periodic function `f` on given harmonics.
 * `f`: the periodic function.
 * `frequency`: the frequency of periodicity of f.
 * `harmonics`: a vector of harmonics to compute.
-* `offsets`: a corresponding ovector of offsets to use in `fourier_coefficient`. Defaults to all OFFSET.
 
 # returns
 A FourierSeries.
 """
-function FourierSeries(f::Function, frequency::Real, harmonics::Vector{Int}, offsets::Union{Vector{<:Number}, Nothing}=nothing)
-    if offsets == nothing; offsets = OFFSET * ones(length(harmonics)); end
-    terms = Dict(h => fourier_coefficient(f, frequency, h, o) for (h, o) in zip(harmonics, offsets))
+function FourierSeries(f::Function, frequency::Real, harmonics::Vector{Int})
+    terms = Dict(h => fourier_coefficient(f, frequency, h) for h in harmonics)
     return FourierSeries(frequency, terms)
 end
 
@@ -79,13 +70,12 @@ end
 """
     rotating_frame_series(fs::FourierSeries, harmonics::Vector{Int})
 
-Compute the fourier series for `exp(i∫_0^t f(τ) dτ)` where `f` is
-the function given by the FourierSeries `fs`. This function ignores a
-constant term in `fs` since that maps onto an overall exponential factor
-which is not part of a FourierSeries.
+Compute the fourier series for `exp(i∫_0^t f(τ) dτ)` where `f` is the function given by
+the FourierSeries `fs`. This function ignores a constant term in `fs` since that maps onto
+an overall exponential factor which is not part of a FourierSeries.
 
 # args
-* `fs`: a FourierSeries for the frequency of a qubit.
+* `fs`: a FourierSeries.
 * `harmonics`: the desired harmonics.
 
 # returns
@@ -102,6 +92,5 @@ function rotating_frame_series(fs::FourierSeries, harmonics::Vector{Int})
         end
         return exp(1im * int)
     end
-    # note the integrals are between -1 and 1 so adding 2 will suffice
-    return FourierSeries(exp_of_integral, fs.frequency, harmonics, OFFSET * ones(length(harmonics)))
+    return FourierSeries(exp_of_integral, fs.frequency, harmonics)
 end
