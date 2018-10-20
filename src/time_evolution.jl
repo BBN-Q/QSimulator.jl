@@ -1,21 +1,23 @@
-# solvers for time evolution of quantum systems
-
-using DifferentialEquations
+using DifferentialEquations: ODEProblem, solve
 using LinearAlgebra: I, rmul!, mul!
 
-import QSimulator.add_parametric_hamiltonians!
-
-export unitary_propagator, unitary_state, me_state
+export unitary_propagator, unitary_state, me_propagator, me_state
 
 """
-    unitary_propagator(cqs::CompositeQSystem, ts::Float64; u0::Matrix=Matrix{ComplexF64}(0,0), t0=0.0)
+    unitary_propagator(cqs::CompositeQSystem, ts::Vector{<:Real})
 
-Compute the unitary propagator evolution of a CompositeQSystem evaluted at ts.
+Compute the unitary propagator of a CompositeQSystem at given times by
+solving the differential equation `dU/dt = -iHU`.
+
+## args
+* `cqs`: a CompositeQSystem.
+* `ts`: a sorted array of times at which to compute the unitary propagator.
+
+## returns
+An array of unitary propagators at the specified times.
 """
-function unitary_propagator(cqs::CompositeQSystem, ts::Vector;
-    u0::Union{Matrix{ComplexF64}, Nothing}=nothing, t0=0.0)
-    # schrodinger differential equation for unitary with in place update
-    # dU/dt = -iHU
+function unitary_propagator(cqs::CompositeQSystem, ts::Vector{<:Real})
+    @assert issorted(ts)
     function ode(du, u, p, t)
         ham = p[3] # preallocated workspace array
         ham .= p[2] # start from fixed_ham
@@ -24,27 +26,32 @@ function unitary_propagator(cqs::CompositeQSystem, ts::Vector;
         mul!(du, ham, u)
     end
     fixed_ham = hamiltonian(cqs)
-    # if initial condition not passed start with identity
-    if u0 == nothing
-        d = dim(cqs)
-        u0 = Matrix{ComplexF64}(I, d, d)
-    end
+    d = dim(cqs)
+    u0 = Matrix{ComplexF64}(I, d, d) # start with identity
     work_ham = similar(fixed_ham) # scratch space
-    prob = ODEProblem(ode, u0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham))
-    save_start = ts[1]==t0 ? true : false #save t0 only if asked for
-    sol = solve(prob; saveat=ts, save_start=save_start, reltol=1e-6)
-    sol.u
+    prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham))
+    sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
+    return sol.u
 end
-
+mul!
 
 """
-    unitary_state(cqs::CompositeQSystem, ts::Float64, ψ0::Vector, t0=0.0)
+    unitary_state(cqs::CompositeQSystem, ts::Vector{<:Real}, ψ0::Vector{<:Number})
 
-Compute the unitary state evolution of a CompositeQSystem from initial state ψ0 evaluted at ts.
+Compute the unitary state evolution of a `CompositeQSystem` from a given initial
+state and at given times by solving the differential equation
+`dψ/dt = -iHψ`.
+
+## args
+* `cqs`: a CompositeQSystem.
+* `ts`: a sorted array of times at which to compute the state.
+* `ψ0`: a vector indicating the initial state.
+
+## returns
+An array of state vectors for the system at the specified times.
 """
-function unitary_state(cqs::CompositeQSystem, ts::Vector, ψ0::Vector; t0=0.0)
-    # schrodinger differential equation for state vector with in place update
-    # dψ/dt = -iHψ
+function unitary_state(cqs::CompositeQSystem, ts::Vector{<:Real}, ψ0::Vector{<:Number})
+    @assert issorted(ts)
     function ode(dψ, ψ, p, t)
         ham = p[3] # preallocated workspace array
         ham .= p[2] # start from fixed_ham
@@ -54,37 +61,81 @@ function unitary_state(cqs::CompositeQSystem, ts::Vector, ψ0::Vector; t0=0.0)
     end
     fixed_ham = hamiltonian(cqs)
     work_ham = similar(fixed_ham)
-    prob = ODEProblem(ode, ψ0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham))
-    save_start = ts[1]==t0 ? true : false #save t0 only if asked for
-    sol = solve(prob; saveat=ts, save_start=save_start, reltol=1e-6)
-    sol.u
+    prob = ODEProblem(ode, ψ0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham))
+    sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
+    return sol.u
 end
 
+"""
+    me_propagator(cqs::CompositeQSystem, ts::Vector{<:Real})
+
+Compute the master equation propagator evolution of a `CompositeQSystem` at
+given times by solving the vectorized master equation
+`du/dt = (-i(I ⊗ H - transpose(H) ⊗ I) + Σ conj(L) ⊗ L - I ⊗ L^†L/2 - transpose(L^†L/2) ⊗ I)u`
+which can be derived using the identity `vec(AXB) = (transpose(B) ⊗ A)vec(X)`.
+
+## args
+* `cqs`: a CompositeQSystem.
+* `ts`: a sorted array of times at which to compute the density matrix.
+
+## returns
+An array of propagators for the system at the specified times.
+"""
+function me_propagator(cqs::CompositeQSystem, ts::Vector{<:Real})
+    @assert issorted(ts)
+    function ode(du, u, p, t)
+        ham = p[3] # preallocated workspace array
+        ham .= p[2] # start from fixed_ham
+        add_parametric_hamiltonians!(ham, p[1], t)
+        d = size(ham, 1)
+        I_mat = Matrix{ComplexF64}(I, d, d)
+        mul!(du, -2π * 1im * (I_mat ⊗ ham - transpose(ham) ⊗ I_mat), u)
+        lind_mat = p[5] # preallocated workspace array
+        for (index, (lind_op, idxs)) in enumerate([p[1].fixed_Ls; p[1].parametric_Ls])
+            lind_mat .= p[4] # start with empty array
+            l = index <= length(p[1].fixed_Ls) ? lind_op : lind_op(t)
+            embed_add!(lind_mat, l, idxs)
+            du .+= 2π * (conj(lind_mat) ⊗ lind_mat .- 0.5 .* I_mat ⊗ (lind_mat'*lind_mat) .- 0.5 .* transpose(lind_mat'*lind_mat) ⊗ I_mat) * u
+        end
+    end
+    fixed_ham = hamiltonian(cqs)
+    work_ham = similar(fixed_ham)
+    bare_lind = zeros(ComplexF64, size(fixed_ham))
+    work_lind = similar(fixed_ham)
+    d = dim(cqs)^2
+    u0 = Matrix{ComplexF64}(I, d, d) # start with identity
+    prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham, bare_lind, work_lind))
+    sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
+    return sol.u
+end
 
 """
-    me_state(cqs::CompositeQSystem, ts::Float64, ρ0::Matrix, t0=0.0)
+    me_state(cqs::CompositeQSystem, ts::Vector{<:Real}, ρ0::Matrix{<:Number})
 
-Compute the master equation evolution of a CompositeQSystem from initial density
-matrix ρ0 evaluted at ts.
+Compute the master equation state evolution of a `CompositeQSystem` from a
+given initial density matrix and at given times by solving the differential
+equation `dρ/dt = -i[H, ρ] + Σ LρL^† - L^†Lρ/2 - ρL^†L/2`.
+
+## args
+* `cqs`: a CompositeQSystem.
+* `ts`: a sorted array of times at which to compute the density matrix.
+* `ρ0`: a matrix indicating the initial density matrix.
+
+## returns
+An array of density matrices for the system at the specified times.
 """
-function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
-    # schrodinger differential equation for density matrix with in place update
-    # dρ/dt = -i[H, ρ]
+function me_state(cqs::CompositeQSystem, ts::Vector{<:Real}, ρ0::Matrix{<:Number})
+    @assert issorted(ts)
     function ode(dρ, ρ, p, t)
         ham = p[3] # preallocated workspace array
         ham .= p[2] # start from fixed_ham
         add_parametric_hamiltonians!(ham, p[1], t)
         dρ .= -2π * 1im * (ham*ρ - ρ*ham)
-        lind_mat = p[5]
-        for (lind_op, idxs) = p[1].fixed_Ls
+        lind_mat = p[5] # preallocated workspace array
+        for (index, (lind_op, idxs)) in enumerate([p[1].fixed_Ls; p[1].parametric_Ls])
             lind_mat .= p[4] # start with empty array
-            embed_add!(lind_mat, lind_op, idxs)
-            dρ .+= 2π * (lind_mat*ρ*lind_mat' .- .5 .* lind_mat'*lind_mat*ρ .- .5 .* ρ*lind_mat'*lind_mat)
-        end
-
-        for (lind_op, idxs) = p[1].parametric_Ls
-            lind_mat .= p[4] # start with empty array
-            embed_add!(lind_mat, lind_op(t), idxs)
+            l = index <= length(p[1].fixed_Ls) ? lind_op : lind_op(t)
+            embed_add!(lind_mat, l, idxs)
             dρ .+= 2π * (lind_mat*ρ*lind_mat' .- .5 .* lind_mat'*lind_mat*ρ .- .5 .* ρ*lind_mat'*lind_mat)
         end
     end
@@ -92,13 +143,7 @@ function me_state(cqs::CompositeQSystem, ts::Vector, ρ0::Matrix; t0=0.0)
     work_ham = similar(fixed_ham)
     bare_lind = zeros(ComplexF64, size(fixed_ham))
     work_lind = similar(fixed_ham)
-    prob = ODEProblem(ode, ρ0, (t0, float(ts[end])), (cqs, fixed_ham, work_ham, bare_lind, work_lind))
-    save_start = ts[1]==t0 ? true : false #save t0 only if asked for
-    sol = solve(prob; saveat=ts, save_start=save_start, reltol=1e-6)
-    sol.u
+    prob = ODEProblem(ode, ρ0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham, bare_lind, work_lind))
+    sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
+    return sol.u
 end
-
-# add helper functions for saving at a single point
-unitary_propagator(cqs::CompositeQSystem, t::T; u0::Union{Matrix{ComplexF64}, Nothing}=nothing, t0=0.0) where {T<:Number} = unitary_propagator(cqs, [t]; u0=u0, t0=t0)[1]
-unitary_state(cqs::CompositeQSystem, t::T, ψ0::Vector; t0=0.0) where {T<:Number} = unitary_state(cqs, [t], ψ0; t0=t0)[1]
-me_state(cqs::CompositeQSystem, t::T, ρ0::Matrix; t0=0.0) where {T<:Number} = me_state(cqs, [t], ρ0; t0=t0)[1]
