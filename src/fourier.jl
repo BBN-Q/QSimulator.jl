@@ -32,7 +32,7 @@ struct FourierSeries
 end
 
 """
-    FourierSeries(f::Function, frequency::Real, harmonics::Vector{Int})
+    FourierSeries(f::Function, frequency::Real, harmonics::AbstractVector{Int})
 
 Construct a FourierSeries from a periodic function `f` on given harmonics.
 
@@ -44,13 +44,13 @@ Construct a FourierSeries from a periodic function `f` on given harmonics.
 # returns
 A FourierSeries.
 """
-function FourierSeries(f::Function, frequency::Real, harmonics::Vector{Int})
+function FourierSeries(f::Function, frequency::Real, harmonics::AbstractVector{Int})
     terms = Dict(h => fourier_coefficient(f, frequency, h) for h in harmonics)
     return FourierSeries(frequency, terms)
 end
 
 """
-    eval_series(fs::FourierSeries, times::Vector{<:Real})
+    eval_series(fs::FourierSeries, times::AbstractVector{<:Real})
 
 Evaluate a FourierSeries on given times.
 
@@ -61,14 +61,14 @@ Evaluate a FourierSeries on given times.
 # returns
 A vector of values.
 """
-function eval_series(fs::FourierSeries, times::Vector{<:Real})
+function eval_series(fs::FourierSeries, times::AbstractVector{<:Real})
     v = collect(fs.terms)
     harmonic_vector, coefficient_vector = [p[1] for p in v], [p[2] for p in v]
     return exp.(2π * 1im * fs.frequency * times * transpose(harmonic_vector)) * coefficient_vector
 end
 
 """
-    rotating_frame_series(fs::FourierSeries, harmonics::Vector{Int})
+    rotating_frame_series(fs::FourierSeries, harmonics::AbstractVector{Int})
 
 Compute the fourier series for `exp(i∫_0^t f(τ) dτ)` where `f` is the function given by
 the FourierSeries `fs`. This function ignores a constant term in `fs` since that maps onto
@@ -81,7 +81,7 @@ an overall exponential factor which is not part of a FourierSeries.
 # returns
 The FourierSeries.
 """
-function rotating_frame_series(fs::FourierSeries, harmonics::Vector{Int})
+function rotating_frame_series(fs::FourierSeries, harmonics::AbstractVector{Int})
     iω = 2π * 1im * fs.frequency
     function exp_of_integral(t::Real)
         int = 0.0

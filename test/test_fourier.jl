@@ -6,11 +6,11 @@ plt.ioff()
 EC, EJ1, EJ2 = 0.172, 12.71, 3.69
 freq = 0.1
 amp = 0.6
-harmonics = collect(-50:50)
+harmonics = -50:50
 parks = [0.0, 0.25]
 
 @testset "FourierSeries" begin
-	times = collect(0.0:.01:50)
+	times = 0.0:.01:50
 	for park in parks
 		ϕ(t) = park + amp * sin(2π * freq * t)
 		ω(t) = 2π * perturbative_transmon_freq(EC, EJ1, EJ2, ϕ(t))
@@ -26,7 +26,7 @@ parks = [0.0, 0.25]
 end
 
 @testset "rotating_frame_series" begin
-	times = collect(0.0:.01:1)
+	times = 0.0:.01:1
 	for park in parks
 		ϕ(t) = park + amp * sin(2π * freq * t)
 		ω(t) = 2π * perturbative_transmon_freq(EC, EJ1, EJ2, ϕ(t))
