@@ -11,6 +11,7 @@ import Base.Iterators
 using OrdinaryDiffEq: ODEProblem, solve, Tsit5
 
 export unitary_propagator, unitary_state, me_propagator, me_state
+export floquet_propagator, choose_times_floquet, decompose_times_floquet
 
 """
     unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
@@ -161,3 +162,145 @@ function me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix
 end
 
 me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}) = me_state(cqs, [0.0, t], ρ0)[end]
+
+######################################################
+# Define a `propagator_function` to be a function that takes a CompositeQSystem
+# and an array of times and returns an array of propagators at those times
+# starting at the first given time.
+######################################################
+
+TIME_TOL_FRACTION = 1e-10
+
+"""
+    floquet_propagator(propagator_func::Function, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+
+Given a propagator function and a time period, create a new propagator
+function that applies correctly to CompositeQSystems that are periodic
+with the given time period. It makes use of the identity
+`U(nτ + dt) = U(dt)U(τ)^n` where `U` is the propagator for a system with period `τ`.
+
+## args
+* `propagator_func`: a propagator function, e.g. `unitary_propagator`.
+* `t_period`: the periodicity of the system.
+* `time_tol_fraction`: a tolerance to use in unique_tol for the times mod the period
+    expressed as a fraction of `t_period`.
+
+## returns
+A new propagator function.
+"""
+function floquet_propagator(propagator_func::Function, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+    function p(cqs::CompositeQSystem, ts::Vector{<:Real})
+        @assert issorted(ts)
+        quotients, unique_remainders, unique_inds = decompose_times_floquet(ts, t_period, time_tol_fraction=time_tol_fraction)
+        # perform time evolution for unique remainders as well as one full period
+        us_remainders = propagator_func(cqs, [unique_remainders; t_period + ts[1]])
+        u_period = us_remainders[end]
+        # create desired unitaries
+        us = Array{Matrix{ComplexF64}, 1}([])
+        quotient = quotients[1]
+        u_floquet = u_period^quotient
+        for i in 1:length(ts)
+            if quotients[i] > quotient
+                u_floquet *= u_period^(quotients[i] - quotient)
+                quotient = quotients[i]
+            end
+            push!(us, us_remainders[unique_inds[i]] * u_floquet)
+        end
+        return us
+    end
+    return p
+end
+
+"""
+    choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Real)
+
+Choose times for integration that maximize remainder overlap for Floquet integration.
+`center` is guaranteed to be one of the times.
+
+## args
+* `center`: the center of the array of times.
+* `width`: the desired approximate width of the array of times.
+* `t_period`: the periodicity of the system.
+* `dt`: the desired approximate time increment.
+
+## returns
+An array of times.
+"""
+function choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Real)
+    dt = t_period / ceil(Int, t_period / dt) # reset dt so it divides time_period, making it smaller
+    num_times = floor(Int, width / dt)
+    if mod(num_times, 2) == 0
+        num_times += 1
+    end
+    width = dt * num_times
+    times = collect(range(center - width/2, stop=center + width/2, length=num_times))
+    times[ceil(Int, num_times/2)] = center
+    return times
+end
+
+"""
+    decompose_times_floquet(ts::Vector{<:Real}, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+
+Decompose the given times as `ts = quotients * t_period + unique_remainders[unique_inds]`
+where `unique_remainders` is as small of an array as possible.
+
+## args
+* `ts`: an array of times.
+* `t_period`: the periodicity of the system.
+* `time_tol_fraction`: a tolerance to use in unique_tol for the times mod the period
+    expressed as a fraction of `t_period`.
+
+## returns
+`quotients`, `unique_remainders`, and `unique_inds`.
+"""
+function decompose_times_floquet(ts::Vector{<:Real}, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+    # find unique times mod a period
+    qrs = fldmod.(ts .- ts[1], t_period)
+    quotients = [qr[1] for qr in qrs]
+    remainders = [qr[2] + ts[1] for qr in qrs]
+    # remove collisions in the times mod a period up to time_tol
+    unique_remainders, unique_inds = unique_tol(remainders, time_tol_fraction * t_period)
+    # sort the unique remainders
+    sort_inds = sortperm(unique_remainders)
+    unique_remainders = unique_remainders[sort_inds]
+    unique_inds = sortperm(sort_inds)[unique_inds]
+    return quotients, unique_remainders, unique_inds
+end
+
+"""
+    floquet_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+
+Create a propagator function that uses the floquet evolution but also
+allows a rise time and a fall time during which the pulse is not periodic.
+The rise time is assumed to be at the beginning of the vector `ts` and the
+fall time is assumed to be at the end.
+
+## args
+* `propagator_func`: a propagator function, e.g. `unitary_propagator`.
+* `t_period`: the periodicity of the system.
+* `rise_time`: the rise time of the pulse (the time at the beginning that is non-periodic).
+* `fall_time`: the fall time of the pulse (the time at the end that is non-periodic).
+* `time_tol_fraction`: a tolerance to use in unique_tol for the times mod the period
+    expressed as a fraction of `t_period`.
+
+## returns
+A propagator function. The times passed into this
+"""
+function floquet_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+    @assert all([t_period, rise_time, fall_time] .>= 0.0)
+    floquet_prop = floquet_propagator(propagator_func, t_period, time_tol_fraction=time_tol_fraction)
+    function p(cqs::CompositeQSystem, ts::Vector{<:Real})
+        t0, t1 = ts[1] + rise_time, ts[end] - fall_time
+        @assert t0 <= t1
+        us_risetime = propagator_func(cqs, [ts[ts .< t0]; t0])
+        u0 = us_risetime[end]
+        us = us_risetime[1:end-1]
+        us_floquet = floquet_prop(cqs, [t0; ts[t0 .<= ts .<= t1]; t1])
+        u1 = us_floquet[end] * u0
+        append!(us, [u * u0 for u in us_floquet[2:end-1]])
+        us_falltime = propagator_func(cqs, [t1; ts[t1 .< ts]])
+        append!(us, [u * u1 for u in us_falltime[2:end]])
+        return us
+    end
+    return p
+end
