@@ -135,14 +135,14 @@ end
         drive = a + b * cos(2π * drive_freq * t)
         return envelope * drive + (1 - envelope) * (a+b)
     end
-    times = collect(linspace(0.0, t_final, 500))
+    times = collect(range(0.0, stop=t_final, length=500))
     if "plot" in ARGS
         plt.plot(times, p.(times))
         plt.axvline(rise_time, color="red")
         plt.axvline(t_final-rise_time, color="red")
         plt.show()
     end
-    add_hamiltonian!(cqs, flux_drive(q0, p), q0)
+    add_hamiltonian!(cqs, parametric_drive(q0, p), q0)
     t_period = 1/drive_freq
     prop = floquet_propagator(unitary_propagator, t_period, rise_time, rise_time)
     us_floquet_pulseshape = prop(cqs, times)

@@ -129,6 +129,6 @@ An array of the unique values and an array of indices.
 function unique_tol(ts::Vector{<:Real}, dt::Real)
     vals = round.(Int, ts ./ dt) .* dt
     unique_vals = unique(vals)
-    unique_inds = [findall(unique_vals .== v)[1] for v in vals]
+    unique_inds = [findfirst(unique_vals .== v) for v in vals]
     return unique_vals, unique_inds
 end
