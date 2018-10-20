@@ -62,9 +62,7 @@ Evaluate a FourierSeries on given times.
 A vector of values.
 """
 function eval_series(fs::FourierSeries, times::AbstractVector{<:Real})
-    v = collect(fs.terms)
-    harmonic_vector, coefficient_vector = [p[1] for p in v], [p[2] for p in v]
-    return exp.(2π * 1im * fs.frequency * times * transpose(harmonic_vector)) * coefficient_vector
+    return reduce(+, coeff * exp.(2π * 1im * fs.frequency * harmonic * times) for (harmonic, coeff) in fs.terms)
 end
 
 """
