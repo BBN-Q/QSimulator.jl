@@ -4,6 +4,7 @@ export ⊗
 
 const ⊗ = kron
 
+include("fourier.jl")
 include("perturbative_transmon.jl")
 include("systems.jl")
 include("operators.jl")
