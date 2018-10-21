@@ -1,5 +1,4 @@
 using Iterators: product
-using GroupSlices: groupinds, groupslices
 
 export photons_to_index, index_to_photons, photons_to_state, index_to_state, tensor_product_states
 export unique_tol
