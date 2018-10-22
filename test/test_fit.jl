@@ -1,3 +1,4 @@
+using Test, QSimulator
 using LinearAlgebra: eigvals
 
 ########################### Fixed Transmon Fit ##########################

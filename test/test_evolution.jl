@@ -1,3 +1,6 @@
+using Test, QSimulator
+using LsqFit: curve_fit
+
 ############################ Ramsey ##########################
 
 # ramsey evolution of a single transmon should produce sinusoidal oscillations at the qubit frequency
