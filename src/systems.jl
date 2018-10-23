@@ -210,12 +210,15 @@ end
 
 struct RotatingFrameSystem <: QSystem
     label::AbstractString
-    dim::Int
     system::QSystem
     rotation_rate::Real
-    RotatingFrameSystem(q::QSystem, rotation_rate::Real) = new(label(q), dim(q), q, rotation_rate)
 end
 
+# contruct from an existing QSystem without a different label
+RotatingFrameSystem(q::QSystem, rotation_rate::Real) = RotatingFrameSystem(label(q), q, rotation_rate)
+
+# defer `dim` and `spec` to underlying QSystem
+dim(r::RotatingFrameSystem) = dim(r.system)
 spec(r::RotatingFrameSystem) = spec(r.system)
 
 function hamiltonian(r::RotatingFrameSystem)
