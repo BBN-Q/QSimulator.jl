@@ -97,10 +97,10 @@ struct PerturbativeTransmon <: QSystem
     dim::Int
     spec::TransmonSpec
     num_terms::Int
-end
 
-PerturbativeTransmon(label::AbstractString, dim::Int, spec::TransmonSpec) =
-                PerturbativeTransmon(label::AbstractString, dim::Int, spec::TransmonSpec, PERTURBATIVE_NUM_TERMS)
+    PerturbativeTransmon(label::AbstractString, dim::Int, spec::TransmonSpec; num_terms::Int=PERTURBATIVE_NUM_TERMS) =
+                new(label::AbstractString, dim::Int, spec::TransmonSpec, PERTURBATIVE_NUM_TERMS)
+end
 
 function DuffingSpec(t::TransmonSpec, ϕ::Real=0.0, num_terms::Int=PERTURBATIVE_NUM_TERMS)
     freq = perturbative_transmon_freq(t.EC, t.EJ1, t.EJ2, ϕ, num_terms=num_terms)
