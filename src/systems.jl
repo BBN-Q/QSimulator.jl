@@ -4,7 +4,7 @@ using LinearAlgebra: diag, diagm, eigvals
 export QSpec, TransmonSpec, DuffingSpec, ResonatorSpec, HermitianSpec
 export QSystem, label, dim, spec
 export LiteralHermitian, Resonator, DuffingTransmon, PerturbativeTransmon, ChargeBasisTransmon
-export hamiltonian, duffing_from_transmon, fit_transmon
+export hamiltonian, fit_transmon
 
 ######################################################
 # QSpec - the physical parameters defining a quantum system
@@ -39,7 +39,7 @@ end
 ######################################################
 abstract type QSystem end
 
-# required functions
+# required functions with defaults
 label(q::QSystem) = q.label
 dim(q::QSystem) = q.dim
 spec(q::QSystem) = q.spec
@@ -50,13 +50,10 @@ spec(q::QSystem) = q.spec
 
 struct LiteralHermitian <: QSystem
     label::AbstractString
-    dim::Int
     spec::HermitianSpec
-
-    function LiteralHermitian(label::AbstractString, hermitian_spec::HermitianSpec)
-        return new(label, size(hermitian_spec.matrix, 1), hermitian_spec)
-    end
 end
+
+dim(h::LiteralHermitian) = size(h.spec.matrix, 1)
 
 hamiltonian(q::LiteralHermitian) = spec(q).matrix
 
@@ -87,13 +84,9 @@ struct DuffingTransmon <: QSystem
     spec::DuffingSpec
 end
 
-function hamiltonian(t::DuffingTransmon)
-    return duffing_hamiltonian(spec(t).frequency, spec(t).anharmonicity, dim(t))
-end
+hamiltonian(t::DuffingTransmon) = duffing_hamiltonian(spec(t).frequency, spec(t).anharmonicity, dim(t))
 
-function hamiltonian(t::DuffingTransmon, frequency::Real)
-    return duffing_hamiltonian(frequency, spec(t).anharmonicity, dim(t))
-end
+hamiltonian(t::DuffingTransmon, frequency::Real) = duffing_hamiltonian(frequency, spec(t).anharmonicity, dim(t))
 
 ######################################################
 # PerturbativeTransmon
@@ -104,10 +97,10 @@ struct PerturbativeTransmon <: QSystem
     dim::Int
     spec::TransmonSpec
     num_terms::Int
-    function PerturbativeTransmon(label::AbstractString, dim::Int, spec::TransmonSpec; num_terms::Int=PERTURBATIVE_NUM_TERMS)
-        return new(label, dim, spec, num_terms)
-    end
 end
+
+PerturbativeTransmon(label::AbstractString, dim::Int, spec::TransmonSpec) =
+                PerturbativeTransmon(label::AbstractString, dim::Int, spec::TransmonSpec, PERTURBATIVE_NUM_TERMS)
 
 function DuffingSpec(t::TransmonSpec, ϕ::Real=0.0, num_terms::Int=PERTURBATIVE_NUM_TERMS)
     freq = perturbative_transmon_freq(t.EC, t.EJ1, t.EJ2, ϕ, num_terms=num_terms)
@@ -147,6 +140,9 @@ function hamiltonian(t::ChargeBasisTransmon, ϕ::Real=0.0)
     EC = s.EC
     charging_term = 4 * EC * diagm(0 => (-N:N).^2)
     tunneling_term = -0.5 * EJ * (diagm(-1 => ones(d-1), 1 => ones(d-1)))
+    # since the Hamiltonian is Hermitian the eigenvalues should already be sorted by the LAPACK
+    # solver; however,  since that implementation is not guaranteed by Julia,  belts and suspenders
+    # style we sort again
     return diagm(0 => sort(real(eigvals(charging_term + tunneling_term)))[1:dim(t)])
 end
 # TODO: update raising and lowering to be correct for ChargeBasisTransmon
