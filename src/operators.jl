@@ -1,7 +1,7 @@
 using LinearAlgebra: diagm
 
 export raising, lowering, number, X, Y, X_Y,
-       decay, dephasing, dipole_drive, flux_drive
+       decay, dephasing, dipole_drive, parametric_drive
 
 ######################################################
 # Primitives
@@ -81,7 +81,7 @@ end
 
 
 """
-    flux_drive(qs::QSystem, drive::Function)
+    parametric_drive(qs::QSystem, drive::Function)
 
 Given some function of time, return a function applying a
 time dependent Hamiltonian.
@@ -93,7 +93,7 @@ time dependent Hamiltonian.
 ## returns
 A function of time.
 """
-function flux_drive(qs::QSystem, drive::Function)
+function parametric_drive(qs::QSystem, drive::Function)
     ham(t) = hamiltonian(qs, drive(t))
     return ham
 end
@@ -102,11 +102,16 @@ end
 # Backwards compatibility
 ######################################################
 
-export microwave_drive, dipole, flip_flop, XY, rotating_flip_flop
+export microwave_drive, flux_drive, dipole, flip_flop, XY, rotating_flip_flop
 
 function microwave_drive(q::QSystem, drive::Function)
     @warn "Deprecation warning: microwave_drive."
     return dipole_drive(q, drive)
+end
+
+function flux_drive(q::QSystem, drive::Function)
+    @warn "Deprecation warning: flux_drive."
+    return parametric_drive(q, drive)
 end
 
 function dipole(a::QSystem, b::QSystem)
