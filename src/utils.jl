@@ -1,4 +1,4 @@
-using Iterators: product
+using Base.Iterators: product
 
 export photons_to_index, index_to_photons, photons_to_state, index_to_state, tensor_product_states
 
