@@ -99,7 +99,7 @@ struct PerturbativeTransmon <: QSystem
     num_terms::Int
 
     PerturbativeTransmon(label::AbstractString, dim::Int, spec::TransmonSpec; num_terms::Int=PERTURBATIVE_NUM_TERMS) =
-                new(label::AbstractString, dim::Int, spec::TransmonSpec, PERTURBATIVE_NUM_TERMS)
+                new(label::AbstractString, dim::Int, spec::TransmonSpec, num_terms)
 end
 
 function DuffingSpec(t::TransmonSpec, ϕ::Real=0.0, num_terms::Int=PERTURBATIVE_NUM_TERMS)
