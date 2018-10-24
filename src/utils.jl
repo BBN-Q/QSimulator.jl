@@ -19,7 +19,7 @@ in each mode.
 `tensor_product_states([2,2]) == [[0,0], [0,1], [1,0], [1,1]]`.
 """
 function tensor_product_states(dims::Vector{Int})
-   return [reverse(collect(prod_inds).-1) for prod_inds in product([1:dim for dim in reverse(dims)]...)]
+   return [reverse(x .- 1) for x in vec(collect(product([1:dim for dim in reverse(dims)]...)))]
 end
 
 """
