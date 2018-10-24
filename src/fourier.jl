@@ -1,6 +1,6 @@
 using QuadGK: quadgk
 
-export FourierSeries, eval_series, rotating_frame_series
+export fourier_coefficient, FourierSeries, eval_series, rotating_frame_series
 
 """
     fourier_coefficient(f::Function, frequency::Real, harmonic::Int)
