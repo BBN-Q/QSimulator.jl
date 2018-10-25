@@ -18,7 +18,7 @@ end
     photons = [1,0]
     index = photons_to_index(photons, dims)
     @test index == 4
-    state = Complex128[0.0, 1.0] ⊗ Complex128[1.0, 0.0, 0.0]
+    state = ComplexF64[0.0, 1.0] ⊗ ComplexF64[1.0, 0.0, 0.0]
     @test index_to_state(index, prod(dims)) == state
     @test photons_to_state(photons, dims) == state
 end
