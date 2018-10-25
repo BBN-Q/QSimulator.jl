@@ -5,15 +5,14 @@ export photons_to_index, index_to_photons, photons_to_state, index_to_state, ten
 """
     tensor_product_states(dims::Vector{Int})
 
-Enumerate all basis states in a tensor product space in the canonical order
-used by the Kronecker product.
+Enumerate all basis states in a tensor product space in the canonical order used by the Kronecker
+product.
 
 ## args
 * `dims`: an array with the dimension of each mode.
 
 ## returns
-An array of arrays where each array indicates the number of photons
-in each mode.
+An array of arrays where each array indicates the number of photons in each mode.
 
 ## example
 `tensor_product_states([2,2]) == [[0,0], [0,1], [1,0], [1,1]]`.
@@ -32,13 +31,11 @@ Convert number of photons in each subsystem of a tensor product space to an inde
 * `dims`: a vector of dimensions for each subsystem.
 
 ## returns
-The index of the state according to the indexing rules of the kronecker product,
-starting at 1.
+The index of the state according to the indexing rules of the kronecker product, starting at 1.
 
 ## example
-Consider a tensor product of two qubits so that `dims = [2,2]`. Then states
-`[0,0], [0,1], [1,0], [1,1]` are numbered `1, 2, 3, 4` so that
-`photons_to_index([1,0], [2,2]) == 3`.
+Consider a tensor product of two qubits so that `dims = [2,2]`. Then states `[0,0], [0,1], [1,0],
+[1,1]` are numbered `1, 2, 3, 4` so that `photons_to_index([1,0], [2,2]) == 3`.
 """
 function photons_to_index(photons::Vector{Int}, dims::Vector{Int})
     @assert length(photons) == length(dims)
@@ -63,9 +60,8 @@ Convert an index in a tensor product space to the number of photons in each subs
 The an array with the number of photons in each subsystem.
 
 ## example
-Consider a tensor product of two qubits so that `dims = [2,2]`. Then states
-`[0,0], [0,1], [1,0], [1,1]` are numbered `1, 2, 3, 4` so that
-`index_to_photons(3, [2,2]) == [1,0]`.
+Consider a tensor product of two qubits so that `dims = [2,2]`. Then states `[0,0], [0,1], [1,0],
+[1,1]` are numbered `1, 2, 3, 4` so that `index_to_photons(3, [2,2]) == [1,0]`.
 """
 function index_to_photons(index::Int, dims::Vector{Int})
     if !(1 <= index <= prod(dims))
@@ -84,8 +80,7 @@ Create the state corresponding to a given number of photons in each mode.
 * `dims`: a array with the dimension of each mode.
 
 ## returns
-The standard basis state corresponding to the given number of photons
-in each mode.
+The standard basis state corresponding to the given number of photons in each mode.
 """
 function photons_to_state(photons::Vector{Int}, dims::Vector{Int})
     index = photons_to_index(photons, dims)
