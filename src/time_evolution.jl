@@ -236,13 +236,19 @@ Choose times for integration that maximize remainder overlap for Floquet integra
 An array of times.
 """
 function choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Real)
-    dt = t_period / ceil(Int, t_period / dt) # reset dt so it divides time_period, making it smaller
-    num_times = floor(Int, width / dt)
-    num_times += iseven(num_times) # make sure num_times is odd for symmetry
-    width = dt * num_times
-    times = collect(range(center - width/2, stop=center + width/2, length=num_times))
-    times[ceil(Int, num_times/2)] = center
-    return times
+    @assert width >= 0
+    @assert dt >= 0
+    if (width == 0) || (dt == 0)
+        return [center]
+    else
+        dt = t_period / ceil(Int, t_period / dt) # reset dt so it divides time_period, making it smaller
+        num_times = floor(Int, width / dt)
+        num_times += iseven(num_times) # make sure num_times is odd for symmetry
+        width = dt * num_times
+        times = collect(range(center - width/2, stop=center + width/2, length=num_times))
+        times[ceil(Int, num_times/2)] = center
+        return times
+    end
 end
 
 """
