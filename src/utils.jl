@@ -39,11 +39,8 @@ Consider a tensor product of two qubits so that `dims = [2,2]`. Then states `[0,
 """
 function photons_to_index(photons::Vector{Int}, dims::Vector{Int})
     @assert length(photons) == length(dims)
-    for (photon_num, dim) in zip(photons, dims)
-        if !(0 <= photon_num < dim)
-            return nothing
-        end
-    end
+    # check that the requested basis_state is compatibile with the subsystem dimensions
+    !(all(photons .>= 0) && all(photons .< dims)) && return nothing
     return LinearIndices(tuple(reverse(dims)...))[reverse(photons.+1)...]
 end
 
@@ -64,9 +61,7 @@ Consider a tensor product of two qubits so that `dims = [2,2]`. Then states `[0,
 [1,1]` are numbered `1, 2, 3, 4` so that `index_to_photons(3, [2,2]) == [1,0]`.
 """
 function index_to_photons(index::Int, dims::Vector{Int})
-    if !(1 <= index <= prod(dims))
-        return nothing
-    end
+    !(1 <= index <= prod(dims)) && return nothing
     return collect(reverse(Tuple(CartesianIndices(tuple(reverse(dims)...))[index])).-1)
 end
 
