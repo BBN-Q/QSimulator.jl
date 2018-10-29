@@ -1,74 +1,36 @@
 using Base.Iterators: product
 
-export photons_to_index, index_to_photons, photons_to_state, index_to_state, tensor_product_states
+import Base: vec, getindex
+
 
 """
-    tensor_product_states(dims::Vector{Int})
-
-Enumerate all basis states in a tensor product space in the canonical order used by the Kronecker
-product.
-
-## args
-* `dims`: an array with the dimension of each mode.
-
-## returns
-An array of arrays where each array indicates the number of photons in each mode.
-
-## example
-`tensor_product_states([2,2]) == [[0,0], [0,1], [1,0], [1,1]]`.
+A simple covenience wrapper for a tuple of subsystem dimensions for a tensor product space.
 """
-function tensor_product_states(dims::Vector{Int})
-   return [collect(reverse(x .- 1)) for x in vec(collect(product([1:dim for dim in reverse(dims)]...)))]
+struct TensorProductBasis
+    dims::Tuple{Vararg{Int}}
 end
 
+# helper contructor to convert from dimensions given in Vector form
+TensorProductBasis(dims::Vector{Int}) = TensorProductBasis(Tuple(dims))
+
+abstract type BasisState end;
+
 """
-    photons_to_index(photons::Vector{Int}, dims::Vector{Int})
-
-Convert number of photons in each subsystem of a tensor product space to an index in the full space.
-
-## args
-* `photons`: a vector with the number of photons in each subsystem.
-* `dims`: a vector of dimensions for each subsystem.
-
-## returns
-The index of the state according to the indexing rules of the kronecker product, starting at 1.
-
-## example
-Consider a tensor product of two qubits so that `dims = [2,2]`. Then states `[0,0], [0,1], [1,0],
-[1,1]` are numbered `1, 2, 3, 4` so that `photons_to_index([1,0], [2,2]) == 3`.
+A basis element of a tensor product space
 """
-function photons_to_index(photons::Vector{Int}, dims::Vector{Int})
-    @assert length(photons) == length(dims)
-    # check that the requested basis_state is compatibile with the subsystem dimensions
-    !(all(photons .>= 0) && all(photons .< dims)) && return nothing
-    return LinearIndices(tuple(reverse(dims)...))[reverse(photons.+1)...]
+struct TensorProductBasisState <: BasisState
+    basis::TensorProductBasis
+    states::Tuple{Vararg{Int}}
 end
 
-"""
-    index_to_photons(index::Int, dims::Vector{Int})
+# helper contructor to convert from dimensions given in Vector form
+TensorProductBasis(b::TensorProductBasis, states::Vector{Int}) = TensorProductBasis(b, Tuple(states))
 
-Convert an index in a tensor product space to the number of photons in each subsystem.
-
-## args
-* `index`: the index of the state in the tensor product space.
-* `dims`: a vector of dimensions for each subsystem.
-
-## returns
-The an array with the number of photons in each subsystem.
-
-## example
-Consider a tensor product of two qubits so that `dims = [2,2]`. Then states `[0,0], [0,1], [1,0],
-[1,1]` are numbered `1, 2, 3, 4` so that `index_to_photons(3, [2,2]) == [1,0]`.
-"""
-function index_to_photons(index::Int, dims::Vector{Int})
-    !(1 <= index <= prod(dims)) && return nothing
-    return collect(reverse(Tuple(CartesianIndices(tuple(reverse(dims)...))[index])).-1)
-end
 
 """
-    photons_to_state(photons::Vector{Int}, dims::Vector{Int})
+    basis_state_to_basis_vector(basis_state::Vector{Int}, dims::Vector{Int})
 
-Create the state corresponding to a given number of photons in each mode.
+Create the complex basis vector correspoding to a given TensorProductBasisState basis state
 
 ## args
 * `photons`: an array with the number of photons in each mode.
@@ -77,25 +39,75 @@ Create the state corresponding to a given number of photons in each mode.
 ## returns
 The standard basis state corresponding to the given number of photons in each mode.
 """
-function photons_to_state(photons::Vector{Int}, dims::Vector{Int})
-    index = photons_to_index(photons, dims)
-    return index_to_state(index, prod(dims))
+function vec(state::TensorProductBasisState)
+    state_vector = zeros(ComplexF64, prod(state.basis.dims))
+    state_vector[index(state)] = 1.0
+    state_vector
 end
 
-"""
-    index_to_state(index::Int, dim::Int)
 
-Create a standard basis vector.
+"""
+    basis_states(b::TensorProductBasis)
+
+Enumerate all basis states in a tensor product space in the canonical order used by the Kronecker
+product.
 
 ## args
-* `index`: the index of the standard basis vector.
-* `dim`: the dimension of the vector space.
+* `b`: a TensorProductBasis
 
 ## returns
-The standard basis vector.
+A vector of TensorProductBasisState
+
+## example
+`[bs.states for bs in basis_states(TensorProductBasis((2,2))] == [(0,0), (0,1), (1,0), (1,1)]]`.
 """
-function index_to_state(index::Int, dim::Int)
-    ans = zeros(ComplexF64, dim)
-    ans[index] = 1.0
-    return ans
+function basis_states(b::TensorProductBasis)
+    return [
+        TensorProductBasisState(b, reverse(x .- 1))
+            for x in vec(collect(product([1:dim for dim in reverse(b.dims)]...)))
+            ]
+end
+
+
+"""
+    index(bs::TensorProductBasisState)
+
+Convert basis state of a tensor product space to an index into an enumerate of all basis states from
+the canonical order used by the Kronecker product.
+
+## args
+* `bs`: a TensorProductBasisState
+
+## returns
+The 1-index of the state into the cannonical tensor product basis states.
+
+## example
+Consider a tensor product of two qubits `b = TensorProductBasis((2,2))`. Then states `(0,0), (0,1),
+(1,0), (1,1)` are numbered `1, 2, 3, 4` so that `index(TensorProductBasisState(b, (1,0)) == 3`.
+"""
+function index(bs::TensorProductBasisState)
+    return LinearIndices(tuple(reverse(bs.basis.dims)...))[reverse(bs.states.+1)...]
+end
+
+
+"""
+    getindex(b::TensorProductBasis, i)
+
+Convert an index into a tensor product space to the basis state
+
+## args
+* `b` : the TensorProductBasis to index into
+* `i`: the index of the basis state in the tensor product space.
+
+## returns
+The indexed TensorProductBasisState.
+
+## example
+Consider a tensor product of two qubits so that ``b = TensorProductBasis((2,2))``. Then states
+`[0,0], [0,1], [1,0], [1,1]` are numbered `1, 2, 3, 4` so that `index_to_basis_state(3, [2,2]) ==
+[1,0]`.
+"""
+function getindex(b::TensorProductBasis, i)
+    states = reverse(Tuple(CartesianIndices(tuple(reverse(dims)...))[index])).-1
+    TensorProductBasisState(b, states)
 end
