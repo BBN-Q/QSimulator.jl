@@ -56,7 +56,7 @@ function dephasing(qs::QSystem, γ::Real)
 end
 
 """
-    dipole_drive(qs::QSystem, drive::Function)
+    dipole_drive(qs::QSystem, drive::Function, rotation_rate::Real=0.0)
 
 Given some function of time, return a function applying a time dependent
 dipole Hamiltonian.
@@ -65,20 +65,15 @@ dipole Hamiltonian.
 * `qs`: a QSystem.
 * `drive`: a function of time returning a real or complex value. The real
     part couples to X and the imaginary part couples to Y.
+* `rotation_rate`: the rotation rate of a rotating frame.
 
 ## returns
 A function of time.
 """
-function dipole_drive(qs::QSystem, drive::Function)
-    x_ham = X(qs)
-    y_ham = Y(qs)
-    function ham(t)
-        pulse = drive(t)
-        return real(pulse) * x_ham + imag(pulse) * y_ham
-    end
+function dipole_drive(qs::QSystem, drive::Function, rotation_rate::Real=0.0)
+    ham(t) = drive(t) * X(qs, rotation_rate * t)
     return ham
 end
-
 
 """
     parametric_drive(qs::QSystem, drive::Function)
@@ -96,41 +91,4 @@ A function of time.
 function parametric_drive(qs::QSystem, drive::Function)
     ham(t) = hamiltonian(qs, drive(t))
     return ham
-end
-
-######################################################
-# Backwards compatibility
-######################################################
-
-export microwave_drive, flux_drive, dipole, flip_flop, XY, rotating_flip_flop
-
-function microwave_drive(q::QSystem, drive::Function)
-    @warn "Deprecation warning: microwave_drive."
-    return dipole_drive(q, drive)
-end
-
-function flux_drive(q::QSystem, drive::Function)
-    @warn "Deprecation warning: flux_drive."
-    return parametric_drive(q, drive)
-end
-
-function dipole(a::QSystem, b::QSystem)
-    @warn "Deprecation warning: dipole."
-    return X([a, b])
-end
-
-function XY(a::QSystem, b::QSystem; ϕ::Real=0.0)
-    @warn "Deprecation warning: XY."
-    return .5 * X_Y([a, b], [ϕ, 0.0])
-end
-
-function flip_flop(a::QSystem, b::QSystem; ϕ::Real=0.0)
-    @warn "Deprecation warning: flip_flop."
-    return .5 * X_Y([a, b], [ϕ, 0.0])
-end
-
-function rotating_flip_flop(a::QSystem, b::QSystem, strength::Real, freq::Real)
-    @warn "Deprecation warning: rotating_flip_flop."
-    op(t) = .5 * strength * X_Y([a, b], [freq, 0.0] * t)
-    return op
 end
