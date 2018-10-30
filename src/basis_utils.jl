@@ -106,6 +106,6 @@ states `(0,0), (0,1), (1,0), (1,1)` are numbered `1, 2, 3, 4` so that
 `b[3] == TensorProductBasisState(b, (1,0))`.
 """
 function getindex(b::TensorProductBasis, i)
-    states = reverse(Tuple(CartesianIndices(tuple(reverse(dims)...))[index])).-1
+    states = reverse(Tuple(CartesianIndices(tuple(reverse(b.dims)...))[i])).-1
     TensorProductBasisState(b, states)
 end
