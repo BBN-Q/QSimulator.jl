@@ -21,6 +21,13 @@ A basis element of a tensor product space
 struct TensorProductBasisState <: BasisState
     basis::TensorProductBasis
     states::Tuple{Vararg{Int}}
+
+    function TensorProductBasisState(b::TensorProductBasis, states::Tuple{Vararg{Int}})
+        # check that given subsystem basis states are compatible with TensorProductBasis dimensions
+        @assert length(states) == length(b.dims)
+        @assert all(states .>= 0) && all(states .< b.dims)
+        new(b, states)
+    end
 end
 
 # helper contructor to convert from dimensions given in Vector form

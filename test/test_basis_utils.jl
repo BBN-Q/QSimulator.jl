@@ -14,4 +14,11 @@ using Test, QSimulator
 
     # and from index to state
     @test all(basis[i] == state for (i,state) in enumerate(all_states))
+
+    # check that TensorProductBasisState construction catches errors
+    basis = QSimulator.TensorProductBasis((2,2))
+    # wrong number of subsystems
+    @test_throws AssertionError QSimulator.TensorProductBasisState(basis, (0,0,0))
+    # state index exceeds dimension
+    @test_throws AssertionError QSimulator.TensorProductBasisState(basis, (2,0))
 end
