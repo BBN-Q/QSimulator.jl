@@ -26,18 +26,16 @@ end
 # helper contructor to convert from dimensions given in Vector form
 TensorProductBasis(b::TensorProductBasis, states::Vector{Int}) = TensorProductBasis(b, Tuple(states))
 
-
 """
-    basis_state_to_basis_vector(basis_state::Vector{Int}, dims::Vector{Int})
+    vec(bs::TensorProductBasisState)
 
 Create the complex basis vector correspoding to a given TensorProductBasisState basis state
 
 ## args
-* `photons`: an array with the number of photons in each mode.
-* `dims`: a array with the dimension of each mode.
+* `bs`: a TensorProductBasisState to conver to a complex state vector
 
 ## returns
-The standard basis state corresponding to the given number of photons in each mode.
+The complex basis state vector
 """
 function vec(state::TensorProductBasisState)
     state_vector = zeros(ComplexF64, prod(state.basis.dims))
@@ -103,9 +101,9 @@ Convert an index into a tensor product space to the basis state
 The indexed TensorProductBasisState.
 
 ## example
-Consider a tensor product of two qubits so that ``b = TensorProductBasis((2,2))``. Then states
-`[0,0], [0,1], [1,0], [1,1]` are numbered `1, 2, 3, 4` so that `index_to_basis_state(3, [2,2]) ==
-[1,0]`.
+Consider a tensor product of two qubits so that ``b = TensorProductBasis((2,2))``. Then the basis
+states `(0,0), (0,1), (1,0), (1,1)` are numbered `1, 2, 3, 4` so that
+`b[3] == TensorProductBasisState(b, (1,0))`.
 """
 function getindex(b::TensorProductBasis, i)
     states = reverse(Tuple(CartesianIndices(tuple(reverse(dims)...))[index])).-1
