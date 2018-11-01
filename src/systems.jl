@@ -259,7 +259,9 @@ function hamiltonian(r::RotatingFrameSystem, t::Real)
 end
 
 function subtract_number!(h::Matrix{<:Real}, r::Real)
-    for i in 1:size(h, 1)
-        h[i,i] -= (i-1) * r
+    if r != 0
+        for i in 1:size(h, 1)
+            h[i,i] -= (i-1) * r
+        end
     end
 end
