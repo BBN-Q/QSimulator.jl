@@ -6,8 +6,8 @@ export unitary_propagator, unitary_state, me_propagator, me_state
 """
     unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
 
-Compute the unitary propagator of a CompositeQSystem at given times by
-solving the differential equation `dU/dt = -iHU`.
+Compute the unitary propagator of a CompositeQSystem at given times by solving the differential
+equation `dU/dt = -iHU`.
 
 ## args
 * `cqs`: a CompositeQSystem.
@@ -38,9 +38,8 @@ mul!
 """
     unitary_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ψ0::Vector{<:Number})
 
-Compute the unitary state evolution of a `CompositeQSystem` from a given initial
-state and at given times by solving the differential equation
-`dψ/dt = -iHψ`.
+Compute the unitary state evolution of a `CompositeQSystem` from a given initial state and at given
+times by solving the differential equation `dψ/dt = -iHψ`.
 
 ## args
 * `cqs`: a CompositeQSystem.
@@ -69,10 +68,10 @@ end
 """
     me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
 
-Compute the master equation propagator evolution of a `CompositeQSystem` at
-given times by solving the vectorized master equation
-`du/dt = (-i(I ⊗ H - transpose(H) ⊗ I) + Σ conj(L) ⊗ L - I ⊗ L^†L/2 - transpose(L^†L/2) ⊗ I)u`
-which can be derived using the identity `vec(AXB) = (transpose(B) ⊗ A)vec(X)`.
+Compute the master equation propagator evolution of a `CompositeQSystem` at given times by solving
+the vectorized master equation `du/dt = (-i(I ⊗ H - transpose(H) ⊗ I) + Σ conj(L) ⊗ L - I ⊗ L^†L/2 -
+transpose(L^†L/2) ⊗ I)u` which can be derived using the identity `vec(AXB) = (transpose(B) ⊗
+A)vec(X)`.
 
 ## args
 * `cqs`: a CompositeQSystem.
@@ -112,9 +111,9 @@ end
 """
     me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix{<:Number})
 
-Compute the master equation state evolution of a `CompositeQSystem` from a
-given initial density matrix and at given times by solving the differential
-equation `dρ/dt = -i[H, ρ] + Σ LρL^† - L^†Lρ/2 - ρL^†L/2`.
+Compute the master equation state evolution of a `CompositeQSystem` from a given initial density
+matrix and at given times by solving the differential equation `dρ/dt = -i[H, ρ] + Σ LρL^† - L^†Lρ/2
+- ρL^†L/2`.
 
 ## args
 * `cqs`: a CompositeQSystem.
