@@ -1,4 +1,5 @@
 using Test, QSimulator
+using QSimulator: index
 using SpecialFunctions: besselj
 import PyPlot
 const plt = PyPlot
@@ -31,6 +32,7 @@ end
 freq_1 = 4.0
 anharm = -0.2
 dims = [3,3]
+basis = TensorProductBasis(dims)
 q0 = DuffingTransmon("q0", dims[1], DuffingSpec(0.0, anharm)) # tunable qubit
 q1 = DuffingTransmon("q1", dims[2], DuffingSpec(freq_1, anharm))
 cqs = CompositeQSystem([q0, q1])
@@ -49,24 +51,25 @@ t_final = 1/(4 * g_eff)
     make_plot = "plot" in ARGS
     num_times = make_plot ? 200 : 25
     times = collect(range(0, stop=t_final, length=num_times))
-    ψ0 = photons_to_state([1,0], dims)
-    ψs = unitary_state(cqs, times, ψ0)
-    pop_10 = [abs2(ψ[photons_to_index([1,0], dims)]) for ψ in ψs]
-    pop_01 = [abs2(ψ[photons_to_index([0,1], dims)]) for ψ in ψs]
-    pop_10_RWA = cos.(2π*g_eff*times).^2
-    pop_01_RWA = 1 .-pop_10_RWA
+    ψ₀₁ = TensorProductBasisState(basis, (1,0))
+    ψ₁₀ = TensorProductBasisState(basis, (1,0))
+    ψs = unitary_state(cqs, times, vec(ψ₀₁))
+    pop₁₀ = [abs2(ψ[index(ψ₁₀)]) for ψ in ψs]
+    pop₀₁ = [abs2(ψ[index(ψ₀₁)]) for ψ in ψs]
+    pop₁₀_RWA = cos.(2π*g_eff*times).^2
+    pop₀₁_RWA = 1 .-pop₁₀_RWA
     if make_plot
         periods = collect(1:floor(times[end] * drive_freq))./drive_freq
-        plt.plot(times, pop_10, label="10")
-        plt.plot(times, pop_01, label="01")
-        plt.plot(times, pop_10_RWA, label="10 RWA")
-        plt.plot(times, pop_01_RWA, label="01 RWA")
+        plt.plot(times, pop₁₀, label="10")
+        plt.plot(times, pop₀₁, label="01")
+        plt.plot(times, pop₁₀_RWA, label="10 RWA")
+        plt.plot(times, pop₀₁_RWA, label="01 RWA")
         for period in periods
             plt.axvline(period, linestyle="--", color="grey")
         end
         plt.show()
     end
-    @test isapprox(pop_10, pop_10_RWA, rtol=.03)
+    @test isapprox(pop₁₀, pop₁₀_RWA, rtol=.03)
 end
 
 
@@ -74,11 +77,11 @@ end
     times = collect(range(0, stop=t_final, length=3))
     us_full = unitary_propagator(cqs, times)
     # compare state evolution to propagator evolution
-    ψ0 = photons_to_state([1,0], dims)
-    ψs = unitary_state(cqs, times, ψ0)
-    pop_10_state = [abs2(ψ[photons_to_index([1,0], dims)]) for ψ in ψs]
+    ψ₀ = TensorProductBasisState(basis, (1,0))
+    ψs = unitary_state(cqs, times, vec(ψ₀))
+    pop_10_state = [abs2(ψ[index(ψ₀)]) for ψ in ψs]
 
-    pop_10_prop = [abs2(ψ0' * u * ψ0) for u in us_full]
+    pop_10_prop = [abs2(vec(ψ₀)' * u * vec(ψ₀)) for u in us_full]
     @test isapprox(pop_10_state, pop_10_prop, rtol=1e-5)
 end
 
