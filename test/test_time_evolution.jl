@@ -21,7 +21,7 @@ plt.ioff()
     lh = LiteralHermitian("label", HermitianSpec(mat))
     cqs = CompositeQSystem([lh])
     add_hamiltonian!(cqs, lh)
-    times = collect(range(0, stop=10, length=100))
+    times = range(0, stop=10, length=100)
     us_full = unitary_propagator(cqs, times)
     us_expm = [exp(-2π *1im * mat * t) for t in times]
     @test isapprox(us_expm[end], us_full[end]; atol=1e-5)
@@ -49,7 +49,7 @@ t_final = 1/(4 * g_eff)
     # compare state evolution to closed form RWA calculation
     make_plot = "plot" in ARGS
     num_times = make_plot ? 200 : 25
-    times = collect(range(0, stop=t_final, length=num_times))
+    times = range(0, stop=t_final, length=num_times)
     ψ₀₁ = TensorProductBasisState(basis, (0,1))
     ψ₁₀ = TensorProductBasisState(basis, (1,0))
     ψs = unitary_state(cqs, times, vec(ψ₁₀))
@@ -58,7 +58,7 @@ t_final = 1/(4 * g_eff)
     pop₁₀_RWA = cos.(2π*g_eff*times).^2
     pop₀₁_RWA = 1 .- pop₁₀_RWA
     if make_plot
-        periods = collect(1:floor(times[end] * drive_freq))./drive_freq
+        periods = (1:floor(times[end] * drive_freq))./drive_freq
         plt.plot(times, pop₁₀, label="10")
         plt.plot(times, pop₀₁, label="01")
         plt.plot(times, pop₁₀_RWA, label="10 RWA")
@@ -75,7 +75,7 @@ end
 
 
 @testset "unitary propagator time dependent" begin
-    times = collect(range(0, stop=t_final, length=3))
+    times = range(0, stop=t_final, length=3)
     us_full = unitary_propagator(cqs, times)
     # compare state evolution to propagator evolution
     ψ₀ = TensorProductBasisState(basis, (1,0))
@@ -98,7 +98,7 @@ end
     γ = 1/(2π * T1) # in GHz
     add_lindblad!(cqs, decay(q0, γ), [q0])
 
-    times = collect(range(0,stop=100,length=101))
+    times = range(0,stop=100,length=101)
     ψ0 = ComplexF64[1; 0; 0]
     ρ0 = ψ0 * ψ0'
     us_prop = me_propagator(cqs, times)
@@ -130,7 +130,7 @@ end
     add_lindblad!(cqs, decay(q0, γ1), [q0])
     add_lindblad!(cqs, dephasing(q0, γϕ), [q0])
 
-    times = collect(range(0,stop=100,length=101))
+    times = range(0,stop=100,length=101)
     ψ0 = ComplexF64[1; 1; 0]/sqrt(2)
     ρ0 = ψ0 * ψ0'
     ρs = me_state(cqs, times, ρ0)
