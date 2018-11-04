@@ -7,7 +7,6 @@ plt.ioff()
 
 @testset "unitary propagator time independent" begin
     # compare exponentiation, full unitary_propagator
-    # and unitary_propagator with projection
     mat_type = Array{ComplexF64,2}
     m1 = convert(mat_type, [[0,1] [1,0]])
     m2 = convert(mat_type, [[0,1im,0] [-1im,.1,2+1im] [0,2-1im,0]])
@@ -31,7 +30,7 @@ end
 # iSWAP interaction
 freq_1 = 4.0
 anharm = -0.2
-dims = [3,3]
+dims = (3,3)
 basis = TensorProductBasis(dims)
 q0 = DuffingTransmon("q0", dims[1], DuffingSpec(0.0, anharm)) # tunable qubit
 q1 = DuffingTransmon("q1", dims[2], DuffingSpec(freq_1, anharm))
@@ -106,9 +105,8 @@ end
     ρs_prop = [reshape(u * vec(ρ0), dims, dims) for u in us_prop]
     ρs = me_state(cqs, times, ρ0)
 
-    for i in 1:length(times)
-        @test isapprox(ρs_prop[i], ρs[i], rtol=1e-5)
-    end
+    @test all(isapprox(ρ_prop, ρ_state, rtol=1e-5) for (ρ_prop, ρ_state) in zip(ρs_prop, ρs))
+
     if "plot" in ARGS
         plt.plot(times, [real(ρ[1, 1]) for ρ in ρs], label="state")
         plt.plot(times, [real(ρ[1, 1]) for ρ in ρs_prop], label="propagator")
@@ -137,12 +135,9 @@ end
     ρ0 = ψ0 * ψ0'
     ρs = me_state(cqs, times, ρ0)
 
-    analytical_T1 = exp.(-times/T1)/2
-    analytical_T2 = exp.(-times/T2)/2
-    for i in 1:length(times)
-        @test isapprox(ρs[i][2,2], analytical_T1[i], rtol=1e-10)
-        @test isapprox(ρs[i][1,2], analytical_T2[i], rtol=1e-4)
-    end
+    # check diagonal and off-diagonal against exponential decay with T1/T2 rates
+    @test all(isapprox(ρ[2,2], check_T1, rtol=1e-10) for (ρ,check_T1) in zip(ρs, exp.(-times/T1)/2))
+    @test all(isapprox(ρ[1,2], check_T2, rtol=1e-4) for (ρ,check_T2) in zip(ρs, exp.(-times/T2)/2))
 
     if "plot" in ARGS
         plt.plot(times, [real(ρ[2, 2]) for ρ in ρs], label="excited population")
