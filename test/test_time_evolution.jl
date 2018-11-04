@@ -51,13 +51,13 @@ t_final = 1/(4 * g_eff)
     make_plot = "plot" in ARGS
     num_times = make_plot ? 200 : 25
     times = collect(range(0, stop=t_final, length=num_times))
-    ψ₀₁ = TensorProductBasisState(basis, (1,0))
+    ψ₀₁ = TensorProductBasisState(basis, (0,1))
     ψ₁₀ = TensorProductBasisState(basis, (1,0))
-    ψs = unitary_state(cqs, times, vec(ψ₀₁))
+    ψs = unitary_state(cqs, times, vec(ψ₁₀))
     pop₁₀ = [abs2(ψ[index(ψ₁₀)]) for ψ in ψs]
     pop₀₁ = [abs2(ψ[index(ψ₀₁)]) for ψ in ψs]
     pop₁₀_RWA = cos.(2π*g_eff*times).^2
-    pop₀₁_RWA = 1 .-pop₁₀_RWA
+    pop₀₁_RWA = 1 .- pop₁₀_RWA
     if make_plot
         periods = collect(1:floor(times[end] * drive_freq))./drive_freq
         plt.plot(times, pop₁₀, label="10")
@@ -70,6 +70,7 @@ t_final = 1/(4 * g_eff)
         plt.show()
     end
     @test isapprox(pop₁₀, pop₁₀_RWA, rtol=.03)
+    @test isapprox(pop₀₁, pop₀₁_RWA, rtol=.03)
 end
 
 
