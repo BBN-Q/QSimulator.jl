@@ -6,25 +6,23 @@ const plt = PyPlot
 plt.ioff()
 
 @testset "unitary propagator time independent" begin
-    # compare exponentiation, full unitary_propagator
-    mat_type = Array{ComplexF64,2}
-    m1 = convert(mat_type, [[0,1] [1,0]])
-    m2 = convert(mat_type, [[0,1im,0] [-1im,.1,2+1im] [0,2-1im,0]])
-    m3 = convert(mat_type, [3][:,:]) # no simple syntax for creating a 1x1 array
+    # For a constant Hamiltonian compare exponentiation to full unitary_propagator
+    # first, create a block diagonal Hamiltonian matrix
+    m1 = [[0,1] [1,0]]
+    m2 = [[0,1im,0] [-1im,.1,2+1im] [0,2-1im,0]]
+    m3 = [3]
     mat = cat(m1, m2, m3, dims=[1,2])
-    inds1 = [1,2]
-    inds2 = [3,4,5]
-    inds3 = [6]
-    @test mat[inds1, inds1] == m1
-    @test mat[inds2, inds2] == m2
-    @test mat[inds3, inds3] == m3
+
+    # Make a CompositeQSystem from the Hamiltonian
     lh = LiteralHermitian("label", HermitianSpec(mat))
     cqs = CompositeQSystem([lh])
     add_hamiltonian!(cqs, lh)
     times = range(0, stop=10, length=100)
-    us_full = unitary_propagator(cqs, times)
+
+    # compare the unitary propagator to matrix exponentiation
+    us_prop = unitary_propagator(cqs, times)
     us_expm = [exp(-2π *1im * mat * t) for t in times]
-    @test isapprox(us_expm[end], us_full[end]; atol=1e-5)
+    @test all(isapprox(u_expm, u_prop; atol=1e-5) for (u_expm, u_prop) in zip(us_expm, us_prop))
 end
 
 # iSWAP interaction
