@@ -67,6 +67,7 @@ t_final = 1/(4 * g_eff)
         for period in periods
             plt.axvline(period, linestyle="--", color="grey")
         end
+        plt.legend()
         plt.show()
     end
     @test isapprox(pop₁₀, pop₁₀_RWA, rtol=.03)
