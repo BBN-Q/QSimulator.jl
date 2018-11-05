@@ -34,7 +34,7 @@ function unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     return sol.u
 end
 
-unitary_propagator(cqs::CompositeQSystem, t::Real; t0::Real=0.0) = unitary_propagator(cqs, [t0, t])[end]
+unitary_propagator(cqs::CompositeQSystem, t::Real) = unitary_propagator(cqs, [0.0, t])[end]
 
 """
     unitary_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ψ0::Vector{<:Number})
@@ -66,7 +66,7 @@ function unitary_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ψ0::V
     return sol.u
 end
 
-unitary_state(cqs::CompositeQSystem, t::Real, ψ0::Vector{<:Number}; t0::Real=0.0) = unitary_state(cqs, [t0, t], ψ0)[end]
+unitary_state(cqs::CompositeQSystem, t::Real, ψ0::Vector{<:Number}) = unitary_state(cqs, [0.0, t], ψ0)[end]
 
 """
     me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
@@ -110,7 +110,7 @@ function me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     return sol.u
 end
 
-me_propagator(cqs::CompositeQSystem, t::Real; t0::Real=0.0) = me_propagator(cqs, [t0, t])[end]
+me_propagator(cqs::CompositeQSystem, t::Real) = me_propagator(cqs, [0.0, t])[end]
 
 """
     me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix{<:Number})
@@ -151,4 +151,4 @@ function me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix
     return sol.u
 end
 
-me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}; t0::Real=0.0) = me_state(cqs, [t0, t], ρ0)[end]
+me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}) = me_state(cqs, [0.0, t], ρ0)[end]
