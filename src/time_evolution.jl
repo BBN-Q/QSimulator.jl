@@ -4,10 +4,10 @@ using LinearAlgebra: I, rmul!, mul!
 export unitary_propagator, unitary_state, me_propagator, me_state
 
 """
-    unitary_propagator(cqs::CompositeQSystem, ts::Vector{<:Real})
+    unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
 
-Compute the unitary propagator of a CompositeQSystem at given times by
-solving the differential equation `dU/dt = -iHU`.
+Compute the unitary propagator of a CompositeQSystem at given times by solving the differential
+equation `dU/dt = -iHU`.
 
 ## args
 * `cqs`: a CompositeQSystem.
@@ -16,7 +16,7 @@ solving the differential equation `dU/dt = -iHU`.
 ## returns
 An array of unitary propagators at the specified times.
 """
-function unitary_propagator(cqs::CompositeQSystem, ts::Vector{<:Real})
+function unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     @assert issorted(ts)
     function ode(du, u, p, t)
         ham = p[3] # preallocated workspace array
@@ -36,11 +36,10 @@ end
 mul!
 
 """
-    unitary_state(cqs::CompositeQSystem, ts::Vector{<:Real}, ψ0::Vector{<:Number})
+    unitary_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ψ0::Vector{<:Number})
 
-Compute the unitary state evolution of a `CompositeQSystem` from a given initial
-state and at given times by solving the differential equation
-`dψ/dt = -iHψ`.
+Compute the unitary state evolution of a `CompositeQSystem` from a given initial state and at given
+times by solving the differential equation `dψ/dt = -iHψ`.
 
 ## args
 * `cqs`: a CompositeQSystem.
@@ -50,7 +49,7 @@ state and at given times by solving the differential equation
 ## returns
 An array of state vectors for the system at the specified times.
 """
-function unitary_state(cqs::CompositeQSystem, ts::Vector{<:Real}, ψ0::Vector{<:Number})
+function unitary_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ψ0::Vector{<:Number})
     @assert issorted(ts)
     function ode(dψ, ψ, p, t)
         ham = p[3] # preallocated workspace array
@@ -67,12 +66,12 @@ function unitary_state(cqs::CompositeQSystem, ts::Vector{<:Real}, ψ0::Vector{<:
 end
 
 """
-    me_propagator(cqs::CompositeQSystem, ts::Vector{<:Real})
+    me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
 
-Compute the master equation propagator evolution of a `CompositeQSystem` at
-given times by solving the vectorized master equation
-`du/dt = (-i(I ⊗ H - transpose(H) ⊗ I) + Σ conj(L) ⊗ L - I ⊗ L^†L/2 - transpose(L^†L/2) ⊗ I)u`
-which can be derived using the identity `vec(AXB) = (transpose(B) ⊗ A)vec(X)`.
+Compute the master equation propagator evolution of a `CompositeQSystem` at given times by solving
+the vectorized master equation `du/dt = (-i(I ⊗ H - transpose(H) ⊗ I) + Σ conj(L) ⊗ L - I ⊗ L^†L/2 -
+transpose(L^†L/2) ⊗ I)u` which can be derived using the identity `vec(AXB) = (transpose(B) ⊗
+A)vec(X)`.
 
 ## args
 * `cqs`: a CompositeQSystem.
@@ -81,7 +80,7 @@ which can be derived using the identity `vec(AXB) = (transpose(B) ⊗ A)vec(X)`.
 ## returns
 An array of propagators for the system at the specified times.
 """
-function me_propagator(cqs::CompositeQSystem, ts::Vector{<:Real})
+function me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     @assert issorted(ts)
     function ode(du, u, p, t)
         ham = p[3] # preallocated workspace array
@@ -110,11 +109,11 @@ function me_propagator(cqs::CompositeQSystem, ts::Vector{<:Real})
 end
 
 """
-    me_state(cqs::CompositeQSystem, ts::Vector{<:Real}, ρ0::Matrix{<:Number})
+    me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix{<:Number})
 
-Compute the master equation state evolution of a `CompositeQSystem` from a
-given initial density matrix and at given times by solving the differential
-equation `dρ/dt = -i[H, ρ] + Σ LρL^† - L^†Lρ/2 - ρL^†L/2`.
+Compute the master equation state evolution of a `CompositeQSystem` from a given initial density
+matrix and at given times by solving the differential equation `dρ/dt = -i[H, ρ] + Σ LρL^† - L^†Lρ/2
+- ρL^†L/2`.
 
 ## args
 * `cqs`: a CompositeQSystem.
@@ -124,7 +123,7 @@ equation `dρ/dt = -i[H, ρ] + Σ LρL^† - L^†Lρ/2 - ρL^†L/2`.
 ## returns
 An array of density matrices for the system at the specified times.
 """
-function me_state(cqs::CompositeQSystem, ts::Vector{<:Real}, ρ0::Matrix{<:Number})
+function me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix{<:Number})
     @assert issorted(ts)
     function ode(dρ, ρ, p, t)
         ham = p[3] # preallocated workspace array
