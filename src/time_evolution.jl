@@ -1,5 +1,6 @@
 using DifferentialEquations: ODEProblem, solve
 using LinearAlgebra: I, rmul!, mul!
+import Base.Iterators
 
 export unitary_propagator, unitary_state, me_propagator, me_state
 
@@ -93,7 +94,7 @@ function me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
         I_mat = Matrix{ComplexF64}(I, d, d)
         mul!(du, -2π * 1im * (I_mat ⊗ ham - transpose(ham) ⊗ I_mat), u)
         lind_mat = p[5] # preallocated workspace array
-        for (lind_op, idxs) in [p[1].fixed_Ls; [(l(t), idxs) for (l, idxs) in p[1].parametric_Ls]]
+        for (lind_op, idxs) in Iterators.flatten((p[1].fixed_Ls, ((l(t), idxs) for (l, idxs) in p[1].parametric_Ls)))
             lind_mat .= p[4] # start with empty array
             embed_add!(lind_mat, lind_op, idxs)
             du .+= 2π * (conj(lind_mat) ⊗ lind_mat .- 0.5 .* I_mat ⊗ (lind_mat'*lind_mat) .- 0.5 .* transpose(lind_mat'*lind_mat) ⊗ I_mat) * u
