@@ -1,5 +1,5 @@
 using Optim: optimize
-using LinearAlgebra: diag, diagm, eigvals
+using LinearAlgebra: diag, diagm, eigvals, ishermitian
 
 export QSpec, TransmonSpec, DuffingSpec, ResonatorSpec, HermitianSpec
 export QSystem, label, dim, spec

@@ -1,4 +1,5 @@
 using Test, QSimulator
+using QSimulator: index
 using LsqFit: curve_fit
 
 ############################ Ramsey ##########################
@@ -95,13 +96,17 @@ end
     g_eff = abs(g * rotating_frame_series(fs, [harmonic]).terms[harmonic])
     t_gate = 1/(2 * g_eff)
 
+    # create basis states
+    basis = TensorProductBasis(dims)
+    ψ₀₁ = TensorProductBasisState(basis, (0,1))
+    ψ₁₀ = TensorProductBasisState(basis, (1,0))
+
     # perform time evolution
     add_hamiltonian!(cqs, parametric_drive(q1, t -> ϕ(t, freq)), q1)
-    ψ0 = ComplexF64[0.0; 1.0; 0.0] ⊗ ComplexF64[1.0; 0.0; 0.0] # start in the 10 state
     times = collect(range(0, stop=2 * t_gate, length=1000))
-    ψs = unitary_state(cqs, times, ψ0)
-    pop_10 = [abs2(ψ[4]) for ψ in ψs]
-    pop_01 = [abs2(ψ[2]) for ψ in ψs]
+    ψs = unitary_state(cqs, times, vec(ψ₁₀))
+    pop_10 = [abs2(ψ[index(ψ₁₀)]) for ψ in ψs]
+    pop_01 = [abs2(ψ[index(ψ₀₁)]) for ψ in ψs]
     # population should oscillate between 01 and 10
     expected_10 = cos.(2π * g_eff * times).^ 2
     # there is additional lab frame jaggedness so relax tolerance
