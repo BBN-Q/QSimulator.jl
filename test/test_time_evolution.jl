@@ -87,6 +87,11 @@ end
     pop_10_state = [abs2(ψ[index(ψ₀)]) for ψ in ψs]
     pop_10_prop = [abs2(vec(ψ₀)' * u * vec(ψ₀)) for u in us_full]
     @test isapprox(pop_10_state, pop_10_prop, rtol=1e-5)
+    # test helper function for saving at a point
+    us_end = unitary_propagator(cqs, times[end])
+    @test us_end == us_full[end]
+    ψ_end = unitary_state(cqs, times[end], vec(ψ₀))
+    @test ψ_end == ψs[end]
 end
 
 @testset "me_propagator" begin
@@ -118,6 +123,11 @@ end
         plt.legend(loc="best")
         plt.show()
     end
+    # test helper function for saving at a point
+    us_end = me_propagator(cqs, times[end])
+    @test us_end == us_prop[end]
+    ρ_end = me_state(cqs, times[end], ρ0)
+    @test ρ_end == ρs[end]
 end
 
 @testset "decay and dephasing" begin

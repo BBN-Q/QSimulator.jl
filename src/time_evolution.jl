@@ -33,7 +33,8 @@ function unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
     return sol.u
 end
-mul!
+
+unitary_propagator(cqs::CompositeQSystem, t::Real; t0::Real=0.0) = unitary_propagator(cqs, [t0, t])[end]
 
 """
     unitary_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ψ0::Vector{<:Number})
@@ -65,6 +66,8 @@ function unitary_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ψ0::V
     return sol.u
 end
 
+unitary_state(cqs::CompositeQSystem, t::Real, ψ0::Vector{<:Number}; t0::Real=0.0) = unitary_state(cqs, [t0, t], ψ0)[end]
+
 """
     me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
 
@@ -90,10 +93,9 @@ function me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
         I_mat = Matrix{ComplexF64}(I, d, d)
         mul!(du, -2π * 1im * (I_mat ⊗ ham - transpose(ham) ⊗ I_mat), u)
         lind_mat = p[5] # preallocated workspace array
-        for (index, (lind_op, idxs)) in enumerate([p[1].fixed_Ls; p[1].parametric_Ls])
+        for (lind_op, idxs) in [p[1].fixed_Ls; [(l(t), idxs) for (l, idxs) in p[1].parametric_Ls]]
             lind_mat .= p[4] # start with empty array
-            l = index <= length(p[1].fixed_Ls) ? lind_op : lind_op(t)
-            embed_add!(lind_mat, l, idxs)
+            embed_add!(lind_mat, lind_op, idxs)
             du .+= 2π * (conj(lind_mat) ⊗ lind_mat .- 0.5 .* I_mat ⊗ (lind_mat'*lind_mat) .- 0.5 .* transpose(lind_mat'*lind_mat) ⊗ I_mat) * u
         end
     end
@@ -107,6 +109,8 @@ function me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
     return sol.u
 end
+
+me_propagator(cqs::CompositeQSystem, t::Real; t0::Real=0.0) = me_propagator(cqs, [t0, t])[end]
 
 """
     me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix{<:Number})
@@ -146,3 +150,5 @@ function me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix
     sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
     return sol.u
 end
+
+me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}; t0::Real=0.0) = me_state(cqs, [t0, t], ρ0)[end]
