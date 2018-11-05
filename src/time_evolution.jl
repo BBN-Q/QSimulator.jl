@@ -1,4 +1,4 @@
-using DifferentialEquations: ODEProblem, solve
+using OrdinaryDiffEq: ODEProblem, solve
 using LinearAlgebra: I, rmul!, mul!
 import Base.Iterators
 
