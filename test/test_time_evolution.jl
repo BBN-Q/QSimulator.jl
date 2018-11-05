@@ -22,7 +22,7 @@ plt.ioff()
     # compare the unitary propagator to matrix exponentiation
     us_prop = unitary_propagator(cqs, times)
     us_expm = [exp(-2π *1im * mat * t) for t in times]
-    @test all(isapprox(u_expm, u_prop; atol=1e-5) for (u_expm, u_prop) in zip(us_expm, us_prop))
+    @test all(isapprox(u_expm, u_prop; atol=1e-4) for (u_expm, u_prop) in zip(us_expm, us_prop))
 end
 
 # parameters for an iSWAP interaction with linear frequency modulation
@@ -86,7 +86,7 @@ end
     ψs = unitary_state(cqs, times, vec(ψ₀))
     pop_10_state = [abs2(ψ[index(ψ₀)]) for ψ in ψs]
     pop_10_prop = [abs2(vec(ψ₀)' * u * vec(ψ₀)) for u in us_full]
-    @test isapprox(pop_10_state, pop_10_prop, rtol=1e-5)
+    @test isapprox(pop_10_state, pop_10_prop, rtol=1e-4)
     # test helper function for saving at a point
     us_end = unitary_propagator(cqs, times[end])
     @test us_end == us_full[end]
@@ -115,7 +115,7 @@ end
     ρs_prop = [reshape(u * vec(ρ0), dims, dims) for u in us_prop]
     ρs = me_state(cqs, times, ρ0)
 
-    @test all(isapprox(ρ_prop, ρ_state, rtol=1e-5) for (ρ_prop, ρ_state) in zip(ρs_prop, ρs))
+    @test all(isapprox(ρ_prop, ρ_state, rtol=1e-4) for (ρ_prop, ρ_state) in zip(ρs_prop, ρs))
 
     if "plot" in ARGS
         plt.plot(times, [real(ρ[1, 1]) for ρ in ρs], label="state")
@@ -156,7 +156,7 @@ end
 
     # check diagonal and off-diagonal against exponential decay with T1/T2 rates
     @test all(isapprox(ρ[2,2], check_T1, rtol=1e-10) for (ρ,check_T1) in zip(ρs, analytical_T1))
-    @test all(isapprox(ρ[1,2], check_T2, rtol=1e-4) for (ρ,check_T2) in zip(ρs, analytical_T2))
+    @test all(isapprox(ρ[1,2], check_T2, rtol=1e-2) for (ρ,check_T2) in zip(ρs, analytical_T2))
 
     if "plot" in ARGS
         plt.plot(times, [real(ρ[2, 2]) for ρ in ρs], label="excited population")
