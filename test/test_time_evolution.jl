@@ -1,10 +1,6 @@
 using Test, QSimulator
-<<<<<<< HEAD
-using QSimulator: index
-using SpecialFunctions: besselj
-=======
+import QSimulator.index
 using SpecialFunctions: besselj, erf
->>>>>>> af31f09... added floquet_propagator and updated test_time_evolution.jl
 import PyPlot
 const plt = PyPlot
 plt.ioff()
@@ -186,15 +182,8 @@ end
     us_floquet = prop(cqs, times)
     ρs_floquet = [reshape(u * vec(ρ0), dims, dims) for u in us_floquet]
 
-<<<<<<< HEAD
     @test all(isapprox(ρ_prop, ρ_state, rtol=1e-4) for (ρ_prop, ρ_state) in zip(ρs_prop, ρs))
 
-=======
-    for i in 1:length(times)
-        @test isapprox(ρs_prop[i], ρs[i], rtol=1e-5)
-        @test isapprox(ρs_floquet[i], ρs[i], rtol=1e-5)
-    end
->>>>>>> af31f09... added floquet_propagator and updated test_time_evolution.jl
     if "plot" in ARGS
         plt.plot(times, [real(ρ[1, 1]) for ρ in ρs], label="state")
         plt.plot(times, [real(ρ[1, 1]) for ρ in ρs_prop], label="propagator")

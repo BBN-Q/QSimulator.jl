@@ -104,16 +104,10 @@ end
     # perform time evolution
     add_hamiltonian!(cqs, parametric_drive(q1, t -> ϕ(t, freq)), q1)
     times = collect(range(0, stop=2 * t_gate, length=1000))
-<<<<<<< HEAD
-    ψs = unitary_state(cqs, times, vec(ψ₁₀))
-    pop_10 = [abs2(ψ[index(ψ₁₀)]) for ψ in ψs]
-    pop_01 = [abs2(ψ[index(ψ₀₁)]) for ψ in ψs]
-=======
     prop = floquet_propagator(unitary_propagator, 1/abs(freq))
     ψs = [u * ψ0 for u in prop(cqs, times)]
-    pop_10 = [abs2(ψ[4]) for ψ in ψs]
-    pop_01 = [abs2(ψ[2]) for ψ in ψs]
->>>>>>> a04c292... updated integration_tests.jl to use floquet
+    pop_10 = [abs2(ψ[index(ψ₁₀)]) for ψ in ψs]
+    pop_01 = [abs2(ψ[index(ψ₀₁)]) for ψ in ψs]
     # population should oscillate between 01 and 10
     expected_10 = cos.(2π * g_eff * times).^ 2
     # there is additional lab frame jaggedness so relax tolerance
