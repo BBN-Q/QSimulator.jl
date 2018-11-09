@@ -30,8 +30,8 @@ function unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     d = dim(cqs)
     u0 = Matrix{ComplexF64}(I, d, d) # start with identity
     work_ham = similar(fixed_ham) # scratch space
-    prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham))
-    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6)
+    prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham)spe
+    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6, abstol=1e-8)
     return sol.u
 end
 
@@ -63,7 +63,7 @@ function unitary_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ψ0::V
     fixed_ham = hamiltonian(cqs)
     work_ham = similar(fixed_ham)
     prob = ODEProblem(ode, ψ0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham))
-    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6)
+    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6, abstol=1e-8)
     return sol.u
 end
 
@@ -107,7 +107,7 @@ function me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     d = dim(cqs)^2
     u0 = Matrix{ComplexF64}(I, d, d) # start with identity
     prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham, bare_lind, work_lind))
-    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6)
+    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6, abstol=1e-8)
     return sol.u
 end
 
@@ -148,7 +148,7 @@ function me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix
     bare_lind = zeros(ComplexF64, size(fixed_ham))
     work_lind = similar(fixed_ham)
     prob = ODEProblem(ode, ρ0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham, bare_lind, work_lind))
-    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6)
+    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6, abstol=1e-8)
     return sol.u
 end
 
