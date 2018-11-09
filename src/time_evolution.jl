@@ -1,6 +1,14 @@
-using DifferentialEquations: ODEProblem, solve
 using LinearAlgebra: I, rmul!, mul!
 import Base.Iterators
+
+# We the more specific OrdinaryDiffEq for a significantly lighter dependency tree and build time.
+# However, this means we loose the automated solver picking. For now we use a recommended Tsit5
+# solver but it is not clear whether it is the right choice for the stiffness of the
+# Schrodinger/Lindblad equations.
+# * `Rodas4/5` does not appear to support complex equations.
+# * `DP5` used by QuantumOptics.jl also gave strange errors
+# * the `reltol` and `abstol` were chosen somewhat arbirtarily to be "good enough"
+using OrdinaryDiffEq: ODEProblem, solve, Tsit5
 
 export unitary_propagator, unitary_state, me_propagator, me_state
 
@@ -30,8 +38,8 @@ function unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     d = dim(cqs)
     u0 = Matrix{ComplexF64}(I, d, d) # start with identity
     work_ham = similar(fixed_ham) # scratch space
-    prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham))
-    sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
+    prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham)spe
+    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6, abstol=1e-8)
     return sol.u
 end
 
@@ -63,7 +71,7 @@ function unitary_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ψ0::V
     fixed_ham = hamiltonian(cqs)
     work_ham = similar(fixed_ham)
     prob = ODEProblem(ode, ψ0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham))
-    sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
+    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6, abstol=1e-8)
     return sol.u
 end
 
@@ -107,7 +115,7 @@ function me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     d = dim(cqs)^2
     u0 = Matrix{ComplexF64}(I, d, d) # start with identity
     prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham, bare_lind, work_lind))
-    sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
+    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6, abstol=1e-8)
     return sol.u
 end
 
@@ -148,7 +156,7 @@ function me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix
     bare_lind = zeros(ComplexF64, size(fixed_ham))
     work_lind = similar(fixed_ham)
     prob = ODEProblem(ode, ρ0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham, bare_lind, work_lind))
-    sol = solve(prob; saveat=ts, save_start=true, reltol=1e-6)
+    sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6, abstol=1e-8)
     return sol.u
 end
 
