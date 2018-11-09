@@ -1,6 +1,14 @@
-using OrdinaryDiffEq: ODEProblem, solve, Tsit5
 using LinearAlgebra: I, rmul!, mul!
 import Base.Iterators
+
+# We the more specific OrdinaryDiffEq for a significantly lighter dependency tree and build time.
+# However, this means we loose the automated solver picking. For now we use a recommended Tsit5
+# solver but it is not clear whether it is the right choice for the stiffness of the
+# Schrodinger/Lindblad equations.
+# * `Rodas4/5` does not appear to support complex equations.
+# * `DP5` used by QuantumOptics.jl also gave strange errors
+# * the `reltol` and `abstol` were chosen somewhat arbirtarily to be "good enough"
+using OrdinaryDiffEq: ODEProblem, solve, Tsit5
 
 export unitary_propagator, unitary_state, me_propagator, me_state
 
