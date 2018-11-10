@@ -38,7 +38,7 @@ function unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
     d = dim(cqs)
     u0 = Matrix{ComplexF64}(I, d, d) # start with identity
     work_ham = similar(fixed_ham) # scratch space
-    prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham)spe
+    prob = ODEProblem(ode, u0, (float(ts[1]), float(ts[end])), (cqs, fixed_ham, work_ham))
     sol = solve(prob, Tsit5(); saveat=ts, save_start=true, reltol=1e-6, abstol=1e-8)
     return sol.u
 end
