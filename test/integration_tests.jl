@@ -105,7 +105,7 @@ end
     add_hamiltonian!(cqs, parametric_drive(q1, t -> ϕ(t, freq)), q1)
     times = collect(range(0, stop=2 * t_gate, length=1000))
     prop = floquet_propagator(unitary_propagator, 1/abs(freq))
-    ψs = [u * ψ0 for u in prop(cqs, times)]
+    ψs = [u * vec(ψ₁₀) for u in prop(cqs, times)]
     pop_10 = [abs2(ψ[index(ψ₁₀)]) for ψ in ψs]
     pop_01 = [abs2(ψ[index(ψ₀₁)]) for ψ in ψs]
     # population should oscillate between 01 and 10
