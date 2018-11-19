@@ -1,5 +1,5 @@
 using Test, QSimulator
-import QSimulator.index
+import QSimulator: index, unique_tol
 using SpecialFunctions: besselj, erf
 import PyPlot
 const plt = PyPlot
@@ -112,12 +112,6 @@ end
 
 @testset "floquet with pulseshape" begin
     cqs = CompositeQSystem([q0, q1])
-    drive_freq = 0.3
-    a = freq_1 + drive_freq
-    b = drive_freq
-    g = 0.01
-    g_eff = g * besselj(1, b/drive_freq)
-    t_final = 1/(4 * g_eff)
     add_hamiltonian!(cqs, q1)
     add_hamiltonian!(cqs, .5 * g * X_Y([q0, q1]), [q0, q1])
     # create pulseshape
@@ -178,16 +172,17 @@ end
     us_prop = me_propagator(cqs, times)
     ρs_prop = [reshape(u * vec(ρ0), dims, dims) for u in us_prop]
     ρs = me_state(cqs, times, ρ0)
-    prop = floquet_propagator(me_propagator, 1/qubit_freq)
-    us_floquet = prop(cqs, times)
-    ρs_floquet = [reshape(u * vec(ρ0), dims, dims) for u in us_floquet]
+    # TODO: bring uncomment and add a test for these
+    # prop = floquet_propagator(me_propagator, 1/qubit_freq)
+    # us_floquet = prop(cqs, times)
+    # ρs_floquet = [reshape(u * vec(ρ0), dims, dims) for u in us_floquet]
 
     @test all(isapprox(ρ_prop, ρ_state, rtol=1e-4) for (ρ_prop, ρ_state) in zip(ρs_prop, ρs))
 
     if "plot" in ARGS
         plt.plot(times, [real(ρ[1, 1]) for ρ in ρs], label="state")
         plt.plot(times, [real(ρ[1, 1]) for ρ in ρs_prop], label="propagator")
-        plt.plot(times, [real(ρ[1, 1]) for ρ in ρs_floquet], label="floquet")
+        # plt.plot(times, [real(ρ[1, 1]) for ρ in ρs_floquet], label="floquet")
         plt.legend(loc="best")
         plt.show()
     end
@@ -234,4 +229,18 @@ end
         plt.legend(loc="best")
         plt.show()
     end
+end
+
+
+@testset "unique_tol" begin
+    l0 = [1.0,2.0,3.0]
+    l1 = l0 .+ 1e-5
+    l2 = [l0; l1]
+    @test unique(l2) == l2
+    a, inds = unique_tol(l2, 1e-6)
+    @test a == l2
+    @test inds == [1,2,3,4,5,6]
+    a, inds = unique_tol(l2, 1e-4)
+    @test a == l0
+    @test inds == [1,2,3,1,2,3]
 end

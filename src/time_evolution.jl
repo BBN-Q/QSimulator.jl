@@ -304,3 +304,24 @@ function floquet_propagator(propagator_func::Function, t_period::Real, rise_time
     end
     return p
 end
+
+"""
+    unique_tol(ts::Vector{<:Real}, dt::Real)
+
+Compute an array `a` of values where each is within `dt/2` of some value in `ts`
+and no two differ by less than `dt`. Further return a vector of indices `inds`
+such that `a[inds]` is an approximation of `ts` up to `dt`.
+
+## args
+* `ts`: an array of numbers.
+* `dt`: a small number within which errors are unimportant.
+
+## returns
+An array of the unique values and an array of indices.
+"""
+function unique_tol(ts::Vector{<:Real}, dt::Real)
+    vals = round.(Int, ts ./ dt) .* dt
+    unique_vals = unique(vals)
+    unique_inds = [findfirst(unique_vals .== v) for v in vals]
+    return unique_vals, unique_inds
+end
