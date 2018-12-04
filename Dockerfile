@@ -2,11 +2,13 @@ FROM library/julia:1.0.2
 
 RUN apt-get update && apt-get install -yq bzip2
 
+WORKDIR /qsimulator
+
 COPY Manifest.toml .
 COPY Project.toml .
-COPY scripts .
+COPY scripts ./scripts
 
-RUN ./scripts/build.sh
+RUN /qsimulator/scripts/build.sh
 
 COPY . .
 
