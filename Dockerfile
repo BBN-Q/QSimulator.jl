@@ -12,4 +12,4 @@ RUN /qsimulator/scripts/build.sh
 
 COPY . .
 
-CMD ["./runtests.sh"]
+CMD ["/qsimulator/scripts/runtests.sh"]
