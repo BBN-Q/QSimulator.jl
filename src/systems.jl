@@ -4,7 +4,7 @@ using LinearAlgebra: diag, diagm, eigvals, ishermitian
 export QSpec, TransmonSpec, DuffingSpec, ResonatorSpec, HermitianSpec
 export QSystem, label, dim, spec
 export LiteralHermitian, Resonator, DuffingTransmon
-export PerturbativeTransmon, ChargeBasisTransmon, RotatingFrameSystem
+export PerturbativeTransmon, ChargeBasisTransmon, DiagonalChargeBasisTransmon, RotatingFrameSystem
 export hamiltonian, fit_transmon
 
 ######################################################
@@ -118,14 +118,40 @@ end
 # Charge basis transmon
 ######################################################
 
-const CHARGE_NUM_TERMS = 101
-
 struct ChargeBasisTransmon <: QSystem
     label::AbstractString
     dim::Int
     spec::TransmonSpec
+    function ChargeBasisTransmon(label::AbstractString, dim::Int, spec::TransmonSpec)
+        @assert mod(dim, 2) == 1
+        return new(label, dim, spec)
+    end
+end
+
+
+function hamiltonian(t::ChargeBasisTransmon, ϕ::Real=0.0)
+    d = dim(t)
+    N = floor(Int, d/2)
+    s = spec(t)
+    EJ = sqrt(s.EJ1^2 + s.EJ2^2 + 2 * s.EJ1 * s.EJ2 * cos(2π * ϕ))
+    EC = s.EC
+    charging_term = 4 * EC * diagm(0 => (-N:N).^2)
+    tunneling_term = -0.5 * EJ * (diagm(-1 => ones(d-1), 1 => ones(d-1)))
+    return charging_term + tunneling_term
+end
+
+######################################################
+# Diagonalized charge basis transmon
+######################################################
+
+const CHARGE_NUM_TERMS = 101
+
+struct DiagonalChargeBasisTransmon <: QSystem
+    label::AbstractString
+    dim::Int
+    spec::TransmonSpec
     num_terms::Int
-    function ChargeBasisTransmon(label::AbstractString, dim::Int, spec::TransmonSpec; num_terms::Int=CHARGE_NUM_TERMS)
+    function DiagonalChargeBasisTransmon(label::AbstractString, dim::Int, spec::TransmonSpec; num_terms::Int=CHARGE_NUM_TERMS)
         @assert mod(num_terms, 2) == 1
         @assert dim <= num_terms
         return new(label, dim, spec, num_terms)
@@ -133,20 +159,14 @@ struct ChargeBasisTransmon <: QSystem
 end
 
 
-function hamiltonian(t::ChargeBasisTransmon, ϕ::Real=0.0)
-    d = t.num_terms
-    N = floor(Int, d/2)
-    s = spec(t)
-    EJ = sqrt(s.EJ1^2 + s.EJ2^2 + 2 * s.EJ1 * s.EJ2 * cos(2π * ϕ))
-    EC = s.EC
-    charging_term = 4 * EC * diagm(0 => (-N:N).^2)
-    tunneling_term = -0.5 * EJ * (diagm(-1 => ones(d-1), 1 => ones(d-1)))
+function hamiltonian(t::DiagonalChargeBasisTransmon, ϕ::Real=0.0)
+    h = hamiltonian(ChargeBasisTransmon(label(t), t.num_terms, spec(t)), ϕ)
     # since the Hamiltonian is Hermitian the eigenvalues should already be sorted by the LAPACK
-    # solver; however,  since that implementation is not guaranteed by Julia,  belts and suspenders
+    # solver; however,  since that implementation is not guaranteed by Julia, belts and suspenders
     # style we sort again
-    return diagm(0 => sort(real(eigvals(charging_term + tunneling_term)))[1:dim(t)])
+    return diagm(0 => sort(real(eigvals(h)))[1:dim(t)])
 end
-# TODO: update raising and lowering to be correct for ChargeBasisTransmon
+# TODO: update raising and lowering to be correct for DiagonalChargeBasisTransmon
 
 
 ######################################################
@@ -156,14 +176,14 @@ end
     fit_transmon(freq_max::Real, freq_min::Real, anharm_max::Real, model::Type{T}, num_terms::Int) where {T<:QSystem}
 
 Fit a transmon to given frequency and anharmonicity at fmax and the frequency
-at fmin. The model can be either PerturbativeTransmon or ChargeBasisTransmon.
+at fmin. The model can be either PerturbativeTransmon or DiagonalChargeBasisTransmon.
 If `freq_max == freq_min` then `EJ2 == 0` is enforced.
 
 ## args
 * `freq_max`: the qubit maximum frequency.
 * `freq_min`: the qubit minimum frequency.
 * `anharm_max`: the qubit maximum anharmonicity.
-* `model`: either PerturbativeTransmon or ChargeBasisTransmon.
+* `model`: either PerturbativeTransmon or DiagonalChargeBasisTransmon.
 * `num_terms`: the number of terms used in the model.
 
 ## returns
@@ -271,7 +291,7 @@ function TunableTransmon(label::AbstractString,
     dim::Int)
     @warn "Deprecation warning: TunableTransmon."
     EJ1, EJ2 = asymmetry_to_EJs(E_J, d)
-    return ChargeBasisTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2), num_terms=dim)
+    return DiagonalChargeBasisTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2), num_terms=dim)
 end
 
 function FixedTransmon(label::AbstractString,
@@ -280,7 +300,7 @@ function FixedTransmon(label::AbstractString,
     dim::Int)
     @warn "Deprecation warning: FixedTransmon."
     EJ1, EJ2 = E_J, 0.0
-    return ChargeBasisTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2), num_terms=dim)
+    return DiagonalChargeBasisTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2), num_terms=dim)
 end
 
 function FixedDuffingTransmon(label::AbstractString,
@@ -323,7 +343,7 @@ end
 
 function fit_fixed_transmon(freq, anharm, num_terms)
     @warn "Deprecation waring: fit_fixed_transmon."
-    t = fit_transmon(freq, freq, anharm, ChargeBasisTransmon, num_terms)
+    t = fit_transmon(freq, freq, anharm, DiagonalChargeBasisTransmon, num_terms)
     return t.EC, t.EJ1 + t.EJ2
 end
 
