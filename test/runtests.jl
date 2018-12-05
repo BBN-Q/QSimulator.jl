@@ -1,6 +1,6 @@
 include("test_operators.jl")
 include("test_systems.jl")
-# include("test_fourier.jl")
+include("test_fourier.jl")
 include("test_basis_utils.jl")
-# include("test_time_evolution.jl")
+include("test_time_evolution.jl")
 include("integration_tests.jl")
