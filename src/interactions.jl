@@ -9,7 +9,7 @@ export ## Types,
 
 #Iteractions linearly add new Hamiltonians to the system
 
-type Dipole <: Interaction
+struct Dipole <: Interaction
     system1::QSystem
     system2::QSystem
     strength::Float64
@@ -19,7 +19,7 @@ function hamiltonian(f::Dipole)
     return f.strength*kron(X(f.system1), X(f.system2))
 end
 
-type FlipFlop <: Interaction
+struct FlipFlop <: Interaction
     system1::QSystem
     system2::QSystem
     strength::Float64
@@ -28,7 +28,7 @@ function hamiltonian(f::FlipFlop)
     return f.strength*(kron(raising(f.system1), lowering(f.system2)) + kron(lowering(f.system1), raising(f.system2)))
 end
 
-type SemiClassicalDipole <: Interaction
+struct SemiClassicalDipole <: Interaction
     system1::Field
     system2::QSystem
     strength::Float64
@@ -37,7 +37,7 @@ function hamiltonian(scd::SemiClassicalDipole, t::Float64)
     return scd.strength*amplitude(scd.system1, t)*X(scd.system2)
 end
 
-type RotatingSemiClassicalDipole <: Interaction
+struct RotatingSemiClassicalDipole <: Interaction
     field::Field
     system2::QSystem
     strength::Float64
@@ -55,7 +55,7 @@ end
 # parameters of systems rather than linearly add new Hamiltonians
 
 #Flux control
-type FluxTransmon <: ParametricInteraction
+struct FluxTransmon <: ParametricInteraction
     flux::Field
     transmon::AbstractString #refer to transmon by label in parent CompositeQSystem to avoid broken reference on copy
     strength::Float64

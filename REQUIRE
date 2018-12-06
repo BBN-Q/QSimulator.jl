@@ -1,5 +1,5 @@
-julia 0.6
+julia 0.7
 ExpmV
 Interpolations
 HDF5
-Iterators
+Optim

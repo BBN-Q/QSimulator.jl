@@ -1,4 +1,4 @@
-using Base.Test
+using Test
 using QSimulator
 import QuantumInfo
 
@@ -55,16 +55,16 @@ function test_4()
 
   system = CompositeQSystem()
 
-  L = zeros(Complex128, 4, 4)
+  L = zeros(ComplexF64, 4, 4)
 
   system += q1
 
   QSimulator.liouvillian_dual_add!(L, system, 0.0)
-  @test_approx_eq norm(L-QuantumInfo.hamiltonian(sz)',2) 0.0
+  @test isapprox(norm(L-QuantumInfo.hamiltonian(sz)', 2), 0.0)
 
   system += Cooling("T1", 0.1, q1)
   QSimulator.liouvillian_dual_add!(L, system, 0.0)
-  @test_approx_eq norm(L-(QuantumInfo.hamiltonian(sz)+.1*QuantumInfo.dissipator(sm))',2) 0.0
+  @test isapprox(norm(L-(QuantumInfo.hamiltonian(sz)+.1*QuantumInfo.dissipator(sm))',2), 0.0)
 end
 
 function test_5()
@@ -78,7 +78,7 @@ function test_5()
 
   Lp = liouvillian_propagator(system,100.,0.,1000.)
 
-  @test_approx_eq_eps norm(Lp-[1 0 0 1; 0 0 0 0; 0 0 0 0; 0 0 0 0], 2) 0.0 1e-12
+  @test isapprox(norm(Lp-[1 0 0 1; 0 0 0 0; 0 0 0 0; 0 0 0 0], 2), 0.0, atol=1e-12)
 end
 
 function test_6()
@@ -94,7 +94,7 @@ function test_6()
 
   ev_state = liouvillian_evolution(state,system,100.,0.,1000.)
 
-  @test_approx_eq_eps norm(ev_state - [1 0; 0 0], 1) 0.0 1e-12
+  @test isapprox(norm(ev_state - [1 0; 0 0], 1), 0.0, atol=1e-12)
 end
 
 function test_7()
@@ -111,17 +111,37 @@ function test_7()
   for i=1:10
       t = 1.0 + 10*abs(randn())
       ev_state = liouvillian_evolution(state,system,.01,0.,t)
-      ans = diagm([1-exp(-t),exp(-t)])
+      ans = diagm(0 => [1-exp(-t),exp(-t)])
 
-      @test_approx_eq_eps norm(ev_state - ans, 1) 0.0 1e-12
+      @test isapprox(norm(ev_state - ans, 1), 0.0, atol = 1e-12)
   end
 end
 
 
-test_1()
-test_2()
-test_3()
-test_4()
-test_5()
-test_6()
-test_7()
+@testset "dissipators 1" begin
+    test_1()
+end
+
+@testset "dissipators 2" begin
+    test_2()
+end
+
+@testset "dissipators 3" begin
+    test_3()
+end
+
+@testset "dissipators 4" begin
+    test_4()
+end
+
+@testset "dissipators 5" begin
+    test_5()
+end
+
+@testset "dissipators 6" begin
+    test_6()
+end
+
+@testset "dissipators 7" begin
+    test_7()
+end

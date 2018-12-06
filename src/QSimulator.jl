@@ -1,11 +1,20 @@
-VERSION >= v"0.4.0-dev+6521" && __precompile__()
-
 module QSimulator
 
-using Interpolations,
-      Iterators
+using Interpolations
 
-import Base: getindex, +
+import Base: getindex
+import Base.+
+using LinearAlgebra
+using SparseArrays
+
+
+eye(dim::Integer) = Matrix{Float64}(LinearAlgebra.I, dim, dim)
+eye(::Type{T}, dim::Integer) where T = Matrix{T}(LinearAlgebra.I, dim, dim)
+speye(dim::Integer) = sparse(one(Float64) * LinearAlgebra.I, dim, dim)
+speye(::Type{T}, dim::Integer) where T = sparse(one(T) * LinearAlgebra.I, dim, dim)
+
+# `findin(a, b)` is deprecated, use `findall((in)(b), a)`
+findin(a, b) = findall((in)(b), a) # :)
 
 include("base-types.jl")
 include("systems.jl")

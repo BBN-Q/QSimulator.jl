@@ -5,6 +5,7 @@ export ## Methods
        liouvillian_evolution
 
 using ExpmV
+import Distributed
 
 function expm_eigen(A::Matrix, t)
     #Calculates exp(t*A) via eigenvalue decomposition and assuming Hermitian matrix
@@ -20,7 +21,7 @@ function unitary_propagator(sys::CompositeQSystem,
                             parallelize=true)
 
     #Preallocate Hamiltonian memory
-    Ham = zeros(Complex128, (dim(sys), dim(sys)))
+    Ham = zeros(ComplexF64, (dim(sys), dim(sys)))
 
     times = startTime:timeStep:(endTime-timeStep)
 
@@ -29,7 +30,7 @@ function unitary_propagator(sys::CompositeQSystem,
     end
 
     if parallelize
-        Uprop = @parallel (*) for time = times
+        Uprop = Distributed.@distributed (*) for time = times
             #a *= b expands to a = a*b
             hamiltonian_add!(Ham, sys, time)
             expm_eigen(Ham, 1im*2pi*timeStep)
@@ -51,16 +52,16 @@ function unitary_propagator(sys::CompositeQSystem,
     return Uprop'
 end
 
-function unitary_evolution{T<:Number}(state::Vector{T},
-                                      sys::CompositeQSystem,
-                                      timeStep::Float64,
-                                      startTime::Float64,
-                                      endTime::Float64)
+function unitary_evolution(state::Vector{<:Number},
+                           sys::CompositeQSystem,
+                           timeStep::Float64,
+                           startTime::Float64,
+                           endTime::Float64)
 
     state_cp = copy(state)
 
     #Preallocate Hamiltonian memory
-    Ham = spzeros(Complex128, dim(sys), dim(sys))
+    Ham = spzeros(ComplexF64, dim(sys), dim(sys))
 
     times = startTime:timeStep:(endTime-timeStep)
 
@@ -89,7 +90,7 @@ function liouvillian_propagator(sys::CompositeQSystem,
                                 parallelize=true)
 
     #Preallocate memory
-    liouv = zeros(Complex128, dim(sys)^2, dim(sys)^2)
+    liouv = zeros(ComplexF64, dim(sys)^2, dim(sys)^2)
 
     times = startTime:timeStep:(endTime-timeStep)
 
@@ -98,27 +99,27 @@ function liouvillian_propagator(sys::CompositeQSystem,
     end
 
     if parallelize
-        Lprop = @parallel (*) for time = times
+        Lprop = Distributed.@distributed (*) for time = times
             liouvillian_dual_add!(liouv, sys, time)
-            expm(2pi*timeStep*liouv)
+            exp(2pi*timeStep*liouv)
         end
     else
         Lprop = eye(dim(sys))
         for time = times
             liouvillian_dual_add!(liouv, sys, time)
-            Lprop *= expm(2pi*timeStep*liouv)
+            Lprop *= exp(2pi*timeStep*liouv)
         end
     end
 
     if (endTime-times[end]) > timeStep
         liouvillian_dual_add!(liouv, sys, times[end]+timeStep)
-        Lprop *= expm(2pi*(endTime-times[end]-timeStep)*liouv)
+        Lprop *= exp(2pi*(endTime-times[end]-timeStep)*liouv)
     end
 
     return Lprop'
 end
 
-function liouvillian_evolution{T<:Number}(state::Matrix{T},
+function liouvillian_evolution(state::Matrix{<:Number},
                                           sys::CompositeQSystem,
                                           timeStep::Float64,
                                           startTime::Float64,
@@ -127,7 +128,7 @@ function liouvillian_evolution{T<:Number}(state::Matrix{T},
     state_cp = copy(state[:])
 
     #Preallocate memory
-    liouv = spzeros(Complex128, dim(sys)^2, dim(sys)^2)
+    liouv = spzeros(ComplexF64, dim(sys)^2, dim(sys)^2)
 
     times = startTime:timeStep:(endTime-timeStep)
 

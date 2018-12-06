@@ -10,7 +10,7 @@ export ## Types
 #AWG channels are controls
 
 #A double-balanced mixer driven by an RF/microwave souce and a single AWG channel
-type MicrowaveControl <: Control
+struct MicrowaveControl <: Control
     label::AbstractString
     freq::Float64
     phase::Float64
@@ -21,7 +21,7 @@ MicrowaveControl(label, freq; phase=0., timeStep=1/1.2, sequence=interpolate([0.
     MicrowaveControl(label, freq, phase, timeStep, sequence)
 
 # Methods to create the interpolated sequence object
-function load_sequence!{T}(mc::MicrowaveControl, sequence::Vector{T}; interpolation=BSpline(Constant()))
+function load_sequence!(mc::MicrowaveControl, sequence::Vector; interpolation=BSpline(Constant()))
     mc.sequence = interpolate(sequence, interpolation, OnGrid())
 end
 
@@ -39,7 +39,7 @@ function amplitude(mc::MicrowaveControl, t::Float64)
 end
 
 #A pair of AWG channels driving an IQ mixer with a microwave source at a given frequency
-type QuadratureControl <: Control
+struct QuadratureControl <: Control
     label::AbstractString
     freq::Float64
     phase::Float64
@@ -71,7 +71,7 @@ function amplitude(qc::QuadratureControl, t::Float64)
 end
 
 #AWG controls get connected, possibly through a transfer function, to fields
-type Field
+struct Field
     control::Control
 end
 #Pull in amplitude from controls
