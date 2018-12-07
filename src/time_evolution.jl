@@ -11,7 +11,7 @@ import Base.Iterators
 using OrdinaryDiffEq: ODEProblem, solve, Tsit5
 
 export unitary_propagator, unitary_state, me_propagator, me_state
-export floquet_propagator, choose_times_floquet, decompose_times_floquet
+export floquet_propagator, floquet_rise_fall_propagator, choose_times_floquet, decompose_times_floquet
 
 """
     unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
@@ -267,7 +267,7 @@ function decompose_times_floquet(ts::Vector{<:Real}, t_period::Real; time_tol_fr
 end
 
 """
-    floquet_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+    floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
 
 Create a propagator function that uses the floquet evolution but also
 allows a rise time and a fall time during which the pulse is not periodic.
@@ -285,7 +285,7 @@ fall time is assumed to be at the end.
 ## returns
 A propagator function. The times passed into this
 """
-function floquet_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+function floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
     @assert all([t_period, rise_time, fall_time] .>= 0.0)
     floquet_prop = floquet_propagator(propagator_func, t_period, time_tol_fraction=time_tol_fraction)
     function p(cqs::CompositeQSystem, ts::Vector{<:Real})

@@ -134,7 +134,7 @@ end
     end
     add_hamiltonian!(cqs, parametric_drive(q0, p), q0)
     t_period = 1/drive_freq
-    prop = floquet_propagator(unitary_propagator, t_period, rise_time, rise_time)
+    prop = floquet_rise_fall_propagator(unitary_propagator, t_period, rise_time, rise_time)
     us_floquet_pulseshape = prop(cqs, times)
     us_unitary = unitary_propagator(cqs, times)
     if "plot" in ARGS
