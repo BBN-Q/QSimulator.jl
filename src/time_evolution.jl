@@ -196,7 +196,7 @@ function floquet_propagator(propagator_func::Function, t_period::Real; time_tol_
         us_remainders = propagator_func(cqs, [unique_remainders; t_period + ts[1]])
         u_period = us_remainders[end]
         # create desired unitaries
-        us = Array{Matrix{ComplexF64}, 1}([])
+        us = Matrix{ComplexF64}[]
         quotient = quotients[1]
         u_floquet = u_period^quotient
         for i in 1:length(ts)
@@ -255,9 +255,8 @@ where `unique_remainders` is as small of an array as possible.
 """
 function decompose_times_floquet(ts::Vector{<:Real}, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
     # find unique times mod a period
-    qrs = fldmod.(ts .- ts[1], t_period)
-    quotients = [qr[1] for qr in qrs]
-    remainders = [qr[2] + ts[1] for qr in qrs]
+    quotients = fld.(ts .- ts[1], t_period)
+    remainders = mod.(ts .- ts[1], t_period) .+ ts[1]
     # remove collisions in the times mod a period up to time_tol
     unique_remainders, unique_inds = unique_tol(remainders, time_tol_fraction * t_period)
     # sort the unique remainders
@@ -320,7 +319,7 @@ such that `a[inds]` is an approximation of `ts` up to `dt`.
 An array of the unique values and an array of indices.
 """
 function unique_tol(ts::Vector{<:Real}, dt::Real)
-    vals = round.(Int, ts ./ dt) .* dt
+    vals = round.(ts ./ dt) .* dt
     unique_vals = unique(vals)
     unique_inds = [findfirst(unique_vals .== v) for v in vals]
     return unique_vals, unique_inds
