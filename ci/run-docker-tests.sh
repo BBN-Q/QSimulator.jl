@@ -9,4 +9,4 @@ pushd ../
 
 docker build -f Dockerfile -t qsimulator-tests .
 
-docker run qsimulator-tests
+docker run -v julia-depot:/root/.julia qsimulator-tests
