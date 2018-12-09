@@ -31,6 +31,7 @@ end
 
 """ Add a subystem Hamiltonian to a CompositeQSystem """
 add_hamiltonian!(cqs::CompositeQSystem, qs::QSystem) = add_hamiltonian!(cqs, hamiltonian(qs), qs)
+add_hamiltonian!(cqs::CompositeQSystem, qs::QSystem, ϕ::Real) = add_hamiltonian!(cqs, hamiltonian(qs, ϕ), qs)
 
 # TODO how to do this dispatch vs adding a fixed Hamiltonian - Jameson says not to do this https://discourse.julialang.org/t/functions-and-callable-methods/2983/3
 """ Add a time parameterized subsystem Hamiltonian to a CompositeQSystem """
