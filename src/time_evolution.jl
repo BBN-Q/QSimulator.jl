@@ -178,7 +178,7 @@ identity `U(nτ + dt) = U(dt)U(τ)^n` where `U` is the propagator for a system w
 
 ## args
 * `propagator_func`: a propagator function, e.g. `unitary_propagator`.
-* `t_period`: the periodicity of the system Hamiltonian.
+* `t_period`: the periodicity of the system equation of motion.
 * `rtol`: a tolerance to use in `unique_tol` for the times mod the period expressed as a fraction
              of `t_period`.
 
@@ -253,7 +253,7 @@ Decompose the given times as `ts = quotients * t_period + unique_remainders[uniq
 
 ## args
 * `ts`: an array of times.
-* `t_period`: the periodicity of the system.
+* `t_period`: the periodicity of the system equations of motion.
 * `rtol`: a tolerance to use in `unique_tol` for the times mod the period expressed as a fraction
              of `t_period`.
 
@@ -295,7 +295,7 @@ vector `ts` and the fall time is assumed to be at the end.
 
 ## args
 * `propagator_func`: a propagator function, e.g. `unitary_propagator`.
-* `t_period`: the periodicity of the system.
+* `t_period`: the periodicity of the system equations of motion.
 * `rise_time`: the rise time of the pulse (the time at the beginning that is non-periodic).
 * `fall_time`: the fall time of the pulse (the time at the end that is non-periodic).
 * `rtol`: a tolerance to use in `unique_tol` for the times mod the period expressed as a fraction of `t_period`.
