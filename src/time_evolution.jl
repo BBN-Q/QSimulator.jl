@@ -169,6 +169,11 @@ me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}) = me_state(cqs, 
 # starting at the first given time.
 ######################################################
 
+# This value is used in periodic problems to produce a small time
+# `dt = TIME_TOL_FRACTION * t_period` where t_period is the periodicity.
+# This value is used as a small time-scale on which errors in the time
+# do not matter. The default value here says we do not need precision on
+# the time better then the periodicity over ten billion.
 TIME_TOL_FRACTION = 1e-10
 
 """
@@ -229,9 +234,7 @@ An array of times.
 function choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Real)
     dt = t_period / ceil(Int, t_period / dt) # reset dt so it divides time_period, making it smaller
     num_times = floor(Int, width / dt)
-    if mod(num_times, 2) == 0
-        num_times += 1
-    end
+    num_times += iseven(num_times)
     width = dt * num_times
     times = collect(range(center - width/2, stop=center + width/2, length=num_times))
     times[ceil(Int, num_times/2)] = center
@@ -242,7 +245,7 @@ end
     decompose_times_floquet(ts::Vector{<:Real}, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
 
 Decompose the given times as `ts = quotients * t_period + unique_remainders[unique_inds]`
-where `unique_remainders` is as small of an array as possible.
+where `unique_remainders` is as small of an array as possible and has `t[1]` as its first element.
 
 ## args
 * `ts`: an array of times.
