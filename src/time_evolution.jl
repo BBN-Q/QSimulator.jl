@@ -197,14 +197,18 @@ function floquet_propagator(propagator_func::Function, t_period::Real; time_tol_
     function p(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
         @assert issorted(ts)
         quotients, unique_remainders, unique_inds = decompose_times_floquet(ts, t_period, time_tol_fraction=time_tol_fraction)
-        # perform time evolution for unique remainders as well as one full period
+        # Perform time evolution for unique remainders as well as one full period. Because
+        # unique_remainders[1] == ts[1] and all of unique_remainders .- unique_remainders[1] <=
+        # t_period then we can calcuate the propagators for all the "remainder" times starting at
+        # ts[1] and also calculate the period propagator by tacking on a final t = t_period + ts[1]
         us_remainders = propagator_func(cqs, [unique_remainders; t_period + ts[1]])
         u_period = us_remainders[end]
         # create desired unitaries
         us = Matrix{ComplexF64}[]
-        quotient = quotients[1]
-        u_floquet = u_period^quotient
+        quotient = quotients[1] # quotients[1] == 0
+        u_floquet = u_period^quotient # effectively the identity map
         for i in 1:length(ts)
+            # if we've advanced by at least a period update the base u_floquet
             if quotients[i] > quotient
                 u_floquet *= u_period^(quotients[i] - quotient)
                 quotient = quotients[i]
@@ -244,8 +248,8 @@ end
 """
     decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real; time_tol_fraction::Real=$TIME_TOL_FRACTION)
 
-Decompose the given times as `ts = quotients * t_period + unique_remainders[unique_inds]`
-where `unique_remainders` is as small of an array as possible and has `t[1]` as its first element.
+Decompose the given times as `ts = quotients * t_period + unique_remainders[unique_inds]` where
+`unique_remainders` is as small of an array as possible and `unique_remainders[1] == ts[1]`.
 
 ## args
 * `ts`: an array of times.
