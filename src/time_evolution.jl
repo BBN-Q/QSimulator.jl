@@ -259,6 +259,12 @@ Decompose the given times as `ts = quotients * t_period + unique_remainders[uniq
 
 ## returns
 `quotients`, `unique_remainders`, and `unique_inds`.
+
+# Examples
+```jldoctest
+julia> quotients, unique_remainders, unique_inds = decompose_times_floquet(0.25:0.1:1, 0.25)
+([0.0, 0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 2.0], [0.25, 0.3, 0.35, 0.4, 0.45], [1, 3, 5, 2, 4, 1, 3, 5])
+```
 """
 function decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
     # find unique times mod a period
