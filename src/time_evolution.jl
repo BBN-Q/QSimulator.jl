@@ -172,7 +172,8 @@ me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}) = me_state(cqs, 
 # This value is used in periodic problems to produce a small time
 # `dt = TIME_TOL_FRACTION * t_period` where t_period is the periodicity.
 # This value is used as a small time-scale on which errors in the time
-# do not matter. The default value here says we do not need precision on
+# do not matter. This allows the solver to simulate fewer time-steps.
+# The default value here says we do not need precision on
 # the time better then the periodicity over ten billion.
 TIME_TOL_FRACTION = 1e-10
 
