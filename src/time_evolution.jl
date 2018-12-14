@@ -169,16 +169,8 @@ me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}) = me_state(cqs, 
 # matrix) at those times assuming an identity initial condition at the first given time.
 ######################################################
 
-# This value is used in periodic problems to produce a small time
-# `dt = TIME_TOL_FRACTION * t_period` where t_period is the periodicity.
-# This value is used as a small time-scale on which errors in the time
-# do not matter. This allows the solver to simulate fewer time-steps.
-# The default value here says we do not need precision on
-# the time better then the periodicity over ten billion.
-TIME_TOL_FRACTION = 1e-10
-
 """
-    floquet_propagator(propagator_func::Function, t_period::Real; time_tol_fraction::Real=$TIME_TOL_FRACTION)
+    floquet_propagator(propagator_func::Function, t_period::Real; rtol::Real)
 
 Given a propagator function and a time period, create a new propagator function that applies
 correctly to CompositeQSystems that are periodic with the given time period. It makes use of the
@@ -187,16 +179,16 @@ identity `U(nτ + dt) = U(dt)U(τ)^n` where `U` is the propagator for a system w
 ## args
 * `propagator_func`: a propagator function, e.g. `unitary_propagator`.
 * `t_period`: the periodicity of the system Hamiltonian.
-* `time_tol_fraction`: a tolerance to use in `unique_tol` for the times mod the period
-    expressed as a fraction of `t_period`.
+* `rtol`: a tolerance to use in `unique_tol` for the times mod the period expressed as a fraction
+             of `t_period`.
 
 ## returns
 A new propagator function.
 """
-function floquet_propagator(propagator_func::Function, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+function floquet_propagator(propagator_func::Function, t_period::Real, rtol::Real)
     function p(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
         @assert issorted(ts)
-        quotients, unique_remainders, unique_inds = decompose_times_floquet(ts, t_period, time_tol_fraction=time_tol_fraction)
+        quotients, unique_remainders, unique_inds = decompose_times_floquet(ts, t_period, rtol)
         # Perform time evolution for unique remainders as well as one full period. Because
         # unique_remainders[1] == ts[1] and all of unique_remainders .- unique_remainders[1] <=
         # t_period then we can calcuate the propagators for all the "remainder" times starting at
@@ -219,6 +211,14 @@ function floquet_propagator(propagator_func::Function, t_period::Real; time_tol_
     end
     return p
 end
+
+"""
+    floquet_propagator(propagator_func::Function, t_period::Real)
+
+Use a default value of `eps(t_period)` for `rtol`.
+"""
+floquet_propagator(propagator_func::Function, t_period::Real) = floquet_propagator(propagator_func, t_period, eps(t_period))
+
 
 """
     choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Real)
@@ -246,7 +246,7 @@ function choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Rea
 end
 
 """
-    decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real; time_tol_fraction::Real=$TIME_TOL_FRACTION)
+    decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real, rtol::Real)
 
 Decompose the given times as `ts = quotients * t_period + unique_remainders[unique_inds]` where
 `unique_remainders` is as small of an array as possible and `unique_remainders[1] == ts[1]`.
@@ -254,8 +254,8 @@ Decompose the given times as `ts = quotients * t_period + unique_remainders[uniq
 ## args
 * `ts`: an array of times.
 * `t_period`: the periodicity of the system.
-* `time_tol_fraction`: a tolerance to use in `unique_tol` for the times mod the period
-    expressed as a fraction of `t_period`.
+* `rtol`: a tolerance to use in `unique_tol` for the times mod the period expressed as a fraction
+             of `t_period`.
 
 ## returns
 `quotients`, `unique_remainders`, and `unique_inds`.
@@ -266,12 +266,12 @@ julia> quotients, unique_remainders, unique_inds = decompose_times_floquet(0.25:
 ([0.0, 0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 2.0], [0.25, 0.3, 0.35, 0.4, 0.45], [1, 3, 5, 2, 4, 1, 3, 5])
 ```
 """
-function decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+function decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real, rtol::Real)
     # find unique times mod a period
     quotients = fld.(ts .- ts[1], t_period)
     remainders = mod.(ts .- ts[1], t_period) .+ ts[1]
     # remove collisions in the times mod a period up to time_tol
-    unique_remainders, unique_inds = unique_tol(remainders, time_tol_fraction * t_period)
+    unique_remainders, unique_inds = unique_tol(remainders, rtol * t_period)
     # sort the unique remainders
     sort_inds = sortperm(unique_remainders)
     unique_remainders = unique_remainders[sort_inds]
@@ -280,7 +280,14 @@ function decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real; tim
 end
 
 """
-    floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=$TIME_TOL_FRACTION)
+    function decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real)
+
+Use a default value off `eps(t_period)` for `rtol`
+"""
+decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real) = decompose_times_floquet(ts, t_period, eps(t_period))
+
+"""
+    floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real, rtol::Real)
 
 Create a propagator function that uses the floquet evolution but also allows a rise time and a fall
 time during which the pulse is not periodic. The rise time is assumed to be at the beginning of the
@@ -291,15 +298,15 @@ vector `ts` and the fall time is assumed to be at the end.
 * `t_period`: the periodicity of the system.
 * `rise_time`: the rise time of the pulse (the time at the beginning that is non-periodic).
 * `fall_time`: the fall time of the pulse (the time at the end that is non-periodic).
-* `time_tol_fraction`: a tolerance to use in `unique_tol` for the times mod the period
-    expressed as a fraction of `t_period`.
+* `rtol`: a tolerance to use in `unique_tol` for the times mod the period expressed as a fraction of `t_period`.
 
 ## returns
-A propagator function. The times passed into this
+A propagator function.
 """
-function floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+function floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real,
+                                      fall_time::Real, rtol::Real)
     @assert all([t_period, rise_time, fall_time] .>= 0.0)
-    floquet_prop = floquet_propagator(propagator_func, t_period, time_tol_fraction=time_tol_fraction)
+    floquet_prop = floquet_propagator(propagator_func, t_period, rtol)
     function p(cqs::CompositeQSystem, ts::Vector{<:Real})
         t0, t1 = ts[1] + rise_time, ts[end] - fall_time
         @assert t0 <= t1
@@ -315,6 +322,15 @@ function floquet_rise_fall_propagator(propagator_func::Function, t_period::Real,
     end
     return p
 end
+
+"""
+    floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real)
+
+Use a default value of `eps(t_period)` for `rtol`.
+"""
+floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real) =
+    floquet_rise_fall_propagator(propagator_func, t_period, rise_time, fall_time, eps(t_period))
+
 
 """
     unique_tol(ts::AbstractVector{<:Real}, dt::Real)
