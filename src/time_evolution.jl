@@ -164,9 +164,9 @@ end
 me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}) = me_state(cqs, [0.0, t], ρ0)[end]
 
 ######################################################
-# Define a `propagator_function` to be a function that takes a CompositeQSystem
-# and an array of times and returns an array of propagators at those times
-# starting at the first given time.
+# Define a `propagator_function` to be a function that takes a CompositeQSystem and a AbstractVector
+# of times and returns an array of propagators (something that evolves a state vector or density
+# matrix) at those times assuming an identity initial condition at the first given time.
 ######################################################
 
 # This value is used in periodic problems to produce a small time
@@ -178,24 +178,23 @@ me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}) = me_state(cqs, 
 TIME_TOL_FRACTION = 1e-10
 
 """
-    floquet_propagator(propagator_func::Function, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+    floquet_propagator(propagator_func::Function, t_period::Real; time_tol_fraction::Real=$TIME_TOL_FRACTION)
 
-Given a propagator function and a time period, create a new propagator
-function that applies correctly to CompositeQSystems that are periodic
-with the given time period. It makes use of the identity
-`U(nτ + dt) = U(dt)U(τ)^n` where `U` is the propagator for a system with period `τ`.
+Given a propagator function and a time period, create a new propagator function that applies
+correctly to CompositeQSystems that are periodic with the given time period. It makes use of the
+identity `U(nτ + dt) = U(dt)U(τ)^n` where `U` is the propagator for a system with period `τ`.
 
 ## args
 * `propagator_func`: a propagator function, e.g. `unitary_propagator`.
-* `t_period`: the periodicity of the system.
-* `time_tol_fraction`: a tolerance to use in unique_tol for the times mod the period
+* `t_period`: the periodicity of the system Hamiltonian.
+* `time_tol_fraction`: a tolerance to use in `unique_tol` for the times mod the period
     expressed as a fraction of `t_period`.
 
 ## returns
 A new propagator function.
 """
 function floquet_propagator(propagator_func::Function, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
-    function p(cqs::CompositeQSystem, ts::Vector{<:Real})
+    function p(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
         @assert issorted(ts)
         quotients, unique_remainders, unique_inds = decompose_times_floquet(ts, t_period, time_tol_fraction=time_tol_fraction)
         # perform time evolution for unique remainders as well as one full period
@@ -243,7 +242,7 @@ function choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Rea
 end
 
 """
-    decompose_times_floquet(ts::Vector{<:Real}, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+    decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real; time_tol_fraction::Real=$TIME_TOL_FRACTION)
 
 Decompose the given times as `ts = quotients * t_period + unique_remainders[unique_inds]`
 where `unique_remainders` is as small of an array as possible and has `t[1]` as its first element.
@@ -251,13 +250,13 @@ where `unique_remainders` is as small of an array as possible and has `t[1]` as 
 ## args
 * `ts`: an array of times.
 * `t_period`: the periodicity of the system.
-* `time_tol_fraction`: a tolerance to use in unique_tol for the times mod the period
+* `time_tol_fraction`: a tolerance to use in `unique_tol` for the times mod the period
     expressed as a fraction of `t_period`.
 
 ## returns
 `quotients`, `unique_remainders`, and `unique_inds`.
 """
-function decompose_times_floquet(ts::Vector{<:Real}, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+function decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
     # find unique times mod a period
     quotients = fld.(ts .- ts[1], t_period)
     remainders = mod.(ts .- ts[1], t_period) .+ ts[1]
@@ -271,19 +270,18 @@ function decompose_times_floquet(ts::Vector{<:Real}, t_period::Real; time_tol_fr
 end
 
 """
-    floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=TIME_TOL_FRACTION)
+    floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real; time_tol_fraction::Real=$TIME_TOL_FRACTION)
 
-Create a propagator function that uses the floquet evolution but also
-allows a rise time and a fall time during which the pulse is not periodic.
-The rise time is assumed to be at the beginning of the vector `ts` and the
-fall time is assumed to be at the end.
+Create a propagator function that uses the floquet evolution but also allows a rise time and a fall
+time during which the pulse is not periodic. The rise time is assumed to be at the beginning of the
+vector `ts` and the fall time is assumed to be at the end.
 
 ## args
 * `propagator_func`: a propagator function, e.g. `unitary_propagator`.
 * `t_period`: the periodicity of the system.
 * `rise_time`: the rise time of the pulse (the time at the beginning that is non-periodic).
 * `fall_time`: the fall time of the pulse (the time at the end that is non-periodic).
-* `time_tol_fraction`: a tolerance to use in unique_tol for the times mod the period
+* `time_tol_fraction`: a tolerance to use in `unique_tol` for the times mod the period
     expressed as a fraction of `t_period`.
 
 ## returns
@@ -309,11 +307,11 @@ function floquet_rise_fall_propagator(propagator_func::Function, t_period::Real,
 end
 
 """
-    unique_tol(ts::Vector{<:Real}, dt::Real)
+    unique_tol(ts::AbstractVector{<:Real}, dt::Real)
 
-Compute an array `a` of values where each is within `dt/2` of some value in `ts`
-and no two differ by less than `dt`. Further return a vector of indices `inds`
-such that `a[inds]` is an approximation of `ts` up to `dt`.
+Compute an array `a` of values where each is within `dt/2` of some value in `ts` and no two differ
+by less than `dt`. Further return a vector of indices `inds` such that `a[inds]` is an approximation
+of `ts` up to `dt`.
 
 ## args
 * `ts`: an array of numbers.
@@ -322,7 +320,7 @@ such that `a[inds]` is an approximation of `ts` up to `dt`.
 ## returns
 An array of the unique values and an array of indices.
 """
-function unique_tol(ts::Vector{<:Real}, dt::Real)
+function unique_tol(ts::AbstractVector{<:Real}, dt::Real)
     vals = round.(ts ./ dt) .* dt
     unique_vals = unique(vals)
     unique_inds = [findfirst(unique_vals .== v) for v in vals]
