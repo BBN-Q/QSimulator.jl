@@ -105,7 +105,7 @@ end
     @test times[1] == 0
     quotients, unique_remainders, unique_inds = decompose_times_floquet(times, t_period)
     @test length(quotients) == length(times)
-    @test length(unique_remainders) < length(times)
+    @test length(unique_remainders) <= length(times)
     @test length(unique_inds) == length(times)
     @test isapprox(t_period * quotients + unique_remainders[unique_inds], times)
 end
@@ -138,18 +138,16 @@ end
     us_floquet_pulseshape = prop(cqs, times)
     us_unitary = unitary_propagator(cqs, times)
     if "plot" in ARGS
-        ind_10 = photons_to_index([1,0], dims)
-        ind_01 = photons_to_index([0,1], dims)
-        plt.plot(times, [abs2(u[ind_10, ind_10]) for u in us_unitary], color="lightcoral", label="10 unitary")
-        plt.plot(times, [abs2(u[ind_01, ind_10]) for u in us_unitary], color="lightblue", label="01 unitary")
-        plt.plot(times, [abs2(u[ind_10, ind_10]) for u in us_floquet_pulseshape], color="red", label="10 floquet")
-        plt.plot(times, [abs2(u[ind_01, ind_10]) for u in us_floquet_pulseshape], color="blue", label="01 floquet")
+        ind₁₀ = index(ψ₁₀)
+        ind₀₁ = index(ψ₀₁)
+        plt.plot(times, [abs2(u[ind₁₀, ind₁₀]) for u in us_unitary], color="lightcoral", label="10 unitary")
+        plt.plot(times, [abs2(u[ind₀₁, ind₁₀]) for u in us_unitary], color="lightblue", label="01 unitary")
+        plt.plot(times, [abs2(u[ind₁₀, ind₁₀]) for u in us_floquet_pulseshape], color="red", label="10 floquet")
+        plt.plot(times, [abs2(u[ind₀₁, ind₁₀]) for u in us_floquet_pulseshape], color="blue", label="01 floquet")
         plt.legend(loc="best")
         plt.show()
     end
-    for i in 1:length(times)
-        @test isapprox(us_unitary[i], us_floquet_pulseshape[i], rtol=1e-5)
-    end
+    @test all(isapprox(u_unitary, u_floquet, rtol=1e-5) for (u_unitary, u_floquet) in zip(us_unitary, us_floquet_pulseshape))
 end
 
 @testset "me_propagator" begin
