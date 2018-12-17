@@ -11,6 +11,7 @@ import Base.Iterators
 using OrdinaryDiffEq: ODEProblem, solve, Tsit5
 
 export unitary_propagator, unitary_state, me_propagator, me_state
+export floquet_propagator, floquet_rise_fall_propagator, choose_times_floquet, decompose_times_floquet
 
 """
     unitary_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
@@ -161,3 +162,193 @@ function me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix
 end
 
 me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}) = me_state(cqs, [0.0, t], ρ0)[end]
+
+######################################################
+# Define a `propagator_function` to be a function that takes a CompositeQSystem and an AbstractVector
+# of times and returns an array of propagators (something that evolves a state vector or density
+# matrix) at those times assuming an identity initial condition at the first given time.
+######################################################
+
+"""
+    floquet_propagator(propagator_func::Function, t_period::Real, rtol::Real)
+
+Given a propagator function and a time period, create a new propagator function that applies
+correctly to CompositeQSystems that are periodic with the given time period. It makes use of the
+identity `U(nτ + dt) = U(dt)U(τ)^n` where `U` is the propagator for a system with period `τ`.
+
+## args
+* `propagator_func`: a propagator function, e.g. `unitary_propagator`.
+* `t_period`: the periodicity of the system equation of motion.
+* `rtol`: a tolerance to use in `unique_tol` for the times mod the period expressed as a fraction
+             of `t_period`.
+
+## returns
+A new propagator function.
+"""
+function floquet_propagator(propagator_func::Function, t_period::Real, rtol::Real)
+    function p(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
+        @assert issorted(ts)
+        quotients, unique_remainders, unique_inds = decompose_times_floquet(ts, t_period, rtol)
+        # Perform time evolution for unique remainders as well as one full period. Because
+        # unique_remainders[1] == ts[1] and all of unique_remainders .- unique_remainders[1] <=
+        # t_period then we can calcuate the propagators for all the "remainder" times starting at
+        # ts[1] and also calculate the period propagator by tacking on a final t = t_period + ts[1]
+        us_remainders = propagator_func(cqs, [unique_remainders; t_period + ts[1]])
+        u_period = us_remainders[end]
+        # create desired unitaries
+        us = Matrix{ComplexF64}[]
+        quotient = quotients[1] # quotients[1] == 0
+        u_floquet = u_period^quotient # effectively the identity map
+        for i in 1:length(ts)
+            # if we've advanced by at least a period update the base u_floquet
+            if quotients[i] > quotient
+                u_floquet *= u_period^(quotients[i] - quotient)
+                quotient = quotients[i]
+            end
+            push!(us, us_remainders[unique_inds[i]] * u_floquet)
+        end
+        return us
+    end
+    return p
+end
+
+"""
+    floquet_propagator(propagator_func::Function, t_period::Real)
+
+Use a default value of `eps(t_period)` for `rtol`.
+"""
+floquet_propagator(propagator_func::Function, t_period::Real) = floquet_propagator(propagator_func, t_period, eps(t_period))
+
+
+"""
+    choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Real)
+
+Choose times for integration that maximize remainder overlap for Floquet integration.
+`center` is guaranteed to be one of the times.
+
+## args
+* `center`: the center of the array of times.
+* `width`: the desired approximate width of the array of times.
+* `t_period`: the periodicity of the system.
+* `dt`: the desired approximate time increment.
+
+## returns
+An array of times.
+"""
+function choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Real)
+    dt = t_period / ceil(Int, t_period / dt) # reset dt so it divides time_period, making it smaller
+    num_times = floor(Int, width / dt)
+    num_times += iseven(num_times) # make sure num_times is odd for symmetry
+    width = dt * num_times
+    times = collect(range(center - width/2, stop=center + width/2, length=num_times))
+    times[ceil(Int, num_times/2)] = center
+    return times
+end
+
+"""
+    decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real, rtol::Real)
+
+Decompose the given times as `ts = quotients * t_period + unique_remainders[unique_inds]` where
+`unique_remainders` is as small of an array as possible and `unique_remainders[1] == ts[1]`.
+
+## args
+* `ts`: an array of times.
+* `t_period`: the periodicity of the system equations of motion.
+* `rtol`: a tolerance to use in `unique_tol` for the times mod the period expressed as a fraction
+             of `t_period`.
+
+## returns
+`quotients`, `unique_remainders`, and `unique_inds`.
+
+# Examples
+```jldoctest
+julia> quotients, unique_remainders, unique_inds = decompose_times_floquet(0.25:0.1:1, 0.25)
+([0.0, 0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 2.0], [0.25, 0.3, 0.35, 0.4, 0.45], [1, 3, 5, 2, 4, 1, 3, 5])
+```
+"""
+function decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real, rtol::Real)
+    # find unique times mod a period
+    quotients = fld.(ts .- ts[1], t_period)
+    remainders = mod.(ts .- ts[1], t_period) .+ ts[1]
+    # remove collisions in the times mod a period up to time_tol
+    unique_remainders, unique_inds = unique_tol(remainders, rtol * t_period)
+    # sort the unique remainders
+    sort_inds = sortperm(unique_remainders)
+    unique_remainders = unique_remainders[sort_inds]
+    unique_inds = sortperm(sort_inds)[unique_inds]
+    return quotients, unique_remainders, unique_inds
+end
+
+"""
+    function decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real)
+
+Use a default value off `eps(t_period)` for `rtol`
+"""
+decompose_times_floquet(ts::AbstractVector{<:Real}, t_period::Real) = decompose_times_floquet(ts, t_period, eps(t_period))
+
+"""
+    floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real, rtol::Real)
+
+Create a propagator function that uses the floquet evolution but also allows a rise time and a fall
+time during which the pulse is not periodic. The rise time is assumed to be at the beginning of the
+vector `ts` and the fall time is assumed to be at the end.
+
+## args
+* `propagator_func`: a propagator function, e.g. `unitary_propagator`.
+* `t_period`: the periodicity of the system equations of motion.
+* `rise_time`: the rise time of the pulse (the time at the beginning that is non-periodic).
+* `fall_time`: the fall time of the pulse (the time at the end that is non-periodic).
+* `rtol`: a tolerance to use in `unique_tol` for the times mod the period expressed as a fraction of `t_period`.
+
+## returns
+A propagator function.
+"""
+function floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real,
+                                      fall_time::Real, rtol::Real)
+    @assert all([t_period, rise_time, fall_time] .>= 0.0)
+    floquet_prop = floquet_propagator(propagator_func, t_period, rtol)
+    function p(cqs::CompositeQSystem, ts::Vector{<:Real})
+        t0, t1 = ts[1] + rise_time, ts[end] - fall_time
+        @assert t0 <= t1
+        us_risetime = propagator_func(cqs, [ts[ts .< t0]; t0])
+        u0 = us_risetime[end]
+        us = us_risetime[1:end-1]
+        us_floquet = floquet_prop(cqs, [t0; ts[t0 .<= ts .<= t1]; t1])
+        u1 = us_floquet[end] * u0
+        append!(us, [u * u0 for u in us_floquet[2:end-1]])
+        us_falltime = propagator_func(cqs, [t1; ts[t1 .< ts]])
+        append!(us, [u * u1 for u in us_falltime[2:end]])
+        return us
+    end
+    return p
+end
+
+"""
+    floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real)
+
+Use a default value of `eps(t_period)` for `rtol`.
+"""
+floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real, fall_time::Real) =
+    floquet_rise_fall_propagator(propagator_func, t_period, rise_time, fall_time, eps(t_period))
+
+
+"""
+    unique_tol(ts::AbstractVector{<:Real}, dt::Real)
+
+Compute an array `a` of values where each is within `dt/2` of some value in `ts` and no two differ
+by less than `dt`. Further return a vector of indices `inds` such that `a[inds]` is an approximation
+of `ts` up to `dt`.
+
+## args
+* `ts`: an array of numbers.
+* `dt`: a small number within which errors are unimportant.
+
+## returns
+An array of the unique values and an array of indices.
+"""
+function unique_tol(ts::AbstractVector{<:Real}, dt::Real)
+    vals = round.(ts ./ dt) .* dt
+    unique_vals = unique(vals)
+    unique_inds = [findfirst(unique_vals .== v) for v in vals]
+    return unique_vals, unique_inds
+end

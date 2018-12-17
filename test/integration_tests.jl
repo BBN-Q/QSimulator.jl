@@ -52,8 +52,10 @@ end
     @test isapprox(e_sim, 1 .- g_expected, rtol=1e-2)
 
     # check that the propagator gives the same result
-    us = unitary_propagator(cqs, times)
-    ψs = [u*ψ_init for u = us]
+    # use floquet_propagator to speed it up since the Hamiltonian is periodic
+    floquet_prop = floquet_propagator(unitary_propagator, 1/qubit_freq)
+    us = floquet_prop(cqs, times)
+    ψs = [u*ψ_init for u in us]
     g_sim = [abs2(s[1]) for s in ψs]
     e_sim = [abs2(s[2]) for s in ψs]
     @test isapprox(g_sim, g_expected; rtol=1e-2)
@@ -71,16 +73,14 @@ end
     transmon = TransmonSpec(0.172, 12.71, 3.69)
     q0 = DuffingTransmon("q0", dims[1], duffing)
     q1 = PerturbativeTransmon("q1", dims[2], transmon)
-    # go to doubly rotating frame for speed
-    rotation_rate_0 = duffing.frequency
-    h = hamiltonian(q1, 0.0)
-    rotation_rate_1 = h[2,2] - h[1,1]
-    q0 = RotatingFrameSystem(q0, rotation_rate_0)
-    q1 = RotatingFrameSystem(q1, rotation_rate_1)
+    # go to rotating frame at duffing.frequency for speed
+    # a doubly rotating frame is also possible, but then you can't use floquet
+    q0 = RotatingFrameSystem(q0, duffing.frequency)
+    q1 = RotatingFrameSystem(q1, duffing.frequency)
     cqs = CompositeQSystem([q0, q1])
     add_hamiltonian!(cqs, q0)
     g = 0.006
-    add_hamiltonian!(cqs, t -> g/2 * X_Y([q0, q1], [rotation_rate_0, rotation_rate_1] * t), [q0,q1])
+    add_hamiltonian!(cqs, t -> g/2 * X_Y([q0, q1], [duffing.frequency, duffing.frequency] * t), [q0,q1])
 
     # compute iSWAP parameters
     mod_park = 0.0
@@ -94,7 +94,7 @@ end
     freq = -detuning/harmonic
     fs = FourierSeries(t -> 2π * f(t, freq), freq, collect(-50:50))
     g_eff = abs(g * rotating_frame_series(fs, [harmonic]).terms[harmonic])
-    t_gate = 1/(2 * g_eff)
+    t_gate = 1/(4 * g_eff)
 
     # create basis states
     basis = TensorProductBasis(dims)
@@ -104,7 +104,8 @@ end
     # perform time evolution
     add_hamiltonian!(cqs, parametric_drive(q1, t -> ϕ(t, freq)), q1)
     times = collect(range(0, stop=2 * t_gate, length=1000))
-    ψs = unitary_state(cqs, times, vec(ψ₁₀))
+    prop = floquet_propagator(unitary_propagator, 1/abs(freq))
+    ψs = [u * vec(ψ₁₀) for u in prop(cqs, times)]
     pop_10 = [abs2(ψ[index(ψ₁₀)]) for ψ in ψs]
     pop_01 = [abs2(ψ[index(ψ₀₁)]) for ψ in ψs]
     # population should oscillate between 01 and 10
@@ -137,7 +138,9 @@ end
     ψ0 = ComplexF64[1; 0; 0]
     ρ0 = ψ0 * ψ0'
     times = collect(range(0, stop=100, length=101))
-    ρs = me_state(cqs, times, ρ0)
+    # use floquet and me_propagator for speed
+    prop = floquet_propagator(me_propagator, 1/qubit_freq)
+    ρs = [reshape(u * vec(ρ0), dims, dims) for u in prop(cqs, times)]
 
     ρ00 = [real(ρ[1, 1]) for ρ in ρs]
 

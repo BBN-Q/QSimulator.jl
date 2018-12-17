@@ -1,6 +1,6 @@
 using Test, QSimulator
-using QSimulator: index
-using SpecialFunctions: besselj
+import QSimulator: index, unique_tol
+using SpecialFunctions: besselj, erf
 import PyPlot
 const plt = PyPlot
 plt.ioff()
@@ -94,6 +94,62 @@ end
     @test ψ_end == ψs[end]
 end
 
+@testset "choose_times_floquet and decompose_times_floquet" begin
+    t_period = 1/drive_freq
+    dt = t_final/10
+    times = choose_times_floquet(t_final/2, t_final, t_period, dt)
+    @test times[1] > 0
+    @test times[end] <= t_final
+    @test t_final/2 in times
+    prepend!(times, 0.0)
+    @test times[1] == 0
+    quotients, unique_remainders, unique_inds = decompose_times_floquet(times, t_period)
+    @test length(quotients) == length(times)
+    @test length(unique_remainders) <= length(times)
+    @test length(unique_inds) == length(times)
+    @test isapprox(t_period * quotients + unique_remainders[unique_inds], times)
+end
+
+@testset "floquet with pulseshape" begin
+    cqs = CompositeQSystem([q0, q1])
+    add_hamiltonian!(cqs, q1)
+    add_hamiltonian!(cqs, .5 * g * X_Y([q0, q1]), [q0, q1])
+    # create pulseshape
+    rise_time = .1 * t_final
+    fwhm = 0.25 * rise_time
+    t1 = fwhm
+    t2 = t_final - fwhm
+    σ = 0.5 * fwhm / sqrt(2*log(2))
+    function p(t)
+        envelope = 0.5 * (erf((t - t1)/σ) - erf((t - t2)/σ)) # erf_squared
+        drive = a + b * cos(2π * drive_freq * t)
+        return envelope * drive + (1 - envelope) * (a+b)
+    end
+    times = collect(range(0.0, stop=t_final, length=500))
+    if "plot" in ARGS
+        plt.plot(times, p.(times))
+        plt.axvline(rise_time, color="red")
+        plt.axvline(t_final-rise_time, color="red")
+        plt.show()
+    end
+    add_hamiltonian!(cqs, parametric_drive(q0, p), q0)
+    t_period = 1/drive_freq
+    prop = floquet_rise_fall_propagator(unitary_propagator, t_period, rise_time, rise_time)
+    us_floquet_pulseshape = prop(cqs, times)
+    us_unitary = unitary_propagator(cqs, times)
+    if "plot" in ARGS
+        ind₁₀ = index(ψ₁₀)
+        ind₀₁ = index(ψ₀₁)
+        plt.plot(times, [abs2(u[ind₁₀, ind₁₀]) for u in us_unitary], color="lightcoral", label="10 unitary")
+        plt.plot(times, [abs2(u[ind₀₁, ind₁₀]) for u in us_unitary], color="lightblue", label="01 unitary")
+        plt.plot(times, [abs2(u[ind₁₀, ind₁₀]) for u in us_floquet_pulseshape], color="red", label="10 floquet")
+        plt.plot(times, [abs2(u[ind₀₁, ind₁₀]) for u in us_floquet_pulseshape], color="blue", label="01 floquet")
+        plt.legend(loc="best")
+        plt.show()
+    end
+    @test all(isapprox(u_unitary, u_floquet, rtol=1e-5) for (u_unitary, u_floquet) in zip(us_unitary, us_floquet_pulseshape))
+end
+
 @testset "me_propagator" begin
     # compare master equation state and propagator evolution for consistency with on-resonance CW
     # microwave
@@ -114,12 +170,17 @@ end
     us_prop = me_propagator(cqs, times)
     ρs_prop = [reshape(u * vec(ρ0), dims, dims) for u in us_prop]
     ρs = me_state(cqs, times, ρ0)
+    # TODO: bring uncomment and add a test for these
+    # prop = floquet_propagator(me_propagator, 1/qubit_freq)
+    # us_floquet = prop(cqs, times)
+    # ρs_floquet = [reshape(u * vec(ρ0), dims, dims) for u in us_floquet]
 
     @test all(isapprox(ρ_prop, ρ_state, rtol=1e-4) for (ρ_prop, ρ_state) in zip(ρs_prop, ρs))
 
     if "plot" in ARGS
         plt.plot(times, [real(ρ[1, 1]) for ρ in ρs], label="state")
         plt.plot(times, [real(ρ[1, 1]) for ρ in ρs_prop], label="propagator")
+        # plt.plot(times, [real(ρ[1, 1]) for ρ in ρs_floquet], label="floquet")
         plt.legend(loc="best")
         plt.show()
     end
@@ -166,4 +227,18 @@ end
         plt.legend(loc="best")
         plt.show()
     end
+end
+
+
+@testset "unique_tol" begin
+    l0 = [1.0,2.0,3.0]
+    l1 = l0 .+ 1e-5
+    l2 = [l0; l1]
+    @test unique(l2) == l2
+    a, inds = unique_tol(l2, 1e-6)
+    @test a == l2
+    @test inds == [1,2,3,4,5,6]
+    a, inds = unique_tol(l2, 1e-4)
+    @test a == l0
+    @test inds == [1,2,3,1,2,3]
 end
