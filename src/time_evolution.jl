@@ -164,13 +164,13 @@ end
 me_state(cqs::CompositeQSystem, t::Real, ρ0::Matrix{<:Number}) = me_state(cqs, [0.0, t], ρ0)[end]
 
 ######################################################
-# Define a `propagator_function` to be a function that takes a CompositeQSystem and a AbstractVector
+# Define a `propagator_function` to be a function that takes a CompositeQSystem and an AbstractVector
 # of times and returns an array of propagators (something that evolves a state vector or density
 # matrix) at those times assuming an identity initial condition at the first given time.
 ######################################################
 
 """
-    floquet_propagator(propagator_func::Function, t_period::Real; rtol::Real)
+    floquet_propagator(propagator_func::Function, t_period::Real, rtol::Real)
 
 Given a propagator function and a time period, create a new propagator function that applies
 correctly to CompositeQSystems that are periodic with the given time period. It makes use of the
