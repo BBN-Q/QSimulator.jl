@@ -12,7 +12,7 @@ rate(d::Dissipation) = d.rate
 
 # NOTE: Only single body dissipators are currently supported
 
-type Cooling <: Dissipation
+struct Cooling <: Dissipation
   label::AbstractString
   rate::Real
   system::QSystem

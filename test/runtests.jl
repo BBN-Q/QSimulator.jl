@@ -1,4 +1,5 @@
 using QSimulator
+using LinearAlgebra
 
 include("unitary-tests.jl")
 include("dissipation-tests.jl")

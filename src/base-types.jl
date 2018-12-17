@@ -21,8 +21,8 @@ abstract type QSystem end
 
 label(q::QSystem) = q.label
 dim(q::QSystem) = q.dim
-raising(q::QSystem) = diagm(sqrt.(1:(dim(q)-1)), -1)
-lowering(q::QSystem) = diagm(sqrt.(1:(dim(q)-1)), 1)
+raising(q::QSystem) = diagm(-1 => sqrt.(1:(dim(q)-1)))
+lowering(q::QSystem) = diagm(1 => sqrt.(1:(dim(q)-1)))
 number(q::QSystem) = raising(q) * lowering(q)
 X(q::QSystem) = raising(q) + lowering(q)
 Y(q::QSystem) = 1im*(raising(q) - lowering(q))
@@ -43,7 +43,7 @@ const IndexSet = Vector{Int}
 const ExpansionIndices = Tuple{Vector{IndexSet},Vector{IndexSet},Vector{IndexSet}}
 
 # [todo] - Should COmpositeQSystem <: QSystem ?
-type CompositeQSystem
+mutable struct CompositeQSystem
     # [feature] - Use something like OrderedDict for component enumeration
     subSystems::Vector{QSystem}
     interactions::Vector{Interaction}

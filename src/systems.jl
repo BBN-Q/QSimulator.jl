@@ -1,4 +1,4 @@
-using Optim
+import Optim
 
 export ## Types
        Duffing,
@@ -42,7 +42,7 @@ Transmon(label::AbstractString, ν::Float64, α::Float64; dim=3)
 # hamiltonian(t::Transmon) = sqrt(8*t.E_J*t.E_C)*number(t) - t.E_C/12*(X(t)^4)
 function hamiltonian(t::Transmon)
   N = floor(Int, dim(t)/2)
-  4 * t.E_C * diagm((-N:N).^2) - t.E_J  * 0.5 * (diagm(ones(dim(t)-1),-1) + diagm(ones(dim(t)-1),1))
+  4 * t.E_C * diagm(0 => (-N:N).^2) - t.E_J  * 0.5 * (diagm(-1 => ones(dim(t)-1)) + diagm(1 => ones(dim(t)-1)))
 end
 
 """
@@ -59,7 +59,7 @@ function fit_fixed_transmon(f_01, α, dim)
       test_f_12 = levels[3] - levels[2]
       ( test_f_01 - f_01)^2 + ( test_f_12 -  test_f_01 - α)^2
     end
-    res = optimize(f, [abs(α), (f_01+abs(α))^2 / (8 * abs(α))] )
+    res = Optim.optimize(f, [abs(α), (f_01+abs(α))^2 / (8 * abs(α))] )
     return res.minimizer[1], res.minimizer[2]
 end
 
@@ -100,7 +100,7 @@ function hamiltonian(tt::TunableDuffingTransmon, t::Float64=0.0)
     myE_J = tt.E_J*scale_EJ(tt.flux, tt.d)
     omega_p = sqrt(8*tt.E_C*myE_J)
     omega = [(omega_p-tt.E_C/2)*i-tt.E_C/2*i^2 for i in 0:(tt.dim-1)]
-    return diagm(omega)
+    return diagm(0 => omega)
 end
 
 #Basic two-level qubit

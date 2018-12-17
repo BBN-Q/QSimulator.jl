@@ -98,7 +98,7 @@ function hamiltonian(c::CompositeQSystem, t::Float64=0.0)
 
     if length(c.subSystems) != 0
         #Initialize Hamiltonian
-        Htot = zeros(Complex128, dim(c), dim(c))
+        Htot = zeros(ComplexF64, dim(c), dim(c))
 
         #Add in all the terms
         hamiltonian_add!(Htot, c, t)
@@ -109,7 +109,7 @@ function hamiltonian(c::CompositeQSystem, t::Float64=0.0)
     end
 end
 
-function hamiltonian_add!{T<:Number}(Ham::AbstractMatrix{T}, c::CompositeQSystem, t::Float64)
+function hamiltonian_add!(Ham::AbstractMatrix{T}, c::CompositeQSystem, t::Float64) where {T<:Number}
     #Fast system hamiltonian calculator with total Hamiltonian preallocated
 
     #Zero the Hamiltonian memory
@@ -139,11 +139,12 @@ function hamiltonian_add!{T<:Number}(Ham::AbstractMatrix{T}, c::CompositeQSystem
     end
 end
 
-function liouvillian_dual_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t::Float64 )
+function liouvillian_dual_add!(liouv::Matrix{ComplexF64}, c::CompositeQSystem, t::Float64 )
     #Fast system superoperator calculator with liouvillian preallocated
 
     #Zero the preallocated operators
-    liouv[:] = 0.0
+#    liouv[:] .= 0.0  # use either .= or fill!
+    fill!(liouv, 0.0)
 
     #Update the subsystems with the parameteric interactions
     for pi in c.parametericInteractions
@@ -170,7 +171,7 @@ function liouvillian_dual_add!(liouv::Matrix{Complex128}, c::CompositeQSystem, t
     end
 end
 
-function liouvillian_add!{T<:Number}(liouv::AbstractMatrix{T}, c::CompositeQSystem, t::Float64 )
+function liouvillian_add!(liouv::AbstractMatrix{T}, c::CompositeQSystem, t::Float64 ) where {T<:Number}
     #Fast system superoperator calculator with liouvillian preallocated
 
     #Zero the preallocated operators.
@@ -245,7 +246,7 @@ function expand(m::Matrix, indices::Vector, sizeM::Int )
     return M
 end
 
-function expand_add!{T<:Number,U<:Number}(M::AbstractMatrix{T}, m::AbstractMatrix{U}, indices::Vector; mult=1.0 )
+function expand_add!(M::AbstractMatrix{T}, m::AbstractMatrix{U}, indices::Vector; mult=1.0 ) where {T<:Number,U<:Number}
     #Add to certain indices of M with terms from m according to expansion indices.
     for ct=1:length(indices)
         # M[indices[ct]] += m[ct]
@@ -261,5 +262,6 @@ function expand_indices(actingOn::Vector, dims::Vector)
     sm = (actingOnDim, actingOnDim)
     lenm = actingOnDim^2;
     M = expand(reshape([1:lenm;], sm), actingOn, dims)
-    return IndexSet[find(M .== x) for x in 1:lenm]
+    M_one_d = reshape(M, prod(size(M)))
+    return IndexSet[findall(M_one_d .== x) for x in 1:lenm]
 end

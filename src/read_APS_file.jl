@@ -31,7 +31,7 @@ function read_APS_file(filename, startIdx=0)
 			numEntries = read(attrs(curLLData)["length"])[1]
 
 			# pull out and scale waveform data
-			wfLib = (1./MAX_WAVEFORM_VALUE)*read(f[chanStr]["waveformLib"])
+			wfLib = (1 ./ MAX_WAVEFORM_VALUE)*read(f[chanStr]["waveformLib"])
 
 			# initialize storage
 			AWGData[mrkStrs[ct]] = Vector{Float64}[]
