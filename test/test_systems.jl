@@ -22,10 +22,10 @@ end
 	@test isapprox(h, diagm(0 => [0.0, fmax, 2 * fmax + anharm_max]))
 end
 
-@testset "PerturbativeTransmon vs ChargeBasisTransmon" begin
+@testset "PerturbativeTransmon vs DiagonalChargeBasisTransmon" begin
 	t = TransmonSpec(.172, 12.71, 3.69)
 	pt = PerturbativeTransmon("q", 3, t, num_terms=pnt)
-	ct = ChargeBasisTransmon("q", 3, t, num_terms=cnt)
+	ct = DiagonalChargeBasisTransmon("q", 3, t, num_terms=cnt)
 	for ϕ in range(0, stop=1.0, length=10)
 		ham_pt = hamiltonian(pt, ϕ)
 		ham_ct = hamiltonian(ct, ϕ)
@@ -46,10 +46,10 @@ end
 
 	fit_spec = fit_transmon(freq, freq, anharm, PerturbativeTransmon, pnt)
 	test_spec(fit_spec, PerturbativeTransmon)
-	test_spec(fit_spec, ChargeBasisTransmon)
-	fit_spec = fit_transmon(freq, freq, anharm, ChargeBasisTransmon, cnt)
+	test_spec(fit_spec, DiagonalChargeBasisTransmon)
+	fit_spec = fit_transmon(freq, freq, anharm, DiagonalChargeBasisTransmon, cnt)
 	test_spec(fit_spec, PerturbativeTransmon)
-	test_spec(fit_spec, ChargeBasisTransmon)
+	test_spec(fit_spec, DiagonalChargeBasisTransmon)
 end
 
 @testset "fit_transmon tunable" begin
@@ -72,8 +72,8 @@ end
 
 	fit_spec = fit_transmon(freq_max, freq_min, anharm_max, PerturbativeTransmon, pnt)
 	test_spec(fit_spec, PerturbativeTransmon)
-	test_spec(fit_spec, ChargeBasisTransmon)
-	fit_spec = fit_transmon(freq_max, freq_min, anharm_max, ChargeBasisTransmon, cnt)
+	test_spec(fit_spec, DiagonalChargeBasisTransmon)
+	fit_spec = fit_transmon(freq_max, freq_min, anharm_max, DiagonalChargeBasisTransmon, cnt)
 	test_spec(fit_spec, PerturbativeTransmon)
-	test_spec(fit_spec, ChargeBasisTransmon)
+	test_spec(fit_spec, DiagonalChargeBasisTransmon)
 end
