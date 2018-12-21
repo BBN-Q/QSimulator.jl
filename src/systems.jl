@@ -2,7 +2,7 @@ using Optim: optimize
 using LinearAlgebra: diag, diagm, eigvals, ishermitian
 
 export QSpec, TransmonSpec, DuffingSpec, ResonatorSpec, HermitianSpec
-export QSystem, label, dim, spec
+export QSystem, label, dimension, spec
 export LiteralHermitian, Resonator, DuffingTransmon
 export PerturbativeTransmon, ChargeBasisTransmon, DiagonalChargeBasisTransmon, RotatingFrameSystem
 export hamiltonian, fit_transmon
@@ -42,7 +42,7 @@ abstract type QSystem end
 
 # required functions with defaults
 label(q::QSystem) = q.label
-dim(q::QSystem) = q.dim
+dimension(q::QSystem) = q.dimension
 spec(q::QSystem) = q.spec
 
 ######################################################
@@ -54,7 +54,7 @@ struct LiteralHermitian <: QSystem
     spec::HermitianSpec
 end
 
-dim(h::LiteralHermitian) = size(h.spec.matrix, 1)
+dimension(h::LiteralHermitian) = size(h.spec.matrix, 1)
 
 hamiltonian(q::LiteralHermitian) = spec(q).matrix
 
@@ -64,11 +64,11 @@ hamiltonian(q::LiteralHermitian) = spec(q).matrix
 
 struct Resonator <: QSystem
     label::AbstractString
-    dim::Int
+    dimension::Int
     spec::ResonatorSpec
 end
 
-hamiltonian(r::Resonator) = diagm(0 => [spec(r).frequency * n for n in 0:dim(r)-1])
+hamiltonian(r::Resonator) = diagm(0 => [spec(r).frequency * n for n in 0:dimension(r)-1])
 
 ######################################################
 # DuffingTransmon
@@ -81,13 +81,13 @@ end
 
 struct DuffingTransmon <: QSystem
     label::AbstractString
-    dim::Int
+    dimension::Int
     spec::DuffingSpec
 end
 
-hamiltonian(t::DuffingTransmon) = duffing_hamiltonian(spec(t).frequency, spec(t).anharmonicity, dim(t))
+hamiltonian(t::DuffingTransmon) = duffing_hamiltonian(spec(t).frequency, spec(t).anharmonicity, dimension(t))
 
-hamiltonian(t::DuffingTransmon, frequency::Real) = duffing_hamiltonian(frequency, spec(t).anharmonicity, dim(t))
+hamiltonian(t::DuffingTransmon, frequency::Real) = duffing_hamiltonian(frequency, spec(t).anharmonicity, dimension(t))
 
 ######################################################
 # PerturbativeTransmon
@@ -95,12 +95,12 @@ hamiltonian(t::DuffingTransmon, frequency::Real) = duffing_hamiltonian(frequency
 
 struct PerturbativeTransmon <: QSystem
     label::AbstractString
-    dim::Int
+    dimension::Int
     spec::TransmonSpec
     num_terms::Int
 
-    PerturbativeTransmon(label::AbstractString, dim::Int, spec::TransmonSpec; num_terms::Int=PERTURBATIVE_NUM_TERMS) =
-                new(label::AbstractString, dim::Int, spec::TransmonSpec, num_terms)
+    PerturbativeTransmon(label::AbstractString, dimension::Int, spec::TransmonSpec; num_terms::Int=PERTURBATIVE_NUM_TERMS) =
+                new(label::AbstractString, dimension::Int, spec::TransmonSpec, num_terms)
 end
 
 function DuffingSpec(t::TransmonSpec, ϕ::Real=0.0, num_terms::Int=PERTURBATIVE_NUM_TERMS)
@@ -111,7 +111,7 @@ end
 
 function hamiltonian(t::PerturbativeTransmon, ϕ::Real=0.0)
     s = DuffingSpec(spec(t), ϕ, t.num_terms)
-    return duffing_hamiltonian(s.frequency, s.anharmonicity, dim(t))
+    return duffing_hamiltonian(s.frequency, s.anharmonicity, dimension(t))
 end
 
 ######################################################
@@ -120,17 +120,17 @@ end
 
 struct ChargeBasisTransmon <: QSystem
     label::AbstractString
-    dim::Int
+    dimension::Int
     spec::TransmonSpec
-    function ChargeBasisTransmon(label::AbstractString, dim::Int, spec::TransmonSpec)
-        @assert mod(dim, 2) == 1
-        return new(label, dim, spec)
+    function ChargeBasisTransmon(label::AbstractString, dimension::Int, spec::TransmonSpec)
+        @assert mod(dimension, 2) == 1
+        return new(label, dimension, spec)
     end
 end
 
 
 function hamiltonian(t::ChargeBasisTransmon, ϕ::Real=0.0)
-    d = dim(t)
+    d = dimension(t)
     N = floor(Int, d/2)
     s = spec(t)
     EJ = sqrt(s.EJ1^2 + s.EJ2^2 + 2 * s.EJ1 * s.EJ2 * cos(2π * ϕ))
@@ -148,13 +148,13 @@ const CHARGE_NUM_TERMS = 101
 
 struct DiagonalChargeBasisTransmon <: QSystem
     label::AbstractString
-    dim::Int
+    dimension::Int
     spec::TransmonSpec
     num_terms::Int
-    function DiagonalChargeBasisTransmon(label::AbstractString, dim::Int, spec::TransmonSpec; num_terms::Int=CHARGE_NUM_TERMS)
+    function DiagonalChargeBasisTransmon(label::AbstractString, dimension::Int, spec::TransmonSpec; num_terms::Int=CHARGE_NUM_TERMS)
         @assert mod(num_terms, 2) == 1
-        @assert dim <= num_terms
-        return new(label, dim, spec, num_terms)
+        @assert dimension <= num_terms
+        return new(label, dimension, spec, num_terms)
     end
 end
 
@@ -164,7 +164,7 @@ function hamiltonian(t::DiagonalChargeBasisTransmon, ϕ::Real=0.0)
     # since the Hamiltonian is Hermitian the eigenvalues should already be sorted by the LAPACK
     # solver; however,  since that implementation is not guaranteed by Julia, belts and suspenders
     # style we sort again
-    return diagm(0 => sort(real(eigvals(h)))[1:dim(t)])
+    return diagm(0 => sort(real(eigvals(h)))[1:dimension(t)])
 end
 # TODO: update raising and lowering to be correct for DiagonalChargeBasisTransmon
 
@@ -237,8 +237,8 @@ end
 # contruct from an existing QSystem without a different label
 RotatingFrameSystem(q::QSystem, rotation_rate::Real) = RotatingFrameSystem(label(q), q, rotation_rate)
 
-# defer `dim` and `spec` to underlying QSystem
-dim(r::RotatingFrameSystem) = dim(r.system)
+# defer `dimension` and `spec` to underlying QSystem
+dimension(r::RotatingFrameSystem) = dimension(r.system)
 spec(r::RotatingFrameSystem) = spec(r.system)
 
 function hamiltonian(r::RotatingFrameSystem)
@@ -267,9 +267,9 @@ export TunableTransmon, FixedTransmon, FixedDuffingTransmon, TunableDuffingTrans
 export fit_fixed_transmon, fit_tunable_transmon
 export MathieuTransmon, create, destroy
 
-function Resonator(label::AbstractString, frequency::Real, dim::Int)
+function Resonator(label::AbstractString, frequency::Real, dimension::Int)
     @warn "Deprecation warning: Resonator."
-    return Resonator(label, dim, ResonatorSpec(frequency))
+    return Resonator(label, dimension, ResonatorSpec(frequency))
 end
 
 function asymmetry_to_EJs(EJ::Real, d::Real)
@@ -288,47 +288,47 @@ function TunableTransmon(label::AbstractString,
     E_C::Real,
     E_J::Real, # sum of junction E_J's
     d::Real, # juntion asymmetry parameter
-    dim::Int)
+    dimension::Int)
     @warn "Deprecation warning: TunableTransmon."
     EJ1, EJ2 = asymmetry_to_EJs(E_J, d)
-    return DiagonalChargeBasisTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2), num_terms=dim)
+    return DiagonalChargeBasisTransmon(label, dimension, TransmonSpec(E_C, EJ1, EJ2), num_terms=dimension)
 end
 
 function FixedTransmon(label::AbstractString,
     E_C::Real,
     E_J::Real, # sum of junction E_J's
-    dim::Int)
+    dimension::Int)
     @warn "Deprecation warning: FixedTransmon."
     EJ1, EJ2 = E_J, 0.0
-    return DiagonalChargeBasisTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2), num_terms=dim)
+    return DiagonalChargeBasisTransmon(label, dimension, TransmonSpec(E_C, EJ1, EJ2), num_terms=dimension)
 end
 
 function FixedDuffingTransmon(label::AbstractString,
     frequency::Real,
     anharmonicity::Real,
-    dim::Int)
+    dimension::Int)
     @warn "Deprecation warning: FixedDuffingTransmon."
-    return DuffingTransmon(label, dim, DuffingSpec(frequency, anharmonicity))
+    return DuffingTransmon(label, dimension, DuffingSpec(frequency, anharmonicity))
 end
 
 function TunableDuffingTransmon(label::AbstractString,
     E_C::Real,
     E_J::Real, #sum of junction E_J's
     d::Real, #asymmetry parameter
-    dim::Int)
+    dimension::Int)
     @warn "Deprecation warning: TunableDuffingTransmon."
     EJ1, EJ2 = asymmetry_to_EJs(E_J, d)
-    return PerturbativeTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2), num_terms=2)
+    return PerturbativeTransmon(label, dimension, TransmonSpec(E_C, EJ1, EJ2), num_terms=2)
 end
 
 function MathieuTransmon(label::AbstractString,
     E_C::Real,
     E_J::Real, #sum of junction E_J's
     d::Real, #asymmetry parameter
-    dim::Int)
+    dimension::Int)
     @warn "Deprecation warning: MathieuTransmon."
     EJ1, EJ2 = asymmetry_to_EJs(E_J, d)
-    return PerturbativeTransmon(label, dim, TransmonSpec(E_C, EJ1, EJ2))
+    return PerturbativeTransmon(label, dimension, TransmonSpec(E_C, EJ1, EJ2))
 end
 
 function create(q::QSystem)

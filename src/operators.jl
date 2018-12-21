@@ -7,9 +7,9 @@ export raising, lowering, number, X, Y, X_Y,
 # Primitives
 ######################################################
 
-raising(q::QSystem, ϕ::Real=0.0) = diagm(-1 => sqrt.(1:(dim(q)-1))) * exp(1im*2π*ϕ)
-lowering(q::QSystem, ϕ::Real=0.0) = diagm(1 => sqrt.(1:(dim(q)-1))) * exp(-1im*2π*ϕ)
-number(q::QSystem) = diagm(0 => collect(ComplexF64, 0:dim(q)-1))
+raising(q::QSystem, ϕ::Real=0.0) = diagm(-1 => sqrt.(1:(dimension(q)-1))) * exp(1im*2π*ϕ)
+lowering(q::QSystem, ϕ::Real=0.0) = diagm(1 => sqrt.(1:(dimension(q)-1))) * exp(-1im*2π*ϕ)
+number(q::QSystem) = diagm(0 => collect(ComplexF64, 0:dimension(q)-1))
 
 X(q::QSystem, ϕ::Real=0.0) = raising(q, ϕ) + lowering(q, ϕ)
 X(qs::Vector{<:QSystem}, ϕs::Vector{<:Real}) = reduce(⊗, [X(q, ϕ) for (q, ϕ) in zip(qs, ϕs)])

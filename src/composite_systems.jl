@@ -9,13 +9,13 @@ mutable struct CompositeQSystem
     parametric_Hs::Vector{Tuple} # tuple of Functions and expansion indices
     fixed_Ls::Vector{Tuple} # tuple of Matrix and expansion indices for collapse operators
     parametric_Ls::Vector{Tuple} # tuple of Matrix, expansion indices, and time-dependent function for collapse operators
-    dim::Int
+    dimension::Int
 end
 
-CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], [], prod(dim(q) for q in qs))
+CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], [], prod(dimension(q) for q in qs))
 
 # helper functions for CompositeQSystems
-dim(cqs::CompositeQSystem) = cqs.dim
+dimension(cqs::CompositeQSystem) = cqs.dimension
 
 find_indices(cqs::CompositeQSystem, s::QSystem) = findall([sub == s for sub in cqs.subsystems])
 find_indices(cqs::CompositeQSystem, s_label::AbstractString) = findall([label(sub) == s_label for sub in cqs.subsystems])
@@ -36,7 +36,7 @@ add_hamiltonian!(cqs::CompositeQSystem, qs::QSystem, ϕ::Real) = add_hamiltonian
 # TODO how to do this dispatch vs adding a fixed Hamiltonian - Jameson says not to do this https://discourse.julialang.org/t/functions-and-callable-methods/2983/3
 """ Add a time parameterized subsystem Hamiltonian to a CompositeQSystem """
 function add_hamiltonian!(cqs::CompositeQSystem, ham::Function, acting_on::Union{Q, Array{Q}}) where Q<:QSystem
-    idxs = embed_indices(find_indices(cqs, acting_on), [dim(s) for s in cqs.subsystems])
+    idxs = embed_indices(find_indices(cqs, acting_on), [dimension(s) for s in cqs.subsystems])
     push!(cqs.parametric_Hs, (ham, idxs))
 end
 
@@ -119,11 +119,11 @@ function embed_indices(acting_on::Vector, dims::Vector)
     return [f(M .== x) for x in 1:dim_acting_on^2]
 end
 
-embed_indices(cqs::CompositeQSystem, acting_on) = embed_indices(find_indices(cqs, acting_on), [dim(s) for s in cqs.subsystems])
+embed_indices(cqs::CompositeQSystem, acting_on) = embed_indices(find_indices(cqs, acting_on), [dimension(s) for s in cqs.subsystems])
 
 """ Calculate the static part of the Hamiltonian of a CompositeQSystem """
 function hamiltonian(cqs::CompositeQSystem)
-    ham = zeros(ComplexF64, (dim(cqs), dim(cqs)))
+    ham = zeros(ComplexF64, (dimension(cqs), dimension(cqs)))
     for (new_ham, idxs) in cqs.fixed_Hs
         embed_add!(ham, new_ham, idxs)
     end

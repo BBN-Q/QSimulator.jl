@@ -17,7 +17,7 @@ for n = 2:4
     add_hamiltonian!(cqs, q0)
     times = collect(range(0,stop=1.0,length=201))
     # superposition of all levels
-    ψ0 = (1/sqrt(dim(cqs))) * ones(ComplexF64, dim(cqs))
+    ψ0 = (1/sqrt(dimension(cqs))) * ones(ComplexF64, dimension(cqs))
     prop_suite["single transmon ($n levels)"] = @benchmarkable unitary_propagator($cqs, $times);
     state_suite["single transmon ($n levels)"] = @benchmarkable unitary_state($cqs, $times, $ψ0);
 end
@@ -34,7 +34,7 @@ for n = 2:4
     end
     times = collect(range(0,stop=1.0,length=201))
     # superposition of all levels
-    ψ0 = (1/sqrt(dim(cqs))) * ones(ComplexF64, dim(cqs))
+    ψ0 = (1/sqrt(dimension(cqs))) * ones(ComplexF64, dimension(cqs))
     prop_suite["dipole chain ($n transmons)"] = @benchmarkable unitary_propagator($cqs, $times);
     state_suite["dipole chain ($n transmons)"] = @benchmarkable unitary_state($cqs, $times, $ψ0);
 end
