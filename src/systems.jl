@@ -109,6 +109,11 @@ function DuffingSpec(t::TransmonSpec, ϕ::Real=0.0, num_terms::Int=PERTURBATIVE_
     return DuffingSpec(freq, anharm)
 end
 
+function TransmonSpec(t::DuffingSpec, model::Type{T}=PerturbativeTransmon,
+    num_terms::Int=PERTURBATIVE_NUM_TERMS) where {T<:QSystem}
+    return fit_transmon(t.frequency, t.frequency, t.anharmonicity, model, num_terms)
+end
+
 function hamiltonian(t::PerturbativeTransmon, ϕ::Real=0.0)
     s = DuffingSpec(spec(t), ϕ, t.num_terms)
     return duffing_hamiltonian(s.frequency, s.anharmonicity, dimension(t))
