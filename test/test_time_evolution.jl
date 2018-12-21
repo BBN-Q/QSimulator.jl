@@ -1,9 +1,6 @@
 using Test, QSimulator
 import QSimulator: index, unique_tol
 using SpecialFunctions: besselj, erf
-import PyPlot
-const plt = PyPlot
-plt.ioff()
 
 @testset "unitary propagator time independent" begin
     # For a constant Hamiltonian compare exponentiation to full unitary_propagator
@@ -53,26 +50,13 @@ t_final = 1/(4 * g_eff)
 
 @testset "unitary state time dependent" begin
     # compare state evolution to closed form RWA calculation
-    make_plot = "plot" in ARGS
-    num_times = make_plot ? 200 : 25
+    num_times = 25
     times = range(0, stop=t_final, length=num_times)
     ψs = unitary_state(cqs, times, vec(ψ₁₀))
     pop₁₀ = [abs2(ψ[index(ψ₁₀)]) for ψ in ψs]
     pop₀₁ = [abs2(ψ[index(ψ₀₁)]) for ψ in ψs]
     pop₁₀_RWA = cos.(2π*g_eff*times).^2
     pop₀₁_RWA = 1 .- pop₁₀_RWA
-    if make_plot
-        plt.plot(times, pop₁₀, label="10")
-        plt.plot(times, pop₀₁, label="01")
-        plt.plot(times, pop₁₀_RWA, label="10 RWA")
-        plt.plot(times, pop₀₁_RWA, label="01 RWA")
-        # mark the period of the drive with vertical dashed lines
-        for period in (1:floor(times[end] * drive_freq))./drive_freq
-            plt.axvline(period, linestyle="--", color="grey")
-        end
-        plt.legend()
-        plt.show()
-    end
     @test isapprox(pop₁₀, pop₁₀_RWA, rtol=.03)
     @test isapprox(pop₀₁, pop₀₁_RWA, rtol=.03)
 end
@@ -126,27 +110,11 @@ end
         return envelope * drive + (1 - envelope) * (a+b)
     end
     times = collect(range(0.0, stop=t_final, length=500))
-    if "plot" in ARGS
-        plt.plot(times, p.(times))
-        plt.axvline(rise_time, color="red")
-        plt.axvline(t_final-rise_time, color="red")
-        plt.show()
-    end
     add_hamiltonian!(cqs, parametric_drive(q0, p), q0)
     t_period = 1/drive_freq
     prop = floquet_rise_fall_propagator(unitary_propagator, t_period, rise_time, rise_time)
     us_floquet_pulseshape = prop(cqs, times)
     us_unitary = unitary_propagator(cqs, times)
-    if "plot" in ARGS
-        ind₁₀ = index(ψ₁₀)
-        ind₀₁ = index(ψ₀₁)
-        plt.plot(times, [abs2(u[ind₁₀, ind₁₀]) for u in us_unitary], color="lightcoral", label="10 unitary")
-        plt.plot(times, [abs2(u[ind₀₁, ind₁₀]) for u in us_unitary], color="lightblue", label="01 unitary")
-        plt.plot(times, [abs2(u[ind₁₀, ind₁₀]) for u in us_floquet_pulseshape], color="red", label="10 floquet")
-        plt.plot(times, [abs2(u[ind₀₁, ind₁₀]) for u in us_floquet_pulseshape], color="blue", label="01 floquet")
-        plt.legend(loc="best")
-        plt.show()
-    end
     @test all(isapprox(u_unitary, u_floquet, rtol=1e-5) for (u_unitary, u_floquet) in zip(us_unitary, us_floquet_pulseshape))
 end
 
@@ -177,13 +145,6 @@ end
 
     @test all(isapprox(ρ_prop, ρ_state, rtol=1e-4) for (ρ_prop, ρ_state) in zip(ρs_prop, ρs))
 
-    if "plot" in ARGS
-        plt.plot(times, [real(ρ[1, 1]) for ρ in ρs], label="state")
-        plt.plot(times, [real(ρ[1, 1]) for ρ in ρs_prop], label="propagator")
-        # plt.plot(times, [real(ρ[1, 1]) for ρ in ρs_floquet], label="floquet")
-        plt.legend(loc="best")
-        plt.show()
-    end
     # test helper function for saving at a point
     us_end = me_propagator(cqs, times[end])
     @test us_end == us_prop[end]
@@ -218,15 +179,6 @@ end
     # check diagonal and off-diagonal against exponential decay with T1/T2 rates
     @test all(isapprox(ρ[2,2], check_T1, rtol=1e-10) for (ρ,check_T1) in zip(ρs, analytical_T1))
     @test all(isapprox(ρ[1,2], check_T2, rtol=1e-2) for (ρ,check_T2) in zip(ρs, analytical_T2))
-
-    if "plot" in ARGS
-        plt.plot(times, [real(ρ[2, 2]) for ρ in ρs], label="excited population")
-        plt.plot(times, analytical_T1, "--", label="exponential T₁")
-        plt.plot(times, [real(ρ[1, 2]) for ρ in ρs], label="coherence")
-        plt.plot(times, analytical_T2, "--", label="exponential T₂")
-        plt.legend(loc="best")
-        plt.show()
-    end
 end
 
 
