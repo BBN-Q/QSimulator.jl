@@ -16,6 +16,7 @@ CompositeQSystem(qs) = CompositeQSystem(qs, [], [], [], [], prod(dimension(q) fo
 
 # helper functions for CompositeQSystems
 dimension(cqs::CompositeQSystem) = cqs.dimension
+dim(cqs::CompositeQSystem) = dimension(cqs)
 
 find_indices(cqs::CompositeQSystem, s::QSystem) = findall([sub == s for sub in cqs.subsystems])
 find_indices(cqs::CompositeQSystem, s_label::AbstractString) = findall([label(sub) == s_label for sub in cqs.subsystems])

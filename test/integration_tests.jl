@@ -51,6 +51,18 @@ end
     @test isapprox(g_sim, g_expected, rtol=1e-2)
     @test isapprox(e_sim, 1 .- g_expected, rtol=1e-2)
 
+    #rwa version
+    cqs_rwa = CompositeQSystem([q0])
+    add_hamiltonian!(cqs_rwa, q0)
+    add_hamiltonian!(cqs_rwa, rwa_dipole(q0, t -> nutation_freq*cos(2π*qubit_freq * t)), q0)
+    ψs_rwa = unitary_state(cqs_rwa, times, ψ_init)
+
+    g_sim_rwa = [abs2(s[1]) for s in ψs_rwa]
+    e_sim_rwa = [abs2(s[2]) for s in ψs_rwa]
+
+    @test isapprox(g_sim_rwa, g_expected, rtol=1e-2)
+    @test isapprox(e_sim_rwa, 1 .- g_expected, rtol=1e-2)
+
     # check that the propagator gives the same result
     # use floquet_propagator to speed it up since the Hamiltonian is periodic
     floquet_prop = floquet_propagator(unitary_propagator, 1/qubit_freq)

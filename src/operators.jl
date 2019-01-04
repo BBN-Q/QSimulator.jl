@@ -1,7 +1,7 @@
 using LinearAlgebra: diagm
 
 export raising, lowering, number, X, Y, X_Y,
-       decay, dephasing, dipole_drive, parametric_drive
+       decay, dephasing, dipole_drive, parametric_drive, rwa_dipole
 
 ######################################################
 # Primitives
@@ -59,19 +59,46 @@ end
     dipole_drive(qs::QSystem, drive::Function, rotation_rate::Real=0.0)
 
 Given some function of time, return a function applying a time dependent
-dipole Hamiltonian.
+dipole Hamiltonian. Note that this does not use the rotating wave approximation
+and therefore requires a real valued drive. See also `rwa_dipole`
 
 ## args
 * `qs`: a QSystem.
-* `drive`: a function of time returning a real or complex value. The real
-    part couples to X and the imaginary part couples to Y.
+* `drive`: a function of time returning a real value.
 * `rotation_rate`: the rotation rate of a rotating frame.
 
 ## returns
 A function of time.
 """
 function dipole_drive(qs::QSystem, drive::Function, rotation_rate::Real=0.0)
-    ham(t) = drive(t) * X(qs, rotation_rate * t)
+    function ham(t)
+        pulse::Real = drive(t)
+        return pulse * X(qs, rotation_rate * t)
+    end
+    return ham
+end
+
+"""
+    rwa_dipole(qs::QSystem, drive::Function)
+
+Given some function of time, return a function applying a time dependent
+dipole Hamiltonian under the rotating wave approximation (RWA).
+
+## args
+* `qs`: a QSystem.
+* `drive`: a function of time returning a real or complex value. The real
+    part couples to X and the imaginary part couples to Y.
+
+## returns
+A function of time.
+"""
+function rwa_dipole(qs::QSystem, drive::Function)
+    x_ham = X(qs)
+    y_ham = Y(qs)
+    function ham(t)
+        pulse = drive(t)
+        return real(pulse) * x_ham + imag(pulse) * y_ham
+    end
     return ham
 end
 
