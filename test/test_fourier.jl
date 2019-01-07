@@ -1,8 +1,5 @@
 using Test, QSimulator
 using QuadGK: quadgk
-using PyPlot
-const plt = PyPlot
-plt.ioff()
 
 EC, EJ1, EJ2 = 0.172, 12.71, 3.69
 freq = 0.1
@@ -18,11 +15,6 @@ parks = [0.0, 0.25]
 		fs = FourierSeries(ω, freq, harmonics)
 		ans = eval_series(fs, times)
 		@test isapprox(ω.(times), ans, rtol=1e-9)
-		if "plot" in ARGS
-			plt.plot(times, ω.(times))
-			plt.plot(times, ans, "--")
-			plt.show()
-		end
 	end
 end
 
@@ -38,10 +30,5 @@ end
 		# as this was ignored in rotating_frame_series
 		ans = exp.(1im * fs.terms[0] * times) .* eval_series(cfs, times)
 		@test isapprox(Φ.(times), ans, rtol=1e-6)
-		if "plot" in ARGS
-			plt.plot(times, real.(Φ.(times)))
-			plt.plot(times, real.(ans), "--")
-			plt.show()
-		end
 	end
 end

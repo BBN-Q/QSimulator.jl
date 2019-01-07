@@ -1,15 +1,15 @@
 using LinearAlgebra: diagm
 
 export raising, lowering, number, X, Y, X_Y,
-       decay, dephasing, dipole_drive, parametric_drive
+       decay, dephasing, dipole_drive, parametric_drive, rwa_dipole
 
 ######################################################
 # Primitives
 ######################################################
 
-raising(q::QSystem, ϕ::Real=0.0) = diagm(-1 => sqrt.(1:(dim(q)-1))) * exp(1im*2π*ϕ)
-lowering(q::QSystem, ϕ::Real=0.0) = diagm(1 => sqrt.(1:(dim(q)-1))) * exp(-1im*2π*ϕ)
-number(q::QSystem) = diagm(0 => collect(ComplexF64, 0:dim(q)-1))
+raising(q::QSystem, ϕ::Real=0.0) = diagm(-1 => sqrt.(1:(dimension(q)-1))) * exp(1im*2π*ϕ)
+lowering(q::QSystem, ϕ::Real=0.0) = diagm(1 => sqrt.(1:(dimension(q)-1))) * exp(-1im*2π*ϕ)
+number(q::QSystem) = diagm(0 => collect(ComplexF64, 0:dimension(q)-1))
 
 X(q::QSystem, ϕ::Real=0.0) = raising(q, ϕ) + lowering(q, ϕ)
 X(qs::Vector{<:QSystem}, ϕs::Vector{<:Real}) = reduce(⊗, [X(q, ϕ) for (q, ϕ) in zip(qs, ϕs)])
@@ -56,10 +56,33 @@ function dephasing(qs::QSystem, γ::Real)
 end
 
 """
-    dipole_drive(qs::QSystem, drive::Function)
+    dipole_drive(qs::QSystem, drive::Function, rotation_rate::Real=0.0)
 
 Given some function of time, return a function applying a time dependent
-dipole Hamiltonian.
+dipole Hamiltonian. Note that this does not use the rotating wave approximation
+and therefore requires a real valued drive. See also `rwa_dipole`
+
+## args
+* `qs`: a QSystem.
+* `drive`: a function of time returning a real value.
+* `rotation_rate`: the rotation rate of a rotating frame.
+
+## returns
+A function of time.
+"""
+function dipole_drive(qs::QSystem, drive::Function, rotation_rate::Real=0.0)
+    function ham(t)
+        pulse::Real = drive(t)
+        return pulse * X(qs, rotation_rate * t)
+    end
+    return ham
+end
+
+"""
+    rwa_dipole(qs::QSystem, drive::Function)
+
+Given some function of time, return a function applying a time dependent
+dipole Hamiltonian under the rotating wave approximation (RWA).
 
 ## args
 * `qs`: a QSystem.
@@ -69,7 +92,7 @@ dipole Hamiltonian.
 ## returns
 A function of time.
 """
-function dipole_drive(qs::QSystem, drive::Function)
+function rwa_dipole(qs::QSystem, drive::Function)
     x_ham = X(qs)
     y_ham = Y(qs)
     function ham(t)
@@ -78,7 +101,6 @@ function dipole_drive(qs::QSystem, drive::Function)
     end
     return ham
 end
-
 
 """
     parametric_drive(qs::QSystem, drive::Function)
@@ -96,41 +118,4 @@ A function of time.
 function parametric_drive(qs::QSystem, drive::Function)
     ham(t) = hamiltonian(qs, drive(t))
     return ham
-end
-
-######################################################
-# Backwards compatibility
-######################################################
-
-export microwave_drive, flux_drive, dipole, flip_flop, XY, rotating_flip_flop
-
-function microwave_drive(q::QSystem, drive::Function)
-    @warn "Deprecation warning: microwave_drive."
-    return dipole_drive(q, drive)
-end
-
-function flux_drive(q::QSystem, drive::Function)
-    @warn "Deprecation warning: flux_drive."
-    return parametric_drive(q, drive)
-end
-
-function dipole(a::QSystem, b::QSystem)
-    @warn "Deprecation warning: dipole."
-    return X([a, b])
-end
-
-function XY(a::QSystem, b::QSystem; ϕ::Real=0.0)
-    @warn "Deprecation warning: XY."
-    return .5 * X_Y([a, b], [ϕ, 0.0])
-end
-
-function flip_flop(a::QSystem, b::QSystem; ϕ::Real=0.0)
-    @warn "Deprecation warning: flip_flop."
-    return .5 * X_Y([a, b], [ϕ, 0.0])
-end
-
-function rotating_flip_flop(a::QSystem, b::QSystem, strength::Real, freq::Real)
-    @warn "Deprecation warning: rotating_flip_flop."
-    op(t) = .5 * strength * X_Y([a, b], [freq, 0.0] * t)
-    return op
 end

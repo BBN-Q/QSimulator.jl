@@ -77,3 +77,13 @@ end
 	test_spec(fit_spec, PerturbativeTransmon)
 	test_spec(fit_spec, DiagonalChargeBasisTransmon)
 end
+
+@testset "DuffingSpec <-> TransmonSpec" begin
+	freq = 4.0
+	anharm = -0.2
+	d = DuffingSpec(freq, anharm)
+	t = TransmonSpec(d)
+	d1 = DuffingSpec(t)
+	@test isapprox(d1.frequency, freq, rtol=1e-8)
+	@test isapprox(d1.anharmonicity, anharm, rtol=1e-6)
+end
