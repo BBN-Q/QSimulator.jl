@@ -238,7 +238,9 @@ An array of times.
 function choose_times_floquet(center::Real, width::Real, t_period::Real, dt::Real)
     @assert width >= 0
     @assert dt >= 0
-    (width == 0) || (dt == 0) && return [center]
+    if (width == 0) || (dt == 0)
+        return [center]
+    end
 
     dt = t_period / ceil(Int, t_period / dt) # reset dt so it divides time_period, making it smaller
     num_times = floor(Int, width / dt)
