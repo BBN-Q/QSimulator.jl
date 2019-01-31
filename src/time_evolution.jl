@@ -7,7 +7,7 @@ import Base.Iterators
 # Schrodinger/Lindblad equations.
 # * `Rodas4/5` does not appear to support complex equations.
 # * `DP5` used by QuantumOptics.jl also gave strange errors
-# * the `reltol` and `abstol` were chosen somewhat arbirtarily to be "good enough"
+# * the `reltol` and `abstol` were chosen somewhat arbitrarily to be "good enough"
 using OrdinaryDiffEq: ODEProblem, solve, Tsit5
 
 export unitary_propagator, unitary_state, me_propagator, me_state
