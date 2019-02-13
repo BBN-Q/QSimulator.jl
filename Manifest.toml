@@ -60,6 +60,7 @@ version = "0.3.2"
 [[DiffEqBase]]
 deps = ["Compat", "IteratorInterfaceExtensions", "LinearAlgebra", "RecipesBase", "RecursiveArrayTools", "Requires", "Roots", "SparseArrays", "StaticArrays", "Statistics", "SuiteSparse", "TableTraits", "Test", "TreeViews"]
 git-tree-sha1 = "f52b84dd3224bca7829f5d5d04560409d3f91b40"
+pinned = true
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
 version = "5.0.1"
 

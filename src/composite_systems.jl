@@ -74,28 +74,51 @@ end
     embed(m::Matrix, acting_on::Vector, dims::Vector)
 
 Embed a subsystem operator `m` acting on subsystem indices `acting_on` into a larger tensor product
-space with subsystem dimensions `dims`.
+space with subsystem dimensions `dims`. This could be implemented by starting with a tensor product
+ordering of `m` ⊗ I and then swapping the subsystems of `m` into the desired order. E.g. in a three
+qubit system CNOT13 can be created with Id⊗SWAP * CNOT⊗Id * Id⊗SWAP.
+
+In practice we use the fact that a tensor product structure is a statement about the strides bewteen
+various subsystem elements and using reshaping the array to match the subsystem dimensions to expose
+those strides and make the swaps a `permutedims`.
 """
 function embed(m::Matrix, acting_on::Vector, dims::Vector)
 
     @assert size(m, 1) == prod(dims[acting_on]) "Oops! Dimensions of operator do not match dims argument."
 
-    # create the large matrix by tensoring on identity terms to the operator
+    # create the large matrix by tensoring on an identity term to the operator`m`
+    d_rest = prod(dims) ÷ size(m,1)
+    M = kron(m, Matrix{eltype(m)}(I, d_rest, d_rest))
+
+    # Reshape into a multi-dimensional array with the dimensions given by swapped (i.e. `m` operator
+    # first) subsystem dimensions. Because the of the way tensor product indices work (last
+    # subsystem is fastest) we need to reverse the order of the dimensions.
+    # e.g
+    # julia> reshape(["a"; "b"] ⊗ ["a"; "b"; "c"] ⊗ ["a"; "b"; "c"; "d"], (4,3,2))
+    # 4×3×2 Array{String,3}:
+    # [:, :, 1] =
+    #  "aaa"  "aba"  "aca"
+    #  "aab"  "abb"  "acb"
+    #  "aac"  "abc"  "acc"
+    #  "aad"  "abd"  "acd"
+    #
+    # [:, :, 2] =
+    #  "baa"  "bba"  "bca"
+    #  "bab"  "bbb"  "bcb"
+    #  "bac"  "bbc"  "bcc"
+    #  "bad"  "bbd"  "bcd"
+
+    # For a matrix we repeat for rows then columns
     l = length(dims)
-    identity_idxs = filter(x->!(x in acting_on), 1:l)
-    d = prod(dims[identity_idxs])
-    M = isempty(identity_idxs) ? m : kron(m, Matrix{eltype(m)}(I, d, d))
+    identity_idxs = filter(x -> !(x in acting_on), 1:l)
+    swapped_dims = reverse([dims[acting_on]; dims[identity_idxs]])
+    M = reshape(M, tuple([swapped_dims; swapped_dims]...))
 
-    # reshape into multi-dimensional array given by subsystem dimensions
-    # since we have a matrix we repeat for rows then columns
-    M = reshape(M, tuple([dims; dims]...))
-
-    # permute magic
-    forward_perm = [acting_on; identity_idxs]
-    reverse_perm = invperm(forward_perm)
-
-    # handle the way tensor product indices work (last subsystem is fastest)
-    reverse_perm = reverse((l+1) .- reverse_perm)
+    # now we want to permute the dimensions to restore the correct subsystem ordering start from the
+    # permutation to get the current ordering with the `m` operator first; then invert and again
+    # handle the way tensor product indices work e.g. if we wanted the permutation [2 1 3] (i.e.
+    # swap 1st and 2nd subsystem) then we actually need to swap the 2nd and 3rd dimensions
+    reverse_perm = (l+1) .- reverse(invperm([acting_on; identity_idxs]))
     M = permutedims(M, [reverse_perm; reverse_perm .+ l])
 
     # reshape back
