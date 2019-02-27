@@ -75,8 +75,7 @@ hamiltonian(r::Resonator) = diagm(0 => [spec(r).frequency * n for n in 0:dimensi
 ######################################################
 
 function duffing_hamiltonian(freq::Real, anharm::Real, dimension::Int)
-    n = collect(0:dimension-1)
-    return diagm(0 => (freq - 0.5 * anharm) * n + 0.5 * anharm * n.^2)
+    diagm(0 => [(freq - 0.5 * anharm) * n + 0.5 * anharm * n^2 for n in 0:dimension-1])
 end
 
 struct DuffingTransmon <: QSystem
