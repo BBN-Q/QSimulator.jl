@@ -8,10 +8,65 @@ export raising, lowering, number, X, Y, X_Y,
 ######################################################
 
 # ladder operators
+"""
+    raising(q::QSystem)
+
+raising/creation/a ladder operator. Given an eignenstate of the number operator `|n⟩` on a
+`QSystem q`, `raising(q)|n⟩ = √(n+1)|n+1⟩`.
+
+# Examples
+```jldoctest
+julia> q = DuffingTransmon("q", 3, DuffingSpec(5, -0.2))
+DuffingTransmon("q", 3, DuffingSpec(5, -0.2))
+
+julia> raising(q)
+3×3 Array{Float64,2}:
+ 0.0  0.0      0.0
+ 1.0  0.0      0.0
+ 0.0  1.41421  0.0
+```
+"""
 raising(q::QSystem) = diagm(-1 => sqrt.(1:(dimension(q)-1)))
+
+"""
+    raising(q::QSystem, ϕ::Real)
+
+Applys an additional phase exp(2πiϕ) to the raising operator.
+"""
 raising(q::QSystem, ϕ::Real) = diagm(-1 => exp(1im*2π*ϕ) * sqrt.(1:(dimension(q)-1)))
+
+"""
+    lowering(q::QSystem)
+
+lowering/destruction/a† ladder operator. Given an eignenstate of the number operator `|n⟩` on a
+`QSystem q`, `lowering(q)|n⟩ = √(n+1)|n+1⟩`.
+
+# Examples
+```jldoctest
+julia> q = DuffingTransmon("q", 3, DuffingSpec(5, -0.2))
+DuffingTransmon("q", 3, DuffingSpec(5, -0.2))
+
+julia> lowering(q)
+3×3 Array{Float64,2}:
+ 0.0  1.0  0.0
+ 0.0  0.0  1.41421
+ 0.0  0.0  0.0
+```
+"""
 lowering(q::QSystem) = diagm(1 => sqrt.(1:(dimension(q)-1)))
+
+"""
+    lowering(q::QSystem, ϕ::Real)
+
+Applys an additional phase exp(-2πiϕ) to the lowering operator.
+"""
 lowering(q::QSystem, ϕ::Real) = diagm(1 => exp(-1im*2π*ϕ) * sqrt.(1:(dimension(q)-1)))
+
+"""
+    number(q::QSystem)
+
+Number operator (a†a) on a QSystem.
+"""
 number(q::QSystem) = diagm(0 => 0:dimension(q)-1)
 
 X(q::QSystem, ϕ::Real=0.0) = raising(q, ϕ) + lowering(q, ϕ)
