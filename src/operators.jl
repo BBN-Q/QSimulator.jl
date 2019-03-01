@@ -69,11 +69,50 @@ Number operator (a†a) on a QSystem.
 """
 number(q::QSystem) = diagm(0 => 0:dimension(q)-1)
 
-X(q::QSystem, ϕ::Real=0.0) = raising(q, ϕ) + lowering(q, ϕ)
+"""
+    X(q::QSystem)
+
+X (a + a†) operator on a QSystem `q`.
+"""
+function X(q::QSystem)
+    diag_elements = sqrt.(1:(dimension(q)-1))
+    diagm(-1 => diag_elements, +1 => diag_elements)
+end
+
+"""
+Apply a phase ϕ (units of τ) to an X operator
+
+# Examples
+```jldoctest
+julia> q = DuffingTransmon("q", 2, DuffingSpec(5, -0.2))
+DuffingTransmon("q", 2, DuffingSpec(5, -0.2))
+
+julia> X(q, 0.25)
+2×2 Array{Complex{Float64},2}:
+         0.0+0.0im  6.12323e-17-1.0im
+ 6.12323e-17+1.0im          0.0+0.0im
+
+julia> X(q, 0.25) ≈ Y(q)
+true
+```
+"""
+X(q::QSystem, ϕ::Real) = raising(q, ϕ) + lowering(q, ϕ)
+
 X(qs::Vector{<:QSystem}, ϕs::Vector{<:Real}) = reduce(⊗, [X(q, ϕ) for (q, ϕ) in zip(qs, ϕs)])
 X(qs::Vector{<:QSystem}) = reduce(⊗, [X(q) for q in qs])
 
-Y(q::QSystem, ϕ::Real=0.0) = 1im*(raising(q, ϕ) - lowering(q, ϕ))
+"""
+    Y(q::QSystem)
+
+Y (-ia + ia†) operator on a QSystem `q`.
+"""
+function Y(q::QSystem)
+    diag_elements = sqrt.(1:(dimension(q)-1))
+    diagm(-1 => 1im*diag_elements, +1 => -1im*diag_elements)
+end
+
+Y(q::QSystem, ϕ::Real) = 1im*(raising(q, ϕ) - lowering(q, ϕ))
+
 Y(qs::Vector{<:QSystem}, ϕs::Vector{<:Real}) = reduce(⊗, [Y(q, ϕ) for (q, ϕ) in zip(qs, ϕs)])
 Y(qs::Vector{<:QSystem}) = reduce(⊗, [Y(q) for q in qs])
 
