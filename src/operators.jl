@@ -133,7 +133,7 @@ XY(a::QSystem, b::QSystem) = lmul!(2.0, flip_flop(a,b))
 
 Apply an additional phase rotation to the XY Hamiltonian exp(2πiϕ)σ⁺σ⁻ + exp(-2πiϕ)σ⁻σ⁺
 """
-XY(a::QSystem, b::QSystem, ϕ::Real) = (2.0*exp(-1im*2π*ϕ))*raising(a)⊗lowering(b) + (2.0*exp(1im*2π*ϕ))*lowering(b)⊗raising(b)
+XY(a::QSystem, b::QSystem, ϕ::Real) =  lmul!(2.0, flip_flop(a,b,ϕ))
 
 """
     flip_flop(a::QSystem, b::QSystem)
@@ -142,6 +142,13 @@ Bilinear photon exchange Hamiltonian on `a` and `b`: `ab† + a†b`. For qubits
 `σ⁺σ⁻ + σ⁻σ⁺`
 """
 flip_flop(a::QSystem, b::QSystem) = raising(a)⊗lowering(b) + lowering(a)⊗raising(b)
+
+"""
+    flip_flop(a::QSystem, b::QSystem, ϕ::Real)
+
+Apply an additional relative phase ϕ: `exp(2πiϕ)ab† + exp(-2πiϕ)a†b`
+"""
+flip_flop(a::QSystem, b::QSystem, ϕ::Real) = exp(-1im*2π*ϕ)*raising(a)⊗lowering(b) + exp(1im*2π*ϕ)*lowering(b)⊗raising(b)
 
 """
     decay(qs::QSystem, γ:Real)
