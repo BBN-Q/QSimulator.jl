@@ -124,9 +124,9 @@ X_Y(qs::Vector{<:QSystem}) = X(qs) + Y(qs)
     XY(a::QSystem, b::QSystem)
 
 Bilinear XY Hamiltonian on `a` and `b` which is (up to a scale) equivalent to a "flip-flop"
-Hamiltonian. XY(a,b) = XX + YY = 2*(ab† + a†b)
+Hamiltonian. XY(a,b) = XᵃXᵇ + YᵃYᵇ = 2*(ab† + a†b)
 """
-XY(a::QSystem, b::QSystem) = lmul!(2.0, raising(a)⊗lowering(b) + lowering(a)⊗raising(b))
+XY(a::QSystem, b::QSystem) = lmul!(2.0, flip_flop(a,b))
 
 """
     XY(a::QSystem, b::QSystem, ϕ::Real)
@@ -138,7 +138,7 @@ XY(a::QSystem, b::QSystem, ϕ::Real) = (2.0*exp(-1im*2π*ϕ))*raising(a)⊗lower
 """
     flip_flop(a::QSystem, b::QSystem)
 
-Bilinear photon exchange Hamiltonian on `a` and `b`. E.g. for qubits corresponds to Pauli operator
+Bilinear photon exchange Hamiltonian on `a` and `b`: `ab† + a†b`. For qubits corresponds to Pauli operator
 `σ⁺σ⁻ + σ⁻σ⁺`
 """
 flip_flop(a::QSystem, b::QSystem) = raising(a)⊗lowering(b) + lowering(a)⊗raising(b)
