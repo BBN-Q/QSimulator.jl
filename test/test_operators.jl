@@ -5,8 +5,12 @@ using LinearAlgebra: I
     r = Resonator("test", 3, QSimulator.ResonatorSpec(5.5))
 
     # test some trivial cases of the ladder operators
-    @test raising(r) == [0 0 0;1 0 0;0 √2 0]
-    @test lowering(r) == [0 1 0;0 0 √2;0 0 0]
+    @test raising(r) == [0 0 0;
+                         1 0 0;
+                         0 √2 0]
+    @test lowering(r) == [0 1 0;
+                          0 0 √2;
+                          0 0 0]
 
     r = Resonator("test", 7, QSimulator.ResonatorSpec(5.5))
 
@@ -22,5 +26,13 @@ using LinearAlgebra: I
     # test commutator relation [a, a†] = 1; because of truncation it doesn't hold for last row/columns
     commutator = lowering(r)*raising(r)- raising(r)*lowering(r)
     @test commutator[1:end-1,1:end-1] ≈ Matrix{eltype(commutator)}(I, dimension(r)-1, dimension(r)-1)
+
+    # test trivial case of the `flip_flop` operator
+    a = Resonator("a", 2, QSimulator.ResonatorSpec(5.5))
+    b = Resonator("b", 2, QSimulator.ResonatorSpec(5.5))
+    @test flip_flop(a,b) == [0 0 0 0;
+                             0 0 1 0;
+                             0 1 0 0;
+                             0 0 0 0]
 
 end
