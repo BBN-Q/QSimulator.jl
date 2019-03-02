@@ -1,6 +1,6 @@
 using LinearAlgebra: diagm, lmul!
 
-export raising, lowering, number, X, Y, X_Y,
+export raising, lowering, number, X, Y, X_Y, XY, flip_flop,
        decay, dephasing, dipole_drive, parametric_drive, rwa_dipole
 
 ######################################################
@@ -121,21 +121,6 @@ X_Y(qs::Vector{<:QSystem}) = X(qs) + Y(qs)
 
 
 """
-    XY(a::QSystem, b::QSystem)
-
-Bilinear XY Hamiltonian on `a` and `b` which is (up to a scale) equivalent to a "flip-flop"
-Hamiltonian. XY(a,b) = XᵃXᵇ + YᵃYᵇ = 2*(ab† + a†b)
-"""
-XY(a::QSystem, b::QSystem) = lmul!(2.0, flip_flop(a,b))
-
-"""
-    XY(a::QSystem, b::QSystem, ϕ::Real)
-
-Apply an additional phase rotation to the XY Hamiltonian exp(2πiϕ)σ⁺σ⁻ + exp(-2πiϕ)σ⁻σ⁺
-"""
-XY(a::QSystem, b::QSystem, ϕ::Real) =  lmul!(2.0, flip_flop(a,b,ϕ))
-
-"""
     flip_flop(a::QSystem, b::QSystem)
 
 Bilinear photon exchange Hamiltonian on `a` and `b`: `ab† + a†b`. For qubits corresponds to Pauli operator
@@ -149,6 +134,22 @@ flip_flop(a::QSystem, b::QSystem) = raising(a)⊗lowering(b) + lowering(a)⊗rai
 Apply an additional relative phase ϕ: `exp(2πiϕ)ab† + exp(-2πiϕ)a†b`
 """
 flip_flop(a::QSystem, b::QSystem, ϕ::Real) = exp(-1im*2π*ϕ)*raising(a)⊗lowering(b) + exp(1im*2π*ϕ)*lowering(b)⊗raising(b)
+
+"""
+    XY(a::QSystem, b::QSystem)
+
+Bilinear XY Hamiltonian on `a` and `b` which is (up to a scale) equivalent to a "flip-flop"
+Hamiltonian. XY(a,b) = XᵃXᵇ + YᵃYᵇ = 2*(ab† + a†b)
+"""
+XY(a::QSystem, b::QSystem) = lmul!(2.0, flip_flop(a,b))
+
+"""
+    XY(a::QSystem, b::QSystem, ϕ::Real)
+
+Apply an additional phase rotation to the XY Hamiltonian 2*(exp(2πiϕ)ab† + exp(-2πiϕ)a†b)
+"""
+XY(a::QSystem, b::QSystem, ϕ::Real) =  lmul!(2.0, flip_flop(a,b,ϕ))
+
 
 """
     decay(qs::QSystem, γ:Real)
