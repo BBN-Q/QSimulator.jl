@@ -120,7 +120,7 @@ function hamiltonian_add!(Ham::AbstractMatrix{T}, c::CompositeQSystem, t::Float6
             Ham[rows[i],cols[i]] = 0.0
         end
     else
-        Ham[:] = 0.0
+        fill!(Ham, 0.0)
     end
 
     #Update the subsystems with the parameteric interactions
