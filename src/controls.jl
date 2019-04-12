@@ -42,7 +42,15 @@ function amplitude(mc::MicrowaveControl, t::Float64)
     # KNOWN ISSUE!! Not sure how to deal the the sequence indexing when
     # t/mc.timeStep gets rounded to 0 or the most efficient way to map scaled
     # time steps to indicies inside an interpolated sequence
-    return mc.sequence(t/mc.timeStep)*cos(2*pi*mc.freq*t + mc.phase)
+    # Force all t < 1 amps to 0.0
+    if t >= 0 && t <= 1
+        return 0.0
+    # also force overruns to zero
+    elseif t > length(mc.sequence)
+        return 0.0
+    else
+        return mc.sequence(t/mc.timeStep)*cos(2*pi*mc.freq*t + mc.phase)
+    end
 end
 
 #A pair of AWG channels driving an IQ mixer with a microwave source at a given frequency
@@ -55,8 +63,8 @@ struct QuadratureControl <: Control
     sequence_Q::AbstractInterpolation
 end
 QuadratureControl(label, freq; phase=0., timeStep=1/1.2,
-        sequence_I=interpolate( [0.0], BSpline(Constant()), OnGrid() ),
-        sequence_Q=interpolate( [0.0], BSpline(Constant()), OnGrid() )) =
+        sequence_I=interpolate( [0.0], BSpline(Constant())),
+        sequence_Q=interpolate( [0.0], BSpline(Constant()))) =
     QuadratureControl(label, freq, phase, timeStep, sequence_I, sequence_Q)
 
 #Create the interpolated object
@@ -66,8 +74,8 @@ function load_sequence!(qc::QuadratureControl, seqDict::Dict, n::Int; interpolat
     chan_I = label(qc)[end-1]
     chan_Q = label(qc)[end]
     APSLabel = label(qc)[1:7]
-    qc.sequence_I = interpolate(seqDict[APSLabel]["chan_"*string(chan_I)][n], interpolation, OnGrid())
-    qc.sequence_Q = interpolate(seqDict[APSLabel]["chan_"*string(chan_Q)][n], interpolation, OnGrid())
+    qc.sequence_I = interpolate(seqDict[APSLabel]["chan_"*string(chan_I)][n], interpolation)
+    qc.sequence_Q = interpolate(seqDict[APSLabel]["chan_"*string(chan_Q)][n], interpolation)
     return nothing
 end
 function amplitude(qc::QuadratureControl, t::Float64)
