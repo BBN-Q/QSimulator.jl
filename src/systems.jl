@@ -183,11 +183,10 @@ hamiltonian(r::Resonator)::HermitianMatrix =
 
 """
 Construct the hamiltonian of a duffing transmon from energy levels spaced by the
-transmon's frequency, minus increasing amounts of anharmonicity for increasing
-levels. Satisfies the condition
+transmon's frequency minus its anharmonicity:
 
 ```
-E_{n+1} - E_n = frequency - anharmonicity.
+f_{n+1} - f_n = frequency - anharmonicity.
 ```
 """
 function duffing_hamiltonian(
