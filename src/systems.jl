@@ -21,7 +21,8 @@ dimension(q::QSystem)::Int64 = q.dimension
 spec(q::QSystem)::QSpec = q.spec
 
 ################################################################################
-# Specs
+# QSpecs
+# QSpecs are the physical parameters that define a quantum system
 ################################################################################
 
 # Structs
@@ -86,7 +87,7 @@ function DuffingSpec(t::TransmonSpec, ϕ::Real=0.0, num_terms::Int=PERTURBATIVE_
 end
 
 ################################################################################
-# QSystems.
+# QSystems
 # QSystems are Structs comprised of a QSpec, a label and a dimension.
 ################################################################################
 
