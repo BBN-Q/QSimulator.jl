@@ -23,7 +23,7 @@ using Test, QSimulator
     # check that TensorProductBasisState construction catches errors
     basis = TensorProductBasis((2,2))
     # wrong number of subsystems
-    @test_throws AssertionError TensorProductBasisState(basis, (0,0,0))
+    @test_throws MethodError TensorProductBasisState(basis, (0,0,0))
     # state index exceeds dimension
     @test_throws AssertionError TensorProductBasisState(basis, (2,0))
 end

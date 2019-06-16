@@ -6,9 +6,12 @@ export TensorProductBasis, TensorProductBasisState, basis_states
 """
 A simple covenience wrapper for a tuple of subsystem dimensions for a tensor product space.
 """
-struct TensorProductBasis
-    dims::Tuple{Vararg{Int}}
+struct TensorProductBasis{N}
+    dims::Tuple{Vararg{Int, N}}
 end
+
+# We may want to paramaterize by the dims. So, hide the implementation
+dims(b::TensorProductBasis) = b.dims
 
 # helper contructor to convert from dimensions given in AbstractVector form
 TensorProductBasis(dims::AbstractVector{Int}) = TensorProductBasis(Tuple(dims))
@@ -18,15 +21,14 @@ abstract type BasisState end
 """
 A basis element of a tensor product space.
 """
-struct TensorProductBasisState <: BasisState
-    basis::TensorProductBasis
-    states::Tuple{Vararg{Int}}
+struct TensorProductBasisState{N} <: BasisState
+    basis::TensorProductBasis{N}
+    states::Tuple{Vararg{Int, N}}
 
-    function TensorProductBasisState(b::TensorProductBasis, states::Tuple{Vararg{Int}})
+    function TensorProductBasisState(b::TensorProductBasis{N}, states::Tuple{Vararg{Int, N}}) where N
         # check that given subsystem basis states are compatible with TensorProductBasis dimensions
-        @assert length(states) == length(b.dims)
-        @assert all(states .>= 0) && all(states .< b.dims)
-        return new(b, states)
+        @assert all(states .>= 0) && all(states .< dims(b))
+        return new{N}(b, states)
     end
 end
 
@@ -45,7 +47,7 @@ Create the complex basis vector correspoding to a given TensorProductBasisState.
 The complex basis state vector.
 """
 function vec(state::TensorProductBasisState)
-    state_vector = zeros(ComplexF64, prod(state.basis.dims))
+    state_vector = zeros(ComplexF64, prod(dims(state.basis)))
     state_vector[index(state)] = 1.0
     return state_vector
 end
@@ -68,9 +70,8 @@ A vector of TensorProductBasisState.
 """
 function basis_states(b::TensorProductBasis)
     return [TensorProductBasisState(b, reverse(x .- 1))
-            for x in vec(collect(product([1:dim for dim in reverse(b.dims)]...)))]
+            for x in vec(collect(product([1:dim for dim in reverse(dims(b))]...)))]
 end
-
 
 """
     index(bs::TensorProductBasisState)
@@ -89,9 +90,8 @@ Consider a tensor product of two qubits `b = TensorProductBasis((2,2))`. Then st
 (1,0), (1,1)` are numbered `1, 2, 3, 4` so that `index(TensorProductBasisState(b, (1,0)) == 3`.
 """
 function index(bs::TensorProductBasisState)
-    return LinearIndices(tuple(reverse(bs.basis.dims)...))[reverse(bs.states.+1)...]
+    return LinearIndices(tuple(reverse(dims(bs.basis))...))[reverse(bs.states.+1)...]
 end
-
 
 """
     getindex(b::TensorProductBasis, i::Int)
@@ -112,6 +112,6 @@ states `(0,0), (0,1), (1,0), (1,1)` are numbered `1, 2, 3, 4` so that
 `b[3] == TensorProductBasisState(b, (1,0))`.
 """
 function getindex(b::TensorProductBasis, i::Int)
-    states = reverse(Tuple(CartesianIndices(tuple(reverse(b.dims)...))[i])).-1
+    states = reverse(Tuple(CartesianIndices(tuple(reverse(dims(b))...))[i])).-1
     return TensorProductBasisState(b, states)
 end
