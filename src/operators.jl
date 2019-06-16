@@ -179,7 +179,7 @@ Dephasing for a QSystem.
 * `γ`: a decay rate in frequency units. Note Tϕ = 1/(2πγ).
 
 ## returns
-The lindblad operator for decay.
+The lindblad operator for dephasing.
 """
 function dephasing(qs::QSystem, γ::Real)
     return sqrt(2γ) * number(qs)
