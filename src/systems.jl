@@ -75,7 +75,7 @@ hamiltonian(r::Resonator) = diagm(0 => [spec(r).frequency * n for n in 0:dimensi
 ######################################################
 
 function duffing_hamiltonian(freq::Real, anharm::Real, dimension::Int)
-    diagm(0 => [(freq - 0.5 * anharm) * n + 0.5 * anharm * n^2 for n in 0:dimension-1])
+    diagm(0 => [(freq - 1//2 * anharm) * n + 1//2 * anharm * n^2 for n in 0:dimension-1])
 end
 
 struct DuffingTransmon <: QSystem
@@ -140,7 +140,7 @@ function hamiltonian(t::ChargeBasisTransmon, ϕ::Real=0.0)
     EJ = sqrt(s.EJ1^2 + s.EJ2^2 + 2 * s.EJ1 * s.EJ2 * cos(2π * ϕ))
     EC = s.EC
     charging_term = 4 * EC * diagm(0 => (-N:N).^2)
-    tunneling_term = -0.5 * EJ * (diagm(-1 => ones(d-1), 1 => ones(d-1)))
+    tunneling_term = - 1//2 * EJ * (diagm(-1 => ones(d-1), 1 => ones(d-1)))
     return charging_term + tunneling_term
 end
 
@@ -216,8 +216,8 @@ function fit_transmon(freq_max::Real, freq_min::Real, anharm_max::Real, model::T
     EC_guess = -anharm_max
     EJ_max_guess = -(freq_max - anharm_max)^2 / (8 * anharm_max)
     EJ_min_guess = -(freq_min - anharm_max)^2 / (8 * anharm_max)
-    EJ1_guess = .5 * (EJ_max_guess + EJ_min_guess)
-    EJ2_guess = .5 * abs(EJ_max_guess - EJ_min_guess)
+    EJ1_guess = 1//2 * (EJ_max_guess + EJ_min_guess)
+    EJ2_guess = 1//2 * abs(EJ_max_guess - EJ_min_guess)
     if freq_max == freq_min
         res = optimize(f_fixed, [EC_guess, EJ1_guess])
         EC, EJ = res.minimizer
