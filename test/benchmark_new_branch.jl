@@ -3,8 +3,10 @@
 # This file benchmarks the "new" branch, for instance the branch that has fixed a performance regression.
 # It runs the benchmark on the new branch, then loads the results from the old branch and compares.
 
-push!(LOAD_PATH, pwd())  # This allows using a copy of the repository.
+pushfirst!(LOAD_PATH, pwd())  # This allows using a copy of the repository.
 include("benchmark.jl")
+QSimulator.checkbenchmarking()
+
 tune!(suite)
 loadparams!(suite, BenchmarkTools.load("benchmark_params.json")[1], :evals, :samples);
 results = run(suite; verbose=true)
