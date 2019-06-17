@@ -10,7 +10,7 @@ SUITE["operators"] = BenchmarkGroup()
 for n = 2:5
     q = DuffingTransmon("q0", n, DuffingSpec(5, -0.2))
 
-    SUITE["operators"]["number operator ($n levels)"] = @benchmarkable number($q)
+    SUITE["operators"]["number(q) ($n levels)"] = @benchmarkable number($q)
     SUITE["operators"]["raising(q) ($n levels)"] = @benchmarkable raising($q)
     SUITE["operators"]["raising(q, 0.123) ($n levels)"] = @benchmarkable raising($q, 0.25)
     SUITE["operators"]["lowering(q) ($n levels)"] = @benchmarkable lowering($q)
