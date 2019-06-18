@@ -38,10 +38,10 @@ function raising(dim::Integer,  ϕ::Real=0.0)
 end
 
 """
-    lowering(q::QSystem)
+    lowering(q::QSystem, ϕ::Real=0.0, factor::Real=1))
 
 lowering/destruction/a† ladder operator. Given an eignenstate of the number operator `|n⟩` on a
-`QSystem q`, `lowering(q)|n⟩ = √(n+1)|n+1⟩`.
+`QSystem q`, `lowering(q)|n⟩ = √(n+1)|n+1⟩`. Optionally apply an additional phase ϕ and scaling `factor`.
 
 # Examples
 ```jldoctest
@@ -55,14 +55,16 @@ julia> lowering(q)
  0.0  0.0  0.0
 ```
 """
-lowering(q::QSystem) = diagm(1 => sqrt.(1:(dimension(q)-1)))
+lowering(q::QSystem, ϕ::Real=0, factor::Real=1) = lowering(dimension(q), ϕ, factor)
 
-"""
-    lowering(q::QSystem, ϕ::Real)
-
-Applys an additional phase exp(-2πiϕ) to the lowering operator.
-"""
-lowering(q::QSystem, ϕ::Real) = diagm(1 => exp(-1im*2π*ϕ) * sqrt.(1:(dimension(q)-1)))
+function lowering(dim::Integer,  ϕ::Real=0, factor::Real=1)
+    m = zeros(typeof(complex(float(ϕ))), dim, dim)
+    efac = exp(-1im * 2π * ϕ) * factor
+    for i in 1:(dim - 1)
+        m[i, i + 1] = sqrt(i) * efac
+    end
+    return m
+end
 
 """
     number(q::QSystem)
@@ -168,7 +170,7 @@ T1 decay for a QSystem.
 The lindblad operator for decay.
 """
 function decay(qs::QSystem, γ::Real)
-    return sqrt(γ) * lowering(qs)
+    return lowering(qs, 0, sqrt(γ))
 end
 
 """
