@@ -9,9 +9,11 @@ import Distributed
 
 function expm_eigen(A::Matrix, t)
     #Calculates exp(t*A) via eigenvalue decomposition and assuming Hermitian matrix
-    F = eigfact(Hermitian(A))
+    F = LinearAlgebra.Hermitian(A)
+    F_vecs = LinearAlgebra.eigvecs(F)
+    F_vals = LinearAlgebra.eigvals(F)
 
-    return F[:vectors] * Diagonal(exp.(t*F[:values])) * F[:vectors]'
+    return F_vecs * LinearAlgebra.Diagonal(exp.(t*F_vals)) * F_vecs'
 end
 
 function unitary_propagator(sys::CompositeQSystem,

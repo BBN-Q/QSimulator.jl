@@ -21,7 +21,7 @@ function speed_test(repeats)
 	println("Serial execution in $(tserial/repeats) seconds")
 	println("Parallel execution in $(tparallel/repeats) seconds")
 
-	tserial/repeats, tparallel/repeats
+	@test isapprox(abs(tserial/repeats - tparallel/repeats), 0.0, atol = 1e-1)
 end
 
 function sim_setup(dimension, numTimeSteps)
@@ -38,4 +38,8 @@ function sim_setup(dimension, numTimeSteps)
 	load_sequence!(drive, seq)
 
 	return sys
+end
+
+@testset "speed test" begin
+    speed_test(5)
 end
