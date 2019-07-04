@@ -37,9 +37,9 @@ function amplitude(mc::MicrowaveControl, t::Float64)
     #Scale time by the timestep before interpolating
     #Note that Julia indexing starting at 1
     if t < 1.0
-        return mc.sequence[t/mc.timeStep + 1]*cos(2*pi*mc.freq*t + mc.phase)
+        return mc.sequence(t/mc.timeStep + 1)*cos(2*pi*mc.freq*t + mc.phase)
     else
-        return mc.sequence[t/mc.timeStep]*cos(2*pi*mc.freq*t + mc.phase)
+        return mc.sequence(t/mc.timeStep)*cos(2*pi*mc.freq*t + mc.phase)
     end
 end
 
