@@ -10,32 +10,37 @@ export ## Types
 #AWG channels are controls
 
 #A double-balanced mixer driven by an RF/microwave souce and a single AWG channel
-struct MicrowaveControl <: Control
+mutable struct MicrowaveControl <: Control
     label::AbstractString
     freq::Float64
     phase::Float64
     timeStep::Float64
     sequence::AbstractInterpolation
 end
-MicrowaveControl(label, freq; phase=0., timeStep=1/1.2, sequence=interpolate([0.0], BSpline(Constant()), OnGrid())) =
+MicrowaveControl(label, freq; phase=0., timeStep=1/1.2, sequence=interpolate([0.0, 0.0], BSpline(Interpolations.Constant()))) =
     MicrowaveControl(label, freq, phase, timeStep, sequence)
 
 # Methods to create the interpolated sequence object
-function load_sequence!(mc::MicrowaveControl, sequence::Vector; interpolation=BSpline(Constant()))
-    mc.sequence = interpolate(sequence, interpolation, OnGrid())
+function load_sequence!(mc::MicrowaveControl, sequence::Vector; interpolation=BSpline(Interpolations.Constant()))
+    mc.sequence = interpolate(sequence, interpolation)
 end
 
-function load_sequence!(mc::MicrowaveControl, seqDict::Dict, n::Int; interpolation=BSpline(Constant()))
+function load_sequence!(mc::MicrowaveControl, seqDict::Dict, n::Int; interpolation=BSpline(Interpolations.Constant()))
     #For double balanced mixer need one AWG channel
     #Hack around off the expected BBNAPSx-xx style
     chan = label(mc)[end]
     APSLabel = label(mc)[1:7]
-    mc.sequence = interpolate(seqDict[APSLabel]["chan_"*string(chan)][n], interpolation, OnGrid())
+    mc.sequence = interpolate(seqDict[APSLabel]["chan_"*string(chan)][n], interpolation)
     return nothing
 end
 function amplitude(mc::MicrowaveControl, t::Float64)
     #Scale time by the timestep before interpolating
-    return mc.sequence[t/mc.timeStep]*cos(2*pi*mc.freq*t + mc.phase)
+    #Note that Julia indexing starting at 1
+    if t < 1.0
+        return mc.sequence[t/mc.timeStep + 1]*cos(2*pi*mc.freq*t + mc.phase)
+    else
+        return mc.sequence[t/mc.timeStep]*cos(2*pi*mc.freq*t + mc.phase)
+    end
 end
 
 #A pair of AWG channels driving an IQ mixer with a microwave source at a given frequency
