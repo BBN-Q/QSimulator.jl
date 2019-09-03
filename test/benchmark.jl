@@ -4,6 +4,24 @@ using QSimulator
 
 const suite = BenchmarkGroup()
 
+########################################## Basic Operators #########################################
+suite["operators"] = BenchmarkGroup()
+
+for n = 2:5
+    q = DuffingTransmon("q0", n, DuffingSpec(5, -0.2))
+
+    suite["operators"]["number operator ($n levels)"] = @benchmarkable number($q)
+    suite["operators"]["raising(q) ($n levels)"] = @benchmarkable raising($q)
+    suite["operators"]["raising(q, 0.123) ($n levels)"] = @benchmarkable raising($q, 0.25)
+    suite["operators"]["lowering(q) ($n levels)"] = @benchmarkable lowering($q)
+    suite["operators"]["lowering(q, 0.123) ($n levels)"] = @benchmarkable lowering($q, 0.25)
+    suite["operators"]["X(q) ($n levels)"] = @benchmarkable X($q)
+    suite["operators"]["X(q, 0.123) ($n levels)"] = @benchmarkable X($q)
+
+end
+
+######################################### Time Evolution ###########################################
+
 suite["unitary"] = BenchmarkGroup()
 suite["unitary"]["propagator"] = BenchmarkGroup()
 suite["unitary"]["pure state"] = BenchmarkGroup()
