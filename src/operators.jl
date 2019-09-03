@@ -75,6 +75,8 @@ number(q::QSystem) = diagm(0 => 0:dimension(q)-1)
 X (a + a†) operator on a QSystem `q`.
 """
 function X(q::QSystem)
+    # Rather than just returning raising(q) + lowering(q) we specialize this implementation because
+    # it more than twice as fast with less than half the allocations. See a4add5ca0 for details.
     diag_elements = sqrt.(1:(dimension(q)-1))
     diagm(-1 => diag_elements, +1 => diag_elements)
 end
