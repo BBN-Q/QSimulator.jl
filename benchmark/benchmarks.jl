@@ -2,33 +2,33 @@ using BenchmarkTools
 
 using QSimulator
 
-const suite = BenchmarkGroup()
+const SUITE = BenchmarkGroup()
 
 ########################################## Basic Operators #########################################
-suite["operators"] = BenchmarkGroup()
+SUITE["operators"] = BenchmarkGroup()
 
 for n = 2:5
     q = DuffingTransmon("q0", n, DuffingSpec(5, -0.2))
 
-    suite["operators"]["number operator ($n levels)"] = @benchmarkable number($q)
-    suite["operators"]["raising(q) ($n levels)"] = @benchmarkable raising($q)
-    suite["operators"]["raising(q, 0.123) ($n levels)"] = @benchmarkable raising($q, 0.25)
-    suite["operators"]["lowering(q) ($n levels)"] = @benchmarkable lowering($q)
-    suite["operators"]["lowering(q, 0.123) ($n levels)"] = @benchmarkable lowering($q, 0.25)
-    suite["operators"]["X(q) ($n levels)"] = @benchmarkable X($q)
-    suite["operators"]["X(q, 0.123) ($n levels)"] = @benchmarkable X($q)
+    SUITE["operators"]["number operator ($n levels)"] = @benchmarkable number($q)
+    SUITE["operators"]["raising(q) ($n levels)"] = @benchmarkable raising($q)
+    SUITE["operators"]["raising(q, 0.123) ($n levels)"] = @benchmarkable raising($q, 0.25)
+    SUITE["operators"]["lowering(q) ($n levels)"] = @benchmarkable lowering($q)
+    SUITE["operators"]["lowering(q, 0.123) ($n levels)"] = @benchmarkable lowering($q, 0.25)
+    SUITE["operators"]["X(q) ($n levels)"] = @benchmarkable X($q)
+    SUITE["operators"]["X(q, 0.123) ($n levels)"] = @benchmarkable X($q)
 
 end
 
 ######################################### Time Evolution ###########################################
 
-suite["unitary"] = BenchmarkGroup()
-suite["unitary"]["propagator"] = BenchmarkGroup()
-suite["unitary"]["pure state"] = BenchmarkGroup()
+SUITE["unitary"] = BenchmarkGroup()
+SUITE["unitary"]["propagator"] = BenchmarkGroup()
+SUITE["unitary"]["pure state"] = BenchmarkGroup()
 
 # Free evolution of an n level transmon
-prop_suite = suite["unitary"]["propagator"]["free evolution"] = BenchmarkGroup()
-state_suite = suite["unitary"]["pure state"]["free evolution"] = BenchmarkGroup()
+prop_suite = SUITE["unitary"]["propagator"]["free evolution"] = BenchmarkGroup()
+state_suite = SUITE["unitary"]["pure state"]["free evolution"] = BenchmarkGroup()
 for n = 2:4
     q0 = DuffingTransmon("q0", n, DuffingSpec(5, -0.2))
     cqs = CompositeQSystem([q0])
@@ -58,8 +58,8 @@ for n = 2:4
 end
 
 # Lab frame Rabi oscillations of an n level transmon
-prop_suite = suite["unitary"]["propagator"]["rabi flops"] = BenchmarkGroup()
-state_suite = suite["unitary"]["pure state"]["rabi flops"] = BenchmarkGroup()
+prop_suite = SUITE["unitary"]["propagator"]["rabi flops"] = BenchmarkGroup()
+state_suite = SUITE["unitary"]["pure state"]["rabi flops"] = BenchmarkGroup()
 
 qubit_freq = 5.0
 nutation_freq = 0.02
@@ -77,8 +77,8 @@ for n = 2:4
 end
 
 # Lab frame parametric interaction between two transmons with spectators
-prop_suite = suite["unitary"]["propagator"]["lab frame parametric 2Q gate"] = BenchmarkGroup()
-state_suite = suite["unitary"]["pure state"]["lab frame parametric 2Q gate"] = BenchmarkGroup()
+prop_suite = SUITE["unitary"]["propagator"]["lab frame parametric 2Q gate"] = BenchmarkGroup()
+state_suite = SUITE["unitary"]["pure state"]["lab frame parametric 2Q gate"] = BenchmarkGroup()
 
 # helper function to add flux drive
 for n = 2:3
@@ -115,8 +115,8 @@ end
 
 
 # Rotating frame parametric interaction between two transmons with spectators
-prop_suite = suite["unitary"]["propagator"]["rotating frame parametric 2Q gate"] = BenchmarkGroup()
-state_suite = suite["unitary"]["pure state"]["rotating frame parametric 2Q gate"] = BenchmarkGroup()
+prop_suite = SUITE["unitary"]["propagator"]["rotating frame parametric 2Q gate"] = BenchmarkGroup()
+state_suite = SUITE["unitary"]["pure state"]["rotating frame parametric 2Q gate"] = BenchmarkGroup()
 
 for n = 2:4
 

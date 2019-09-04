@@ -1,2 +1,2 @@
-test/*.json
+benchmark/*.json
 doc/.ipynb_checkpoints/*
