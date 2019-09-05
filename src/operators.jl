@@ -28,6 +28,7 @@ julia> raising(q)
 """
 raising(q::QSystem, ϕ::Real=0.0) = raising(dimension(q), ϕ)
 
+# custom diagm because it's twice as fast for small matrices
 function raising(dim::Integer,  ϕ::Real=0.0)
     m = zeros(typeof(complex(ϕ)), dim, dim)
     fac = exp(1im * 2π * ϕ)
@@ -57,6 +58,7 @@ julia> lowering(q)
 """
 lowering(q::QSystem, ϕ::Real=0, factor::Real=1) = lowering(dimension(q), ϕ, factor)
 
+# custom diagm because it's twice as fast for small matrices
 function lowering(dim::Integer,  ϕ::Real=0, factor::Real=1)
     m = zeros(typeof(complex(float(ϕ))), dim, dim)
     efac = exp(-1im * 2π * ϕ) * factor
@@ -74,6 +76,7 @@ matrix if `factor != 1`.
 """
 number(q::QSystem, factor::Real=1) = number(dimension(q), factor)
 
+# custom diagm because it's twice as fast for small matrices
 function number(dim::Integer, factor::Real=1)
     m = zeros(factor |> float |> complex |> typeof, dim, dim)
     for i in 2:dim
