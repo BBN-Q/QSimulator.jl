@@ -20,6 +20,16 @@ for n = 2:5
 
 end
 
+########################################## CompositeSystems ########################################
+SUITE["embedding"] = BenchmarkGroup()
+
+for n = 2:2:8
+    r = rand(3,3)
+    dims = fill(3, n)
+    acting_on = [n]
+    SUITE["embedding"]["QSimulator.embed(r, $acting_on, $dims)"] = @benchmarkable QSimulator.embed($r, $acting_on, $dims)
+end
+
 ########################################## Basis Utilities #########################################
 SUITE["basis_utils"] = BenchmarkGroup()
 
