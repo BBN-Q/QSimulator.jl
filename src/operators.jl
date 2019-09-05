@@ -9,10 +9,10 @@ export raising, lowering, number, X, Y, X_Y, XY, flip_flop,
 
 # ladder operators
 """
-    raising(q::QSystem)
+    raising(q::QSystem, ϕ::Real=0.0)
 
 raising/creation/a ladder operator. Given an eignenstate of the number operator `|n⟩` on a
-`QSystem q`, `raising(q)|n⟩ = √(n+1)|n+1⟩`.
+`QSystem q`, `raising(q)|n⟩ = √(n+1)|n+1⟩`. Optionally an additional phase exp(2πiϕ) is applied.
 
 # Examples
 ```jldoctest
@@ -26,20 +26,23 @@ julia> raising(q)
  0.0  1.41421  0.0
 ```
 """
-raising(q::QSystem) = diagm(-1 => sqrt.(1:(dimension(q)-1)))
+raising(q::QSystem, ϕ::Real=0.0) = raising(dimension(q), ϕ)
+
+# custom diagm because it's twice as fast for small matrices
+function raising(dim::Integer,  ϕ::Real=0.0)
+    m = zeros(typeof(complex(ϕ)), dim, dim)
+    fac = exp(1im * 2π * ϕ)
+    for i in 1:(dim -1 )
+        m[i + 1, i] = sqrt(i) * fac
+    end
+    return m
+end
 
 """
-    raising(q::QSystem, ϕ::Real)
-
-Applys an additional phase exp(2πiϕ) to the raising operator.
-"""
-raising(q::QSystem, ϕ::Real) = diagm(-1 => exp(1im*2π*ϕ) * sqrt.(1:(dimension(q)-1)))
-
-"""
-    lowering(q::QSystem)
+    lowering(q::QSystem, ϕ::Real=0.0, factor::Real=1))
 
 lowering/destruction/a† ladder operator. Given an eignenstate of the number operator `|n⟩` on a
-`QSystem q`, `lowering(q)|n⟩ = √(n+1)|n+1⟩`.
+`QSystem q`, `lowering(q)|n⟩ = √(n+1)|n+1⟩`. Optionally apply an additional phase ϕ and scaling `factor`.
 
 # Examples
 ```jldoctest
@@ -53,21 +56,35 @@ julia> lowering(q)
  0.0  0.0  0.0
 ```
 """
-lowering(q::QSystem) = diagm(1 => sqrt.(1:(dimension(q)-1)))
+lowering(q::QSystem, ϕ::Real=0, factor::Real=1) = lowering(dimension(q), ϕ, factor)
+
+# custom diagm because it's twice as fast for small matrices
+function lowering(dim::Integer,  ϕ::Real=0, factor::Real=1)
+    m = zeros(typeof(complex(float(ϕ))), dim, dim)
+    efac = exp(-1im * 2π * ϕ) * factor
+    for i in 1:(dim - 1)
+        m[i, i + 1] = sqrt(i) * efac
+    end
+    return m
+end
 
 """
-    lowering(q::QSystem, ϕ::Real)
+    number(q::QSystem, factor::Real=1)
 
-Applys an additional phase exp(-2πiϕ) to the lowering operator.
+Number operator (a†a) on a QSystem `q` with an optional scaling factor which gives a dephasing
+matrix if `factor != 1`.
 """
-lowering(q::QSystem, ϕ::Real) = diagm(1 => exp(-1im*2π*ϕ) * sqrt.(1:(dimension(q)-1)))
+number(q::QSystem, factor::Real=1) = number(dimension(q), factor)
 
-"""
-    number(q::QSystem)
+# custom diagm because it's twice as fast for small matrices
+function number(dim::Integer, factor::Real=1)
+    m = zeros(factor |> float |> complex |> typeof, dim, dim)
+    for i in 2:dim
+        m[i, i] = (i - 1) * factor
+    end
+    return m
+end
 
-Number operator (a†a) on a QSystem.
-"""
-number(q::QSystem) = diagm(0 => 0:dimension(q)-1)
 
 """
     X(q::QSystem)
@@ -166,7 +183,7 @@ T1 decay for a QSystem.
 The lindblad operator for decay.
 """
 function decay(qs::QSystem, γ::Real)
-    return sqrt(γ) * lowering(qs)
+    return lowering(qs, 0, sqrt(γ))
 end
 
 """
@@ -179,10 +196,10 @@ Dephasing for a QSystem.
 * `γ`: a decay rate in frequency units. Note Tϕ = 1/(2πγ).
 
 ## returns
-The lindblad operator for decay.
+The lindblad operator for dephasing.
 """
 function dephasing(qs::QSystem, γ::Real)
-    return sqrt(2γ) * number(qs)
+    return number(qs, sqrt(2γ))
 end
 
 """

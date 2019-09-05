@@ -106,7 +106,7 @@ function me_propagator(cqs::CompositeQSystem, ts::AbstractVector{<:Real})
         for (lind_op, idxs) in Iterators.flatten((p[1].fixed_Ls, ((l(t), idxs) for (l, idxs) in p[1].parametric_Ls)))
             lind_mat .= p[4] # start with empty array
             embed_add!(lind_mat, lind_op, idxs)
-            du .+= 2π * (conj(lind_mat) ⊗ lind_mat .- 0.5 .* I_mat ⊗ (lind_mat'*lind_mat) .- 0.5 .* transpose(lind_mat'*lind_mat) ⊗ I_mat) * u
+            du .+= 2π * (conj(lind_mat) ⊗ lind_mat .- 1//2 .* I_mat ⊗ (lind_mat'*lind_mat) .- 1//2 .* transpose(lind_mat'*lind_mat) ⊗ I_mat) * u
         end
     end
     fixed_ham = hamiltonian(cqs)
@@ -149,7 +149,7 @@ function me_state(cqs::CompositeQSystem, ts::AbstractVector{<:Real}, ρ0::Matrix
             lind_mat .= p[4] # start with empty array
             l = index <= length(p[1].fixed_Ls) ? lind_op : lind_op(t)
             embed_add!(lind_mat, l, idxs)
-            dρ .+= 2π * (lind_mat*ρ*lind_mat' .- .5 .* lind_mat'*lind_mat*ρ .- .5 .* ρ*lind_mat'*lind_mat)
+            dρ .+= 2π * (lind_mat*ρ*lind_mat' .- 1//2 .* lind_mat'*lind_mat*ρ .- 1//2 .* ρ*lind_mat'*lind_mat)
         end
     end
     fixed_ham = hamiltonian(cqs)
@@ -311,7 +311,7 @@ A propagator function.
 """
 function floquet_rise_fall_propagator(propagator_func::Function, t_period::Real, rise_time::Real,
                                       fall_time::Real, rtol::Real)
-    @assert all([t_period, rise_time, fall_time] .>= 0.0)
+    @assert all([t_period, rise_time, fall_time] .>= 0)
     floquet_prop = floquet_propagator(propagator_func, t_period, rtol)
     function p(cqs::CompositeQSystem, ts::Vector{<:Real})
         t0, t1 = ts[1] + rise_time, ts[end] - fall_time
