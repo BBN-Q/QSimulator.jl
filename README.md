@@ -1,12 +1,11 @@
 # QSimulator.jl
 
 Package for simulating time dynamics of quantum systems with a focus on superconducting qubits.
-Based off of [BBN QSimulator package](https://github.com/BBN-Q/QSimulator.jl)
 
 ## Installation
 
 ```
-Pkg.clone("ssh://git@bitbucket.lab.rigetti.com:7999/qos/qsimulator.jl.git", "QSimulator")
+(v1.2) pkg> add https://github.com/BBN-Q/QSimulator.jl
 ```
 
 ## Unit tests
