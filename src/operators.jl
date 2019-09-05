@@ -76,7 +76,7 @@ number(q::QSystem, factor::Real=1) = number(dimension(q), factor)
 
 function number(dim::Integer, factor::Real=1)
     m = zeros(factor |> float |> complex |> typeof, dim, dim)
-    for i in 1:dim
+    for i in 2:dim
         m[i, i] = (i - 1) * factor
     end
     return m
