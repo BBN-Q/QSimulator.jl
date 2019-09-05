@@ -1,0 +1,26 @@
+language: julia
+os:
+  - linux
+#  - osx
+julia:
+  - 0.7
+  - 1.0
+  - nightly
+matrix:
+  allowed_failures:
+    - os: osx
+notifications:
+  email: false
+before_install:
+- sudo apt-get update
+# custom script to grab the unregistered ExpmV package
+
+script:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia --check-bounds=yes --color=yes -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(url="https://github.com/matteoacrossi/ExpmV.jl")); Pkg.develop(Pkg.PackageSpec(url="https://github.com/BBN-Q/QuantumInfo.jl")); Pkg.develop(Pkg.PackageSpec(url="https://github.com/BBN-Q/Cliffords.jl")); Pkg.clone(pwd()); Pkg.build("QSimulator"); Pkg.test("QSimulator"; coverage=true)'
+
+after_success:
+ - julia -e 'using Pkg; cd(Pkg.dir("QSimulator")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+
+ # necessary to run on new container-based infrastructure
+sudo: false
