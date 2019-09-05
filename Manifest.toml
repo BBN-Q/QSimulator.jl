@@ -197,6 +197,11 @@ git-tree-sha1 = "b34d7cef7b337321e97d22242c3c2b91f476748e"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.21.0"
 
+[[LRUCache]]
+git-tree-sha1 = "6505b43dbdb449462a52e8e45feb0706f8b36dab"
+uuid = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
+version = "1.0.2"
+
 [[LazyArrays]]
 deps = ["FillArrays", "LinearAlgebra", "MacroTools", "StaticArrays"]
 git-tree-sha1 = "e71f611fec1329f0fd6c82e9b5d7da3fc9822b0d"
@@ -245,10 +250,9 @@ uuid = "a3b82374-2e81-5b9e-98ce-41277c0e4c87"
 version = "0.1.0"
 
 [[Missings]]
-deps = ["SparseArrays", "Test"]
-git-tree-sha1 = "f0719736664b4358aa9ec173077d4285775f8007"
+git-tree-sha1 = "29858ce6c8ae629cf2d733bffa329619a1c843d0"
 uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
-version = "0.4.1"
+version = "0.4.2"
 
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
@@ -443,6 +447,12 @@ git-tree-sha1 = "c53e809e63fe5cf5de13632090bc3520649c9950"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 version = "0.32.0"
 
+[[Strided]]
+deps = ["LinearAlgebra", "TupleTools"]
+git-tree-sha1 = "1013add5a55fc7c48c19a54486869c7ff9240363"
+uuid = "5e0ebb24-38b0-5f93-81fe-25c709ecae67"
+version = "0.3.2"
+
 [[SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
 uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
@@ -452,6 +462,12 @@ deps = ["IteratorInterfaceExtensions"]
 git-tree-sha1 = "b1ad568ba658d8cbb3b892ed5380a6f3e781a81e"
 uuid = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
 version = "1.0.0"
+
+[[TensorOperations]]
+deps = ["LRUCache", "LinearAlgebra", "Strided", "TupleTools"]
+git-tree-sha1 = "15d31a5821ca106d567eb148df123ca57d8cf4c9"
+uuid = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
+version = "1.2.0"
 
 [[Test]]
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
@@ -467,6 +483,12 @@ deps = ["Test"]
 git-tree-sha1 = "8d0d7a3fe2f30d6a7f833a5f19f7c7a5b396eae6"
 uuid = "a2a6695c-b41b-5b7d-aed9-dbfdeacea5d7"
 version = "0.3.0"
+
+[[TupleTools]]
+deps = ["Random", "Test"]
+git-tree-sha1 = "b006524003142128cc6d36189dce337729aa0050"
+uuid = "9d95972d-f1c8-5527-a6e0-b4b365fa01f6"
+version = "1.1.0"
 
 [[URIParser]]
 deps = ["Test", "Unicode"]

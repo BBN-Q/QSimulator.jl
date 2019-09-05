@@ -1,4 +1,5 @@
 using LinearAlgebra: I
+import TensorOperations
 
 export CompositeQSystem, add_hamiltonian!, add_lindblad!
 
@@ -119,7 +120,8 @@ function embed(m::Matrix, acting_on::Vector, dims::Vector)
     # handle the way tensor product indices work e.g. if we wanted the permutation [2 1 3] (i.e.
     # swap 1st and 2nd subsystem) then we actually need to swap the 2nd and 3rd dimensions
     reverse_perm = (l+1) .- reverse(invperm([acting_on; identity_idxs]))
-    M = permutedims(M, [reverse_perm; reverse_perm .+ l])
+    IC = [reverse_perm; reverse_perm .+ l]
+    M = TensorOperations.tensorcopy(M, 1:length(IC), IC)
 
     # reshape back
     return reshape(M, prod(dims), prod(dims))
