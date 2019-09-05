@@ -20,6 +20,20 @@ for n = 2:5
 
 end
 
+########################################## Basis Utilities #########################################
+SUITE["basis_utils"] = BenchmarkGroup()
+
+for n = 2:4
+    basis_tuple = ((2 for i in 1:n)...,)
+    SUITE["basis_utils"]["tensor_product_basis ($n qubits)"] = @benchmarkable TensorProductBasis($basis_tuple);
+    b = TensorProductBasis(basis_tuple)
+    SUITE["basis_utils"]["basis_states ($n qubits)"] = @benchmarkable basis_states($b);
+    bs = basis_states(b)
+    SUITE["basis_utils"]["vec ($n qubits)"] = @benchmarkable QSimulator.vec($bs[1]);
+    SUITE["basis_utils"]["index ($n qubits)"] = @benchmarkable QSimulator.index($bs[1]);
+    SUITE["basis_utils"]["getindex ($n qubits)"] = @benchmarkable getindex($b, 1);
+end
+
 ######################################### Time Evolution ###########################################
 
 SUITE["unitary"] = BenchmarkGroup()
