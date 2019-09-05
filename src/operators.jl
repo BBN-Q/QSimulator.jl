@@ -67,11 +67,21 @@ function lowering(dim::Integer,  ϕ::Real=0, factor::Real=1)
 end
 
 """
-    number(q::QSystem)
+    number(q::QSystem, factor::Real=1)
 
-Number operator (a†a) on a QSystem.
+Number operator (a†a) on a QSystem `q` with an optional scaling factor which gives a dephasing
+matrix if `factor != 1`.
 """
-number(q::QSystem) = diagm(0 => 0:dimension(q)-1)
+number(q::QSystem, factor::Real=1) = number(dimension(q), factor)
+
+function number(dim::Integer, factor::Real=1)
+    m = zeros(factor |> float |> complex |> typeof, dim, dim)
+    for i in 1:dim
+        m[i, i] = (i - 1) * factor
+    end
+    return m
+end
+
 
 """
     X(q::QSystem)
@@ -186,7 +196,7 @@ Dephasing for a QSystem.
 The lindblad operator for dephasing.
 """
 function dephasing(qs::QSystem, γ::Real)
-    return sqrt(2γ) * number(qs)
+    return number(qs, sqrt(2γ))
 end
 
 """
