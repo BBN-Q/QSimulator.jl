@@ -316,8 +316,8 @@ function fit_transmon(
     EC_guess = -anharm_max
     EJ_max_guess = -(freq_max - anharm_max)^2 / (8 * anharm_max)
     EJ_min_guess = -(freq_min - anharm_max)^2 / (8 * anharm_max)
-    EJ1_guess = .5 * (EJ_max_guess + EJ_min_guess)
-    EJ2_guess = .5 * abs(EJ_max_guess - EJ_min_guess)
+    EJ1_guess = 1//2 * (EJ_max_guess + EJ_min_guess)
+    EJ2_guess = 1//2 * abs(EJ_max_guess - EJ_min_guess)
     if freq_max == freq_min
         res = optimize(f_fixed, [EC_guess, EJ1_guess])
         EC, EJ = res.minimizer
