@@ -20,6 +20,19 @@ end
 	q = PerturbativeTransmon("q", 3, t)
 	h = hamiltonian(q, 0.0)
 	@test isapprox(h, diagm(0 => [0.0, fmax, 2 * fmax + anharm_max]))
+
+	ξ = QSimulator.xi_effective(2,160,0,0)
+	U = perturbative_transmon_Ueigen(ξ)
+	@test size(U) == (5,25)
+	Neigen = U*transmon_N(25, ξ)*U'
+
+	σy = 1im*(raising(2) - lowering(2))
+	λ = perturbative_transmon_λ(2,160,0,0; num_terms=6)
+	Λ = perturbative_transmon_Λ(2,160,0,0; num_terms=6)
+
+	# confirm eq. (24) in arXiv:1706.06566v2
+	@test isapprox(Neigen[1:2,1:2], λ*σy/(2*√ξ); rtol=1e-6)
+	@test isapprox(Neigen[2:3,2:3], Λ*σy/√(2ξ); rtol=1e-5)
 end
 
 @testset "PerturbativeTransmon vs DiagonalChargeBasisTransmon" begin
