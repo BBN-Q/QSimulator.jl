@@ -20,6 +20,23 @@ for n = 2:5
 
 end
 
+########################################## PerturbativeTransmon ####################################
+SUITE["transmon"] = BenchmarkGroup()
+
+for n in (3, 10, 20)
+    SUITE["transmon"]["perturbative_transmon_freq ($n terms)"] =
+        @benchmarkable perturbative_transmon_freq(2, 160, 0, 0; num_terms = $n)
+    SUITE["transmon"]["perturbative_transmon_anharm ($n terms)"] =
+        @benchmarkable perturbative_transmon_anharm(2, 160, 0, 0; num_terms = $n)
+    SUITE["transmon"]["perturbative_transmon_λ ($n terms)"] =
+        @benchmarkable perturbative_transmon_λ(2, 160, 0, 0; num_terms = $n)
+    SUITE["transmon"]["perturbative_transmon_Λ ($n terms)"] =
+        @benchmarkable perturbative_transmon_Λ(2, 160, 0, 0; num_terms = $n)
+end
+
+SUITE["transmon"]["perturbative_transmon_Ueigen"] =
+    @benchmarkable perturbative_transmon_Ueigen(0.15)
+
 ########################################## CompositeSystems ########################################
 SUITE["embedding"] = BenchmarkGroup()
 
