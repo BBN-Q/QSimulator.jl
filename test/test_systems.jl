@@ -31,7 +31,7 @@ end
 	Λ = perturbative_transmon_Λ(2,160,0,0; num_terms=6)
 
 	# confirm eq. (24) in arXiv:1706.06566v2
-	@test isapprox(Neigen[1:2,1:2], λ*σy/(2*√ξ); rtol=1e-6)
+	@test isapprox(Neigen[1:2,1:2], λ*σy/(2*√ξ); rtol=5e-7)
 	@test isapprox(Neigen[2:3,2:3], Λ*σy/√(2ξ); rtol=1e-5)
 end
 
