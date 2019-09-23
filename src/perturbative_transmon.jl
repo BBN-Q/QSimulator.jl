@@ -1,8 +1,7 @@
 # Perturbative expansion of the Mathieu functions for the energy levels of a tunable transmon. The
-# expansion is performed in the dimensionless paramter ξ = √(2EC/EJ). Each 3 element vector v below
-# gives a term  (v[1]/2^v[2]) * ξ^v[3]
-# For details see  Didier, N., Sete, E. A., da Silva, M. P., & Rigetti, C. (2017). Analytical
-# modeling of parametrically-modulated transmon qubits. http://arxiv.org/abs/1706.06566
+# expansion is performed in the dimensionless paramter ξ = √(2EC/EJ). For details see Didier, N.,
+# Sete, E. A., da Silva, M. P., & Rigetti, C. (2017). Analytical modeling of
+# parametrically-modulated transmon qubits. http://arxiv.org/abs/1706.06566.
 
 export perturbative_transmon_freq, perturbative_transmon_anharm
 export perturbative_transmon_λ, perturbative_transmon_Λ
@@ -32,7 +31,10 @@ function transmon_N(dim::Integer, ξ, ϕ::Real=0.0)
     return (im/(2*√ξ)) * (raising(dim, ϕ) - lowering(dim, ϕ))
 end
 
-# pertubative expansion coefficients for the 0 ↔ 1 transisition
+# The expansions are given as a sum ∑ₚ aₚ/2^bₚ ξ^p and so each 2-tuple element below gives an (a,b)
+# pair.
+
+# 0 ↔ 1 transisition
 const PT_FREQ = [
     (-1., 0),
     (-1., 2),
@@ -67,7 +69,7 @@ const PT_FREQ = [
     (-518667194120793070334115565427490753019904133., 116)
 ]
 
-# pertubative expansion coefficients for the anharmonicity
+# anharmonicity
 const PT_ANH = [
     (-1., 0),
     (-9., 4),
@@ -102,6 +104,7 @@ const PT_ANH = [
     (-384886904723357410697832985058012690322303378753., 116)
 ]
 
+# weight of the number operator on the g-e σ_y operator in the three-level transmon eigenbasis
 const PT_λ = [
     (1., 0),
     (-1., 3),
@@ -131,6 +134,7 @@ const PT_λ = [
     (-569157711742925565406447462105395143103., 109)
 ]
 
+# weight of the number operator on the e-f s_y operator in the three-level transmon eigenbasis
 const PT_Λ = [
     (1., 0),
     (-1., 2),
@@ -184,6 +188,8 @@ function xi_effective(EC::Real, EJ1::Real, EJ2::Real, ϕ::Real)
     return sqrt((2 * EC) / sqrt((EJ1 ^ 2 + EJ2 ^ 2) + (2 * EJ1 * EJ2) * cos(2π*ϕ)))
 end
 
+# helper function to evaluate a polynomial expansion using Horner's method and combined multiply-add
+# TODO: consider removing when https://github.com/JuliaLang/julia/pull/32753 lands
 function evalpoly(x, coeffs)
     T = promote_type(typeof(x), eltype(coeffs))
     isempty(coeffs) && return zero(T)
