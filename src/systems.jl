@@ -36,15 +36,14 @@ struct HermitianSpec <: QSpec
 end
 
 """
-Resonator, specified by its transition frequency.
+Resonator, specified by its level spacing.
 """
 struct ResonatorSpec <: QSpec
    frequency::Real
 end
 
 """
-Transmon, specified by its charge and junctions energies, EC and EJ1/EJ2,
-respectively.
+Transmon, specified by its charge and junctions energies, EC and EJ1/EJ2, respectively.
 """
 struct TransmonSpec <: QSpec
    EC::Real
@@ -53,8 +52,7 @@ struct TransmonSpec <: QSpec
 end
 
 """
-Alternative Transmon specifiication by its (base linear) transition frequency
-and anharmonicity.
+Alternative Transmon specification by its f₀₁ transition frequency and anharmonicity (f₁₂ - f₀₁).
 """
 struct DuffingSpec <: QSpec
    frequency::Real
@@ -64,11 +62,10 @@ end
 # Functions
 
 """
-Construct a TransmonSpec (EC, EJ1, EJ2) from a DuffingSpec (frequency,
-anharmonicity), and a model type to perform the conversion.
+Construct a `TransmonSpec` (EC, EJ1, EJ2) from a `DuffingSpec` (frequency, anharmonicity), and a model
+type to perform the conversion.
 
-An optimization routine, fit_transmon, must be run to convert
-frequency/anharmonicity to EC/EJ.
+An optimization routine, fit_transmon, must be run to convert frequency/anharmonicity to EC/EJ.
 """
 function TransmonSpec(t::DuffingSpec, model::Type{T}=PerturbativeTransmon,
     num_terms::Int=PERTURBATIVE_NUM_TERMS) where {T<:QSystem}
@@ -76,9 +73,8 @@ function TransmonSpec(t::DuffingSpec, model::Type{T}=PerturbativeTransmon,
 end
 
 """
-Construct a DuffingSpec (freqency, anharmonicity) from a TransmonSpec (EC, EJ1,
-EJ2), at a given flux quantum ϕ. May optionally supply a customer number of
-perturbative terms.
+Construct a `DuffingSpec` (frequency, anharmonicity) from a TransmonSpec (EC, EJ1, EJ2), at a given
+flux quantum ϕ. May optionally supply a custom number of perturbative terms.
 """
 function DuffingSpec(t::TransmonSpec, ϕ::Real=0.0, num_terms::Int=PERTURBATIVE_NUM_TERMS)
     freq = perturbative_transmon_freq(t.EC, t.EJ1, t.EJ2, ϕ, num_terms=num_terms)
@@ -114,8 +110,10 @@ struct DuffingTransmon <: QSystem
 end
 
 """
-The PerturbativeTransmon type is a DuffingTransmon with the added `num_terms`
-attribute, specifying to how many terms the transmon should be calculated.
+The `PerturbativeTransmon` type is a `DuffingTransmon` with the f₀₁ and f₁₂ calculated from a
+perturbative expansion. For details see Didier, N., Sete, E. A., da Silva, M. P., & Rigetti, C.
+(2017). Analytical modeling of parametrically-modulated transmon qubits.
+http://arxiv.org/abs/1706.06566 for details.
 """
 struct PerturbativeTransmon <: QSystem
     label::AbstractString
@@ -174,8 +172,8 @@ spec(r::RotatingFrameSystem) = spec(r.system)
 # Resonator
 
 """
-Construct a resonator hamiltonian from energy levels equally spaced
-by the resonator frequency, along the diagonal of a square matrix.
+Construct a resonator hamiltonian from energy levels equally spaced by the resonator frequency,
+along the diagonal of a square matrix.
 """
 hamiltonian(r::Resonator)::HermitianMatrix =
     diagm(0 =>[spec(r).frequency * n for n in 0:dimension(r)-1])
@@ -183,11 +181,9 @@ hamiltonian(r::Resonator)::HermitianMatrix =
 # Duffing Transmon
 
 """
-Construct the hamiltonian of a duffing transmon from energy levels spaced by the
-transmon's frequency minus its anharmonicity:
-
+Construct the hamiltonian of a duffing transmon - constant relative anharmonicity.
 ```
-f_{n+1} - f_n = frequency - anharmonicity.
+E_{n+1} - E_{n} = f₀₁ - n*anharmonicity.
 ```
 """
 function duffing_hamiltonian(
@@ -204,7 +200,7 @@ hamiltonian(t::DuffingTransmon)::HermitianMatrix =
     duffing_hamiltonian(spec(t).frequency, spec(t).anharmonicity, dimension(t))
 
 """
-Construct a hamiltonian for a Duffing transmon using a custom frequency.
+Construct a hamiltonian for a Duffing transmon given a specific f₀₁
 """
 hamiltonian(t::DuffingTransmon, frequency::Real)::HermitianMatrix =
     duffing_hamiltonian(frequency, spec(t).anharmonicity, dimension(t))
@@ -212,8 +208,7 @@ hamiltonian(t::DuffingTransmon, frequency::Real)::HermitianMatrix =
 # Perturbative Transmon
 
 """
-Construct a hamiltonian from a PerturbativeTransmon at a given flux quantum
-ϕ.
+Construct a hamiltonian from a PerturbativeTransmon at a given external flux ϕ in units of Φ₀
 """
 function hamiltonian(t::PerturbativeTransmon, ϕ::Real=0.0)::HermitianMatrix
     s = DuffingSpec(spec(t), ϕ, t.num_terms)
@@ -259,8 +254,7 @@ end
 # Util
 
 """
-Helper function that subtracts a real number off the diagonal elements of a Real
-matrix.
+Helper function that subtracts a real number off the diagonal elements of a Real matrix.
 """
 function subtract_number!(h::Matrix{<:Real}, r::Real)
     if r != 0
@@ -277,9 +271,9 @@ end
 """
     fit_transmon(freq_max::Real, freq_min::Real, anharm_max::Real, model::Type{T}, num_terms::Int) where {T<:QSystem}
 
-Fit a transmon to given frequency and anharmonicity at fmax and the frequency
-at fmin. The model can be either PerturbativeTransmon or DiagonalChargeBasisTransmon.
-If `freq_max == freq_min` then `EJ2 == 0` is enforced.
+Fit a transmon to given frequency and anharmonicity at fmax and the frequency at fmin. The model can
+be either PerturbativeTransmon or DiagonalChargeBasisTransmon. If `freq_max == freq_min` then `EJ2
+== 0` is enforced.
 
 ## args
 * `freq_max`: the qubit maximum frequency.
