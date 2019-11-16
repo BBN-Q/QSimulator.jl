@@ -76,8 +76,10 @@ end
 
 ########################### Parmetric Flux Drive ##########################
 
-# parametric flux drive should produce flops between resonant states
-# parameters from Blue Launch paper
+# parametric flux drive should produce flops between resonant states parameters from S. A.
+# Caldwell, et. al (2018). Parametrically Activated Entangling Gates Using Transmon Qubits. Physical
+# Review Applied, 10(3). https://doi.org/10.1103/PhysRevApplied.10.034050
+
 @testset "parametric flux drive" begin
     # create Hamiltonian
     dims = [3,3]

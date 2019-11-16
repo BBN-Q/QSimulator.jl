@@ -26,7 +26,7 @@ function find_indices(cqs::CompositeQSystem, s::Union{Vector{<:QSystem}, Vector{
 end
 
 """ Add a subsystem static Hamiltonian matrix to a CompositeQSystem """
-function add_hamiltonian!(cqs::CompositeQSystem, ham::AbstractMatrix{T}, acting_on::Union{Q, Array{Q}}) where {T<:Number, Q<:QSystem}
+function add_hamiltonian!(cqs::CompositeQSystem, ham::AbstractMatrix{<:Number}, acting_on::Union{Q, Array{Q}}) where {Q<:QSystem}
     idxs = embed_indices(cqs, acting_on)
     push!(cqs.fixed_Hs, (ham, idxs))
 end

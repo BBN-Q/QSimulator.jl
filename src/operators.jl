@@ -77,8 +77,8 @@ matrix if `factor != 1`.
 number(q::QSystem, factor::Real=1) = number(dimension(q), factor)
 
 # custom diagm because it's twice as fast for small matrices
-function number(dim::Integer, factor::Real=1)
-    m = zeros(factor |> float |> complex |> typeof, dim, dim)
+function number(dim::Integer, factor::T=1) where {T<:Real}
+    m = zeros(complex(float(T)), dim, dim)
     for i in 2:dim
         m[i, i] = (i - 1) * factor
     end
