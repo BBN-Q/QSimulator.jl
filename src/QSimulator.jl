@@ -1,25 +1,14 @@
 module QSimulator
 
-using Interpolations
+export ⊗
 
-import Base: getindex
-import Base.+
-using LinearAlgebra
-using SparseArrays
+const ⊗ = kron
 
-
-eye(dim::Integer) = Matrix{Float64}(LinearAlgebra.I, dim, dim)
-eye(::Type{T}, dim::Integer) where T = Matrix{T}(LinearAlgebra.I, dim, dim)
-speye(dim::Integer) = sparse(one(Float64) * LinearAlgebra.I, dim, dim)
-speye(::Type{T}, dim::Integer) where T = sparse(one(T) * LinearAlgebra.I, dim, dim)
-
-include("base-types.jl")
+include("fourier.jl")
+include("perturbative_transmon.jl")
+include("basis_utils.jl")
 include("systems.jl")
-include("controls.jl")
-include("interactions.jl")
-include("composite-systems.jl")
-include("dissipation.jl")
-include("evolution.jl")
-include("read_APS_file.jl")
-
+include("operators.jl")
+include("composite_systems.jl")
+include("time_evolution.jl")
 end

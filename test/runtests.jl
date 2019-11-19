@@ -1,10 +1,7 @@
-using QSimulator
-using LinearAlgebra
-
-include("unitary-tests.jl")
-include("dissipation-tests.jl")
-
-include("speed_test.jl")
-#speed_test(5)
-
-#include("test_dissipators.jl")
+include("test_operators.jl")
+include("test_systems.jl")
+include("test_fourier.jl")
+include("test_basis_utils.jl")
+include("test_time_evolution.jl")
+include("test_composite_systems.jl")
+include("integration_tests.jl")
