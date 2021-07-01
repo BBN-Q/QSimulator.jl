@@ -1,6 +1,6 @@
 # QSimulator.jl
 
-[![Build Status](https://travis-ci.org/BBN-Q/QSimulator.jl.svg?branch=master)](https://travis-ci.org/BBN-Q/QSimulator.jl)
+[![CI](https://github.com/BBN-Q/QSimulator.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/BBN-Q/QSimulator.jl/actions/workflows/CI.yml)
 
 Package for simulating time dynamics of quantum systems with a focus on superconducting qubits.
 
