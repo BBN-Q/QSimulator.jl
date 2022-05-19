@@ -1,13 +1,15 @@
 # QSimulator.jl
 
-[![CI](https://github.com/BBN-Q/QSimulator.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/BBN-Q/QSimulator.jl/actions/workflows/CI.yml)
+[![CI](https://github.com/spherical-tensor/QSimulator.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/spherical-tensorQSimulator.jl/actions/workflows/CI.yml)
+
+QSimulator Fork from BBN-Q's original.
 
 Package for simulating time dynamics of quantum systems with a focus on superconducting qubits.
 
 ## Installation
 
 ```
-(v1.2) pkg> add https://github.com/BBN-Q/QSimulator.jl
+(v1.6) pkg> add https://github.com/spherical-tensor/QSimulator.jl
 ```
 
 ## Unit tests
