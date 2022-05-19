@@ -188,17 +188,6 @@ function xi_effective(EC::Real, EJ1::Real, EJ2::Real, ϕ::Real)
     return sqrt((2 * EC) / sqrt((EJ1 ^ 2 + EJ2 ^ 2) + (2 * EJ1 * EJ2) * cos(2π*ϕ)))
 end
 
-# helper function to evaluate a polynomial expansion using Horner's method and combined multiply-add
-# TODO: consider removing when https://github.com/JuliaLang/julia/pull/32753 lands
-function evalpoly(x, coeffs)
-    T = promote_type(typeof(x), eltype(coeffs))
-    isempty(coeffs) && return zero(T)
-    ex = coeffs[end]
-    for i = length(coeffs)-1:-1:1
-        ex = muladd(x, ex, coeffs[i])
-    end
-    return ex
-end
 
 """
     perturbative_transmon_freq(EC::Real, EJ1::Real, EJ2::Real, ϕ::Real;
